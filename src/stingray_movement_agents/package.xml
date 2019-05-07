@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>stingray_movement_agents</name>
+  <version>0.1.0</version>
+  <description>Package contains basic action servers for movement of the vehicle for Stingray platform.</description>
+
+  <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
+
+
+  <license>MIT</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+</package>
