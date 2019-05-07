@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_common</name>
+  <name>stingray_utils</name>
   <version>0.1.0</version>
   <description>Package contains different helper utilities of the Stingray platform.</description>
 
