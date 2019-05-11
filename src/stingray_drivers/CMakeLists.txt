@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(stingray_drivers)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -124,6 +124,27 @@ include_directories(
  include
  ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(hardware_bridge
+  src/hardware_bridge.cpp
+  include/messages/messages.h
+  src/messages/messages.cpp
+)
+target_link_libraries(hardware_bridge ${catkin_LIBRARIES})
+add_dependencies(hardware_bridge stingray_common_generate_messages_cpp)
+
+add_executable(uart_driver
+  src/uart_driver.cpp
+  include/messages/messages.h
+  src/messages/messages.cpp
+)
+target_link_libraries(uart_driver ${catkin_LIBRARIES})
+
+add_executable(gazebo_bridge
+  src/gazebo_bridge.cpp
+)
+target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
+#add_dependencies(gazebo_bridge stingray_common_generate_messages_cpp)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
