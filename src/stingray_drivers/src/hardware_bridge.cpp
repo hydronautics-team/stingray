@@ -18,12 +18,12 @@
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
 
-#define SHORE_STABILIZE_DEPTH_BIT       0
-#define SHORE_STABILIZE_ROLL_BIT        1
-#define SHORE_STABILIZE_PITCH_BIT       2
-#define SHORE_STABILIZE_YAW_BIT         3
-#define SHORE_STABILIZE_IMU_BIT         4
-#define SHORE_STABILIZE_SAVE_BIT        5
+#define SHORE_STABILIZE_DEPTH_BIT 0
+#define SHORE_STABILIZE_ROLL_BIT 1
+#define SHORE_STABILIZE_PITCH_BIT 2
+#define SHORE_STABILIZE_YAW_BIT 3
+#define SHORE_STABILIZE_IMU_BIT 4
+#define SHORE_STABILIZE_SAVE_BIT 5
 
 static const std::string HARDWARE_BRIDGE_NODE_NAME = "hardware_bridge";
 
@@ -113,7 +113,24 @@ bool depthCallback(stingray_common::SetInt32::Request &request, stingray_common:
   response.success = true;
 
   return true;
+}
 
+bool yawCallback(stingray_common::SetInt32::Request &request, stingray_common::SetInt32::Response &response) {
+  if (!yawStabilizationEnabled) {
+    response.success = false;
+    response.message = "Yaw stabilization is not enabled";
+    return true;
+  }
+
+  ROS_INFO("Setting yaw to %d", request.value);
+  requestMessage.yaw = request.value;
+  ROS_INFO("Sending to STM32 yaw value: %d", requestMessage.depth);
+
+  isReady = true;
+
+  response.success = true;
+
+  return true;
 }
 
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response) {
@@ -188,6 +205,7 @@ int main(int argc, char **argv) {
 
   ros::ServiceServer velocityService = nodeHandle.advertiseService(SET_VELOCITY_SERVICE, movementCallback);
   ros::ServiceServer depthService = nodeHandle.advertiseService(SET_DEPTH_SERVICE, depthCallback);
+  ros::ServiceServer yawService = nodeHandle.advertiseService(SET_YAW_SERVICE, yawCallback);
   ros::ServiceServer imuService = nodeHandle.advertiseService(SET_IMU_ENABLED_SERVICE, imuCallback);
   ros::ServiceServer stabilizationService = nodeHandle.advertiseService(SET_STABILIZATION_SERVICE, stabilizationCallback);
   ros::ServiceServer deviceService = nodeHandle.advertiseService(SET_DEVICE_SERVICE, deviceActionCallback);
