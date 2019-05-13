@@ -14,39 +14,25 @@
 #include <vector>
 
 #include "messages/messages.h"
+#include "TopicsAndServices.h"
 
 static const std::string UART_BRIDGE_NODE_NAME = "uart_bridge";
 
-static const std::string PUBLISH_TOPIC = "/stingray/drivers/uart";
-
-static const std::string SUBSCRIBE_TOPIC = "/stingray/hardware_bridge/parcels";
 
 static const std::string PARAM_DEVICE = "device";
-
 static const std::string PARAM_BAUDRATE = "baudrate";
-
 static const std::string PARAM_DATA_BYTES = "dataBytes";
-
 static const std::string PARAM_PARITY = "parity";
-
 static const std::string PARAM_STOP_BITS = "stopBits";
-
 static const std::string PARITY_NONE = "none";
-
 static const std::string PARITY_EVEN = "even";
-
 static const std::string PARITY_ODD = "odd";
 
 static const std::string DEFAULT_DEVICE = "/dev/ttyS0";
-
 static const int DEFAULT_BAUDRATE = 57600;
-
 static const int DEFAULT_DATA_BYTES = 8;
-
 static const std::string DEFAULT_PARITY = PARITY_NONE;
-
 static const int DEFAULT_STOP_BITS = 1;
-
 // Needed for serial port library
 static const int DEFAULT_SERIAL_TIMEOUT = 1000;
 
@@ -179,26 +165,19 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-
-  // Input message container
   msg_in.layout.dim.push_back(std_msgs::MultiArrayDimension());
   msg_in.layout.dim[0].size = RequestMessage::length;
   msg_in.layout.dim[0].stride = RequestMessage::length;
   msg_in.layout.dim[0].label = "msg_in";
 
-  // Outnput message container
   msg_out.layout.dim.push_back(std_msgs::MultiArrayDimension());
   msg_out.layout.dim[0].size = ResponseMessage::length;
   msg_out.layout.dim[0].stride = ResponseMessage::length;
   msg_out.layout.dim[0].label = "msg_out";
 
-  // ROS publishers
-  ros::Publisher outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(PUBLISH_TOPIC, 100);
-  // **************
+  ros::Publisher outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(INPUT_PARCEL_TOPIC, 100);
 
-  // ROS subscribers
-  ros::Subscriber inputMessage_sub = nodeHandle.subscribe(SUBSCRIBE_TOPIC, 100, inputMessageCallback);
-  // **************
+  ros::Subscriber inputMessage_sub = nodeHandle.subscribe(OUTPUT_PARCEL_TOPIC, 100, inputMessageCallback);
 
   ros::Rate readDelay(100);
 

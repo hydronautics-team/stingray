@@ -66,6 +66,10 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   SetTwist.srv
+  SetFloat64.srv
+  SetDeviceAction.srv
+  SetStabilization.srv
+  SetInt32.srv
 )
 
 ## Generate actions in the 'action' folder
