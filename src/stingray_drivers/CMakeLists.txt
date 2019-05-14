@@ -148,7 +148,7 @@ add_executable(gazebo_bridge
   include/TopicsAndServices.h
 )
 target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
-#add_dependencies(gazebo_bridge stingray_common_generate_messages_cpp)
+add_dependencies(gazebo_bridge stingray_common_generate_messages_cpp)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
