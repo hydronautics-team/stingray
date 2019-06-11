@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(stingray_common)
+project(stingray_msgs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -135,7 +135,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
  ${catkin_INCLUDE_DIRS}
 )
 
@@ -198,12 +197,12 @@ include_directories(
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
+#[[install(FILES
    scripts/topics.py
    scripts/services.py
    scripts/actions.py
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
- )
+ )]]
 
 #############
 ## Testing ##

@@ -9,11 +9,11 @@
 #include <string>
 #include <vector>
 
-#include <stingray_common/SetTwist.h>
-#include <stingray_common/SetFloat64.h>
-#include <stingray_common/SetInt32.h>
-#include <stingray_common/SetStabilization.h>
-#include <stingray_common/SetDeviceAction.h>
+#include <stingray_msgs/SetTwist.h>
+#include <stingray_msgs/SetFloat64.h>
+#include <stingray_msgs/SetInt32.h>
+#include <stingray_msgs/SetStabilization.h>
+#include <stingray_msgs/SetDeviceAction.h>
 
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
@@ -79,7 +79,7 @@ void inputMessageCallback(const std_msgs::UInt8MultiArray::ConstPtr &msg) {
     ROS_ERROR("Wrong checksum");
 }
 
-bool movementCallback(stingray_common::SetTwist::Request &request, stingray_common::SetTwist::Response &response) {
+bool movementCallback(stingray_msgs::SetTwist::Request &request, stingray_msgs::SetTwist::Response &response) {
   requestMessage.roll = static_cast<int16_t>(request.twist.angular.x);
   requestMessage.pitch = static_cast<int16_t>(request.twist.angular.z);
   requestMessage.march = static_cast<int16_t>(request.twist.linear.x);
@@ -97,7 +97,7 @@ bool movementCallback(stingray_common::SetTwist::Request &request, stingray_comm
   return true;
 }
 
-bool depthCallback(stingray_common::SetInt32::Request &request, stingray_common::SetInt32::Response &response) {
+bool depthCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetInt32::Response &response) {
   if (!depthStabilizationEnabled) {
     response.success = false;
     response.message = "Depth stabilization is not enabled";
@@ -115,7 +115,7 @@ bool depthCallback(stingray_common::SetInt32::Request &request, stingray_common:
   return true;
 }
 
-bool yawCallback(stingray_common::SetInt32::Request &request, stingray_common::SetInt32::Response &response) {
+bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetInt32::Response &response) {
   if (!yawStabilizationEnabled) {
     response.success = false;
     response.message = "Yaw stabilization is not enabled";
@@ -144,8 +144,8 @@ bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Respons
   return true;
 }
 
-bool stabilizationCallback(stingray_common::SetStabilization::Request &request,
-                           stingray_common::SetStabilization::Response &response) {
+bool stabilizationCallback(stingray_msgs::SetStabilization::Request &request,
+                           stingray_msgs::SetStabilization::Response &response) {
   ROS_INFO("Setting depth stabilization bits to %d", request.depthStabilization);
   setBit(requestMessage.stabilize_flags, SHORE_STABILIZE_DEPTH_BIT, request.depthStabilization);
   ROS_INFO("Setting yaw stabilization bits to %d", request.yawStabilization);
@@ -161,8 +161,8 @@ bool stabilizationCallback(stingray_common::SetStabilization::Request &request,
   return true;
 }
 
-bool deviceActionCallback(stingray_common::SetDeviceAction::Request &request,
-                          stingray_common::SetDeviceAction::Response &response) {
+bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request &request,
+                          stingray_msgs::SetDeviceAction::Response &response) {
   ROS_INFO("Setting device [%d] action value to %d", request.device, request.value);
   requestMessage.dev[request.device]  = request.value;
 

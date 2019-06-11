@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   nav_msgs
   serial
-  stingray_common
+  stingray_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_common
+  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_msgs
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_drivers
 #  CATKIN_DEPENDS other_catkin_pkg
@@ -133,7 +133,7 @@ add_executable(hardware_bridge
   include/TopicsAndServices.h
 )
 target_link_libraries(hardware_bridge ${catkin_LIBRARIES})
-add_dependencies(hardware_bridge stingray_common_generate_messages_cpp)
+add_dependencies(hardware_bridge stingray_msgs_generate_messages_cpp)
 
 add_executable(uart_driver
   src/uart_driver.cpp
@@ -148,7 +148,7 @@ add_executable(gazebo_bridge
   include/TopicsAndServices.h
 )
 target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
-add_dependencies(gazebo_bridge stingray_common_generate_messages_cpp)
+add_dependencies(gazebo_bridge stingray_msgs_generate_messages_cpp)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

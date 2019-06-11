@@ -18,6 +18,6 @@
   <depend>std_srvs</depend>
   <depend>nav_msgs</depend>
   <depend>serial</depend>
-  <depend>stingray_common</depend>
+  <depend>stingray_msgs</depend>
 
 </package>
