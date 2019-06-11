@@ -4,67 +4,47 @@
 #include <geometry_msgs/Twist.h>
 
 typedef enum {
-  MARCH_FORWARD, // Forward
-  MARCH_BACKWARDS, // Backwards
-  LAG_RIGHT, // Right
-  LAG_LEFT, // Left
-  DEPTH_UP, // Up
-  DEPTH_DOWN, // Down
-  YAW_CW, // Turn clockwise
-  YAW_CCW, // Turn counterclockwise
-  STOP // Stop
-} Direction;
+  LINEAR_LEVEL_SLOW,
+  LINEAR_LEVEL_MEDIUM,
+  LINEAR_LEVEL_FAST,
+  LINEAR_LEVEL_VERY_FAST
+} LinearVelocityLevel;
 
 typedef enum {
-  LINEAR_LEVEL_1,
-  LINEAR_LEVEL_2,
-  LINEAR_LEVEL_3,
-  LINEAR_LEVEL_4,
-  ANGULAR_LEVEL_1,
-  ANGULAR_LEVEL_2,
-  ANGULAR_LEVEL_3,
-  ANGULAR_LEVEL_4
-} VelocityLevel;
+  ANGULAR_LEVEL_SLOW,
+  ANGULAR_LEVEL_MEDIUM,
+  ANGULAR_LEVEL_FAST
+} AngularVelocityLevel;
+
+static const int LINEAR_VELOCITIES_LEVELS = 4;
+static const int ANGULAR_VELOCITIES_LEVELS = 3;
 
 class Steerer {
 
  protected:
 
-  double linearVelocityValues[4];
-  double angularVelocityValues[4];
+  double linearVelocityValues[LINEAR_VELOCITIES_LEVELS];
+  double angularVelocityValues[ANGULAR_VELOCITIES_LEVELS];
+
+  /** Sets twist via specific service */
+  void setTwist(geometry_msgs::Twist& twist);
 
   /** Initializes twist */
-  geometry_msgs::Twist createTwist(double x, double y, double z, double roll, double pitch, double yaw);
-
-  /** Initializes twist with zero angular velocities */
-  geometry_msgs::Twist createLinearTwist(double x, double y, double z);
-
-  /** Initializes twist with zero linear velocities */
-  geometry_msgs::Twist createAngularTwist(double roll, double pitch, double yaw);
-
-  /** Initializes twist for specified direction and velocity level */
-  geometry_msgs::Twist createDirectionTwist(Direction direction, VelocityLevel velocityLevel);
-
-  /** Creates twist to stop vehicle */
-  geometry_msgs::Twist createStopTwist();
-
-  /** Publishes twist to specific topic */
-  void publishTwist(geometry_msgs::Twist& twist, std::string& topic);
-
-  /** Initializes twist for specified direction and velocity */
-  virtual geometry_msgs::Twist createDirectionTwist(Direction direction, double velocity) = 0;
+  virtual geometry_msgs::Twist createTwist(double x, double y, double z, double roll, double pitch, double yaw) = 0;
 
  public:
 
-  Steerer(double linearVelocityValues[4], double angularVelocityValues[4]);
+  Steerer(double linearVelocityValues[LINEAR_VELOCITIES_LEVELS], double angularVelocityValues[ANGULAR_VELOCITIES_LEVELS]);
   Steerer(Steerer& other) = default;
   ~Steerer() = default;
 
-  void moveMarch(int duration);
+  // TODO: Add async API
 
-  void moveLag(int duration);
+  void moveMarch(int duration, LinearVelocityLevel velocityLevel);
 
-  void rotateToAngle(int angle);
+  void moveLag(int duration, LinearVelocityLevel velocityLevel);
+
+  void rotateToAngle(int angle, AngularVelocityLevel velocityLevel);
 
   void diveToDepth(int depth);
 
