@@ -1,8 +1,11 @@
 #ifndef STINGRAY_SRC_STINGRAY_STEERING_INCLUDE_STEERER_H_
 #define STINGRAY_SRC_STINGRAY_STEERING_INCLUDE_STEERER_H_
 
+#include <ros/ros.h>
+
 #include <geometry_msgs/Twist.h>
 #include <stingray_msgs/SetLagAndMarch.h>
+#include <ros/node_handle.h>
 
 typedef enum {
   LINEAR_LEVEL_SLOW,
@@ -30,6 +33,9 @@ static const std::string SET_YAW_SERVICE = "/stingray/services/control/set_yaw";
 
 static const int LINEAR_VELOCITY_LEVELS = 4;
 
+static const int DEPTH_DELTA = 10;
+static const int YAW_DELTA = 5;
+
 class Steerer {
 
  private:
@@ -38,15 +44,16 @@ class Steerer {
 
  protected:
 
-  double getVelocity(LinearVelocityLevel velocityLevel);
+  ros::NodeHandle nodeHandle;
 
-  stingray_msgs::SetLagAndMarch createMessage(double marchVelocity, double lagVelocity);
+  double getVelocity(LinearVelocityLevel velocityLevel);
 
   void move(double marchVelocity, double lagVelocity, int durationSeconds);
 
  public:
 
-  Steerer(double linearSlow, double linearMedium, double linearFast, double linearTurbo);
+  Steerer(const ros::NodeHandle& nodeHandle, double linearSlow, double linearMedium,
+      double linearFast, double linearTurbo);
   Steerer(Steerer& other) = default;
   ~Steerer() = default;
 
@@ -62,9 +69,9 @@ class Steerer {
 
   void stop();
 
-  void rotateToAngle(int angle);
+  void rotateToAngle(int angleDegree);
 
-  void diveToDepth(int depth);
+  void diveToDepth(int depthCm);
 
 };
 
