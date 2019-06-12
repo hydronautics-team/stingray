@@ -7,7 +7,7 @@ typedef enum {
   LINEAR_LEVEL_SLOW,
   LINEAR_LEVEL_MEDIUM,
   LINEAR_LEVEL_FAST,
-  LINEAR_LEVEL_VERY_FAST
+  LINEAR_LEVEL_TURBO
 } LinearVelocityLevel;
 
 typedef enum {
