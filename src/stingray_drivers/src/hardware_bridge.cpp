@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/UInt32.h>
+#include <std_msgs/Int32.h>
 #include <std_msgs/UInt8MultiArray.h>
 #include <geometry_msgs/Twist.h>
 #include <std_srvs/SetBool.h>
@@ -14,6 +15,7 @@
 #include <stingray_msgs/SetInt32.h>
 #include <stingray_msgs/SetStabilization.h>
 #include <stingray_msgs/SetDeviceAction.h>
+#include <stingray_msgs/SetLagAndMarch.h>
 
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
@@ -39,6 +41,7 @@ RequestMessage requestMessage;
 ResponseMessage responseMessage;
 
 std_msgs::UInt32 depthMessage;
+std_msgs::Int32 yawMessage;
 
 bool isReady = false;
 
@@ -75,25 +78,19 @@ void inputMessageCallback(const std_msgs::UInt8MultiArray::ConstPtr &msg) {
   bool ok = responseMessage.parseVector(received_vector);
   if (ok) {
     depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
+    // TODO: Test yaw obtaining
+    yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
   } else
     ROS_ERROR("Wrong checksum");
 }
 
-bool movementCallback(stingray_msgs::SetTwist::Request &request, stingray_msgs::SetTwist::Response &response) {
-  requestMessage.roll = static_cast<int16_t>(request.twist.angular.x);
-  requestMessage.pitch = static_cast<int16_t>(request.twist.angular.z);
-  requestMessage.march = static_cast<int16_t>(request.twist.linear.x);
-  requestMessage.lag = static_cast<int16_t>(request.twist.linear.z);
-
-  if (!depthStabilizationEnabled)
-    requestMessage.depth = static_cast<int16_t>(request.twist.linear.y);
-  if (!yawStabilizationEnabled)
-    requestMessage.yaw = static_cast<int16_t>(request.twist.angular.y);
+bool lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request &request,
+    stingray_msgs::SetLagAndMarch::Response &response) {
+  requestMessage.march = static_cast<int16_t>(request.march);
+  requestMessage.lag = static_cast<int16_t>(request.lag);
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -127,9 +124,7 @@ bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetIn
   ROS_INFO("Sending to STM32 yaw value: %d", requestMessage.depth);
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -138,9 +133,7 @@ bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Respons
   setBit(requestMessage.stabilize_flags, SHORE_STABILIZE_IMU_BIT, request.data);
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -155,9 +148,7 @@ bool stabilizationCallback(stingray_msgs::SetStabilization::Request &request,
   yawStabilizationEnabled = request.yawStabilization;
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -167,9 +158,7 @@ bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request &request,
   requestMessage.dev[request.device]  = request.value;
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -200,10 +189,11 @@ int main(int argc, char **argv) {
 
   ros::Publisher outputMessagePublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 100);
   ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(DEPTH_PUBLISH_TOPIC, 20);
+  ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(YAW_PUBLISH_TOPIC, 20);
 
   ros::Subscriber inputMessageSubscriber = nodeHandle.subscribe(INPUT_PARCEL_TOPIC, 100, inputMessageCallback);
 
-  ros::ServiceServer velocityService = nodeHandle.advertiseService(SET_VELOCITY_SERVICE, movementCallback);
+  ros::ServiceServer lagAndMarchService = nodeHandle.advertiseService(SET_LAG_AND_MARCH_SERVICE, lagAndMarchCallback);
   ros::ServiceServer depthService = nodeHandle.advertiseService(SET_DEPTH_SERVICE, depthCallback);
   ros::ServiceServer yawService = nodeHandle.advertiseService(SET_YAW_SERVICE, yawCallback);
   ros::ServiceServer imuService = nodeHandle.advertiseService(SET_IMU_ENABLED_SERVICE, imuCallback);
@@ -215,6 +205,7 @@ int main(int argc, char **argv) {
       makeOutputMessage();
       outputMessagePublisher.publish(msg_out);
       depthPublisher.publish(depthMessage);
+      yawPublisher.publish(yawMessage);
     }
 
     ros::spinOnce();

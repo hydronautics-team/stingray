@@ -70,6 +70,7 @@ add_service_files(
   SetDeviceAction.srv
   SetStabilization.srv
   SetInt32.srv
+  SetLagAndMarch.srv
 )
 
 ## Generate actions in the 'action' folder

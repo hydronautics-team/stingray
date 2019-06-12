@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/UInt32.h>
+#include <std_msgs/Int32.h>
 #include <std_msgs/UInt8MultiArray.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
@@ -15,6 +16,7 @@
 #include <stingray_msgs/SetInt32.h>
 #include <stingray_msgs/SetStabilization.h>
 #include <stingray_msgs/SetDeviceAction.h>
+#include <stingray_msgs/SetLagAndMarch.h>
 
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
@@ -26,27 +28,20 @@ static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = 100;
 nav_msgs::Odometry currentOdometry;
 
 std_msgs::UInt32 depthMessage;
+std_msgs::Int32 yawMessage;
 
 bool isReady = false;
 
 bool depthStabilizationEnabled = false;
 bool yawStabilizationEnabled = false;
 
-bool movementCallback(stingray_msgs::SetTwist::Request &request, stingray_msgs::SetTwist::Response &response) {
-  currentOdometry.twist.twist.linear.x = request.twist.linear.x;
-  currentOdometry.twist.twist.linear.y = request.twist.linear.y;
-  currentOdometry.twist.twist.angular.x = request.twist.angular.x;
-  currentOdometry.twist.twist.angular.y = request.twist.angular.y;
-
-  if (!depthStabilizationEnabled)
-    currentOdometry.twist.twist.linear.z = request.twist.linear.z;
-  if (!yawStabilizationEnabled)
-    currentOdometry.twist.twist.angular.z = request.twist.angular.z;
+bool lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request &request,
+                         stingray_msgs::SetLagAndMarch::Response &response) {
+  currentOdometry.twist.twist.linear.x = request.march;
+  currentOdometry.twist.twist.linear.y = request.lag;
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -57,15 +52,12 @@ bool depthCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::Set
     return true;
   }
 
-  // TODO: Check it
+  // TODO: Test it
   currentOdometry.pose.pose.position.z = request.value;
 
   isReady = true;
-
   response.success = true;
-
   return true;
-
 }
 
 bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetInt32::Response &response) {
@@ -75,15 +67,12 @@ bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetIn
     return true;
   }
 
-  // TODO: Check it
+  // TODO: Test it
   currentOdometry.pose.pose.orientation.z = request.value;
 
   isReady = true;
-
   response.success = true;
-
   return true;
-
 }
 
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response) {
@@ -98,9 +87,7 @@ bool stabilizationCallback(stingray_msgs::SetStabilization::Request &request,
   yawStabilizationEnabled = request.yawStabilization;
 
   isReady = true;
-
   response.success = true;
-
   return true;
 }
 
@@ -125,10 +112,11 @@ int main(int argc, char **argv) {
 
   ros::Publisher gazeboOdometryPublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(GAZEBO_ODOMETRY_PUBLISH_TOPIC, 100);
 
-  // TODO: Optain depth from simulator
-  //ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(DEPTH_PUBLISH_TOPIC, 20);
+  // TODO: Obtain depth and yaw from simulator
+  ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(DEPTH_PUBLISH_TOPIC, 20);
+  ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(YAW_PUBLISH_TOPIC, 20);
 
-  ros::ServiceServer velocityService = nodeHandle.advertiseService(SET_VELOCITY_SERVICE, movementCallback);
+  ros::ServiceServer velocityService = nodeHandle.advertiseService(SET_LAG_AND_MARCH_SERVICE, lagAndMarchCallback);
   ros::ServiceServer depthService = nodeHandle.advertiseService(SET_DEPTH_SERVICE, depthCallback);
   ros::ServiceServer yawService = nodeHandle.advertiseService(SET_YAW_SERVICE, yawCallback);
   ros::ServiceServer imuService = nodeHandle.advertiseService(SET_IMU_ENABLED_SERVICE, imuCallback);
@@ -139,6 +127,7 @@ int main(int argc, char **argv) {
     if (isReady) {
       gazeboOdometryPublisher.publish(currentOdometry);
       //depthPublisher.publish(depthMessage);
+      //yawPublisher.publish(yawMessage);
     }
 
     ros::spinOnce();
