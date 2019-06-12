@@ -65,7 +65,6 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 add_service_files(
   FILES
-  SetTwist.srv
   SetFloat64.srv
   SetDeviceAction.srv
   SetStabilization.srv
