@@ -2,6 +2,7 @@
 #define STINGRAY_SRC_STINGRAY_STEERING_INCLUDE_STEERER_H_
 
 #include <geometry_msgs/Twist.h>
+#include <stingray_msgs/SetLagAndMarch.h>
 
 typedef enum {
   LINEAR_LEVEL_SLOW,
@@ -11,40 +12,57 @@ typedef enum {
 } LinearVelocityLevel;
 
 typedef enum {
-  ANGULAR_LEVEL_SLOW,
-  ANGULAR_LEVEL_MEDIUM,
-  ANGULAR_LEVEL_FAST
-} AngularVelocityLevel;
+  MARCH_FORWARD,
+  MARCH_BACKWARDS
+} MarchDirection;
 
-static const int LINEAR_VELOCITIES_LEVELS = 4;
-static const int ANGULAR_VELOCITIES_LEVELS = 3;
+typedef enum {
+  LAG_RIGHT,
+  LAG_LEFT
+} LagDirection;
+
+static const std::string DEPTH_SUBSCRIBE_TOPIC = "/stingray/topics/position/depth";
+static const std::string YAW_SUBSCRIBE_TOPIC = "/stingray/topics/position/yaw";
+
+static const std::string SET_LAG_AND_MARCH_SERVICE = "/stingray/services/control/set_lag_and_march";
+static const std::string SET_DEPTH_SERVICE = "/stingray/services/control/set_depth";
+static const std::string SET_YAW_SERVICE = "/stingray/services/control/set_yaw";
+
+static const int LINEAR_VELOCITY_LEVELS = 4;
 
 class Steerer {
 
+ private:
+
+  double linearVelocityValues[LINEAR_VELOCITY_LEVELS];
+
  protected:
 
-  double linearVelocityValues[LINEAR_VELOCITIES_LEVELS];
-  double angularVelocityValues[ANGULAR_VELOCITIES_LEVELS];
+  double getVelocity(LinearVelocityLevel velocityLevel);
 
-  /** Sets twist via specific service */
-  void setTwist(geometry_msgs::Twist& twist);
+  stingray_msgs::SetLagAndMarch createMessage(double marchVelocity, double lagVelocity);
 
-  /** Initializes twist */
-  virtual geometry_msgs::Twist createTwist(double x, double y, double z, double roll, double pitch, double yaw) = 0;
+  void move(double marchVelocity, double lagVelocity, int durationSeconds);
 
  public:
 
-  Steerer(double linearVelocityValues[LINEAR_VELOCITIES_LEVELS], double angularVelocityValues[ANGULAR_VELOCITIES_LEVELS]);
+  Steerer(double linearSlow, double linearMedium, double linearFast, double linearTurbo);
   Steerer(Steerer& other) = default;
   ~Steerer() = default;
 
   // TODO: Add async API
 
-  void moveMarch(int duration, LinearVelocityLevel velocityLevel);
+  void moveMarch(int durationSeconds, LinearVelocityLevel velocityLevel, MarchDirection direction);
+  void moveMarchForward(int durationSeconds, LinearVelocityLevel velocityLevel);
+  void moveMarchBackwards(int durationSeconds, LinearVelocityLevel velocityLevel);
 
-  void moveLag(int duration, LinearVelocityLevel velocityLevel);
+  void moveLag(int durationSeconds, LinearVelocityLevel velocityLevel, LagDirection direction);
+  void moveLagRight(int durationSeconds, LinearVelocityLevel velocityLevel);
+  void moveLagLeft(int durationSeconds, LinearVelocityLevel velocityLevel);
 
-  void rotateToAngle(int angle, AngularVelocityLevel velocityLevel);
+  void stop();
+
+  void rotateToAngle(int angle);
 
   void diveToDepth(int depth);
 

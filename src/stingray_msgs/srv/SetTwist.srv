@@ -1,6 +1,0 @@
-# Request
-geometry_msgs/Twist twist
----
-# Response
-bool success
-string message
