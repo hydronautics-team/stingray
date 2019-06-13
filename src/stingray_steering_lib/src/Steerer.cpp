@@ -6,6 +6,13 @@
 #include <stingray_msgs/SetFloat64.h>
 #include <stingray_msgs/SetInt32.h>
 
+const std::string Steerer::DEPTH_SUBSCRIBE_TOPIC = "/stingray/topics/position/depth";
+const std::string Steerer::YAW_SUBSCRIBE_TOPIC = "/stingray/topics/position/yaw";
+
+const std::string Steerer::SET_LAG_AND_MARCH_SERVICE = "/stingray/services/control/set_lag_and_march";
+const std::string Steerer::SET_DEPTH_SERVICE = "/stingray/services/control/set_depth";
+const std::string Steerer::SET_YAW_SERVICE = "/stingray/services/control/set_yaw";
+
 Steerer::Steerer(const ros::NodeHandle& nodeHandle, double linearSlow, double linearMedium,
     double linearFast, double linearTurbo) : nodeHandle(nodeHandle) {
   linearVelocityValues[LinearVelocityLevel::LINEAR_LEVEL_SLOW] = linearSlow;
