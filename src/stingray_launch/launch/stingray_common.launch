@@ -1,0 +1,45 @@
+<launch>
+
+    <!-- Basic launch file of Stingray platform -->
+
+    <!-- Settings for "output" parameter of nodes -->
+    <arg name="ros_output" default="screen" />
+
+    <!-- Enables simulation mode -->
+    <arg name="simulation" default="false" />
+
+    <!-- Enables connection with hardware platform -->
+    <arg name="hardware_connection" default="true" />
+
+    <!-- Velocity levels. Note: in simulation used mode hard-coded velocity values. -->
+    <arg name="velocity_slow" default="4300.0" />
+    <arg name="velocity_medium" default="5000.0" />
+    <arg name="velocity_fast" default="7000.0" />
+    <arg name="velocity_turbo" default="15000.0" />
+
+    <!-- UART settings -->
+    <arg name="uart_device" default="/dev/ttyS0" />
+    <arg name="uart_baudrate" default="57600" />
+    <arg name="uart_data_bytes" default="8" />
+    <!-- Available parity values: none, even, odd -->
+    <arg name="uart_parity" default="none" />
+    <arg name="uart_stop_bits" default="1" />
+
+    <group unless="$(arg simulation)">
+        <group if="$(arg hardware_connection)">
+            <node pkg="stingray_drivers" name="uart_driver" type="uart_driver" output="$(arg ros_output)" respawn="true">
+                <param name="device" value="$(arg uart_device)" />
+                <param name="baudrate" value="$(arg uart_baudrate)" />
+                <param name="data_bytes" value="$(arg uart_data_bytes)" />
+                <param name="parity" value="$(arg uart_parity)" />
+                <param name="stop_bits" value="$(arg uart_stop_bits)" />
+            </node>
+        </group>
+        <node pkg="stingray_drivers" name="hardware_bridge" type="hardware_bridge" output="$(arg ros_output)" respawn="true" />
+    </group>
+
+    <group if="$(arg simulation)">
+        <node pkg="stingray_drivers" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
+    </group>
+
+</launch>

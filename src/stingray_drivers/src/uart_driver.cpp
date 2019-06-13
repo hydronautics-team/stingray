@@ -21,9 +21,9 @@ static const std::string UART_BRIDGE_NODE_NAME = "uart_bridge";
 
 static const std::string PARAM_DEVICE = "device";
 static const std::string PARAM_BAUDRATE = "baudrate";
-static const std::string PARAM_DATA_BYTES = "dataBytes";
+static const std::string PARAM_DATA_BYTES = "data_bytes";
 static const std::string PARAM_PARITY = "parity";
-static const std::string PARAM_STOP_BITS = "stopBits";
+static const std::string PARAM_STOP_BITS = "stop_bits";
 static const std::string PARITY_NONE = "none";
 static const std::string PARITY_EVEN = "even";
 static const std::string PARITY_ODD = "odd";
@@ -33,6 +33,7 @@ static const int DEFAULT_BAUDRATE = 57600;
 static const int DEFAULT_DATA_BYTES = 8;
 static const std::string DEFAULT_PARITY = PARITY_NONE;
 static const int DEFAULT_STOP_BITS = 1;
+
 // Needed for serial port library
 static const int DEFAULT_SERIAL_TIMEOUT = 1000;
 
