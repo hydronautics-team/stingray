@@ -12,30 +12,18 @@
 #include "../include/uart_driver_nodelet.h"
 
 static const std::string PARAM_DEVICE = "device";
-
 static const std::string PARAM_BAUDRATE = "baudrate";
-
 static const std::string PARAM_DATA_BYTES = "dataBytes";
-
 static const std::string PARAM_PARITY = "parity";
-
 static const std::string PARAM_STOP_BITS = "stopBits";
-
 static const std::string PARITY_NONE = "none";
-
 static const std::string PARITY_EVEN = "even";
-
 static const std::string PARITY_ODD = "odd";
 
-//static const std::string DEFAULT_DEVICE = "/dev/ttyUSB0";
 static const std::string DEFAULT_DEVICE = "/dev/ttyS0";
-
 static const int DEFAULT_BAUDRATE = 57600;
-
 static const int DEFAULT_DATA_BYTES = 8;
-
 static const std::string DEFAULT_PARITY = PARITY_NONE;
-
 static const int DEFAULT_STOP_BITS = 1;
 
 // Needed for serial port library
@@ -43,7 +31,7 @@ static const int DEFAULT_SERIAL_TIMEOUT = 1000;
 
 void uart_driver::onInit()
 {
-    NODELET_INFO("Initializing uart_driver_nodelet...");
+    NODELET_INFO("Initializing nodelet: uart_driver");
 
     /* Initializing node and parameters */
     ros::NodeHandle& nodeHandle = getNodeHandle();
@@ -147,7 +135,7 @@ void uart_driver::onInit()
     msg_out.layout.dim.push_back(std_msgs::MultiArrayDimension());
     msg_out.layout.dim[0].size = ResponseMessage::length;
     msg_out.layout.dim[0].stride = ResponseMessage::length;
-    msg_out.layout.dim[0].label = "msg_out";
+    msg_out.layout.dim[0].label = "outputMessage";
     msg_out.data = { 0 };
 }
 
@@ -161,10 +149,9 @@ bool uart_driver::sendData()
         port.flush();
         size_t written = port.write(msg);
         return written == toWrite;
-        NODELET_DEBUG("SENDING TO STM");
     }
     catch (serial::IOException &ex){
-        NODELET_ERROR("Serial exception when trying to flush and send. Error: %s", ex.what());
+        NODELET_ERROR("Serial exception, when trying to flush and send. Error: %s", ex.what());
         return false;
     }
 }
