@@ -12,7 +12,8 @@
 #include "../include/hardware_bridge_nodelet.h"
 
 void hardware_bridge::onInit() {
-    // Init node handle
+    // Initializing nodelet and parameters
+    NODELET_INFO("Initializing nodelet: hardware_brige");
     ros::NodeHandle& nodeHandle = getNodeHandle();
     // ROS publishers
     outputMessagePublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 1000);
