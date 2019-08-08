@@ -11,168 +11,142 @@
 #include <pluginlib/class_list_macros.h>
 #include "../include/hardware_bridge_nodelet.h"
 
-#define SHORE_STABILIZE_DEPTH_BIT       0
-#define SHORE_STABILIZE_ROLL_BIT        1
-#define SHORE_STABILIZE_PITCH_BIT       2
-#define SHORE_STABILIZE_YAW_BIT         3
-#define SHORE_STABILIZE_IMU_BIT         4
-#define SHORE_STABILIZE_SAVE_BIT		5
-
 void hardware_bridge::onInit() {
-
-    ros::NodeHandle& n = getNodeHandle();
-
-    current_depth = 0;
-
+    // Init node handle
+    ros::NodeHandle& nodeHandle = getNodeHandle();
     // ROS publishers
-    outputMessage_pub = n.advertise<std_msgs::UInt8MultiArray>("/hard_bridge/parcel", 1000);
-    depth_pub = n.advertise<std_msgs::UInt32>("/perception/depth", 1000);
-    // **************
-
+    outputMessagePublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 1000);
+    depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(DEPTH_PUBLISH_TOPIC, 1000);
+    yawPublisher = nodeHandle.advertise<std_msgs::Int32>(YAW_PUBLISH_TOPIC, 20);
     // ROS subscribers
-    inputMessage_sub = n.subscribe("/hard_bridge/uart", 1000, &hardware_bridge::inputMessage_callback, this);
-    // **************
-
+    inputMessageSubscriber = nodeHandle.subscribe(INPUT_PARCEL_TOPIC, 1000,
+            &hardware_bridge::inputMessage_callback, this);
     // ROS services
-    lagAndMarchSrv = n.advertiseService("lag_and_march_service", &hardware_bridge::lagAndMarchCallback, this);
-    depthSrv = n.advertiseService("depth_service", &hardware_bridge::depthCallback, this);
-    yawSrv = n.advertiseService("yaw_service", &hardware_bridge::yawCallback, this);
-    imuSrv = n.advertiseService("imu_service", &hardware_bridge::imuCallback, this);
-    deviceActionSrv = n.advertiseService("device_action_service", &hardware_bridge::deviceActionCallback, this);
-    stabilizationSrv = n.advertiseService("stabilization_service", &hardware_bridge::stabilizationCallback, this);
-    // **************
-
+    lagAndMarchService = nodeHandle.advertiseService(SET_LAG_AND_MARCH_SERVICE,
+            &hardware_bridge::lagAndMarchCallback, this);
+    depthService = nodeHandle.advertiseService(SET_DEPTH_SERVICE, &hardware_bridge::depthCallback, this);
+    yawService = nodeHandle.advertiseService(SET_YAW_SERVICE, &hardware_bridge::yawCallback, this);
+    imuService = nodeHandle.advertiseService(SET_IMU_ENABLED_SERVICE, &hardware_bridge::imuCallback, this);
+    stabilizationService = nodeHandle.advertiseService(SET_STABILIZATION_SERVICE,
+            &hardware_bridge::stabilizationCallback, this);
+    deviceActionService = nodeHandle.advertiseService(SET_DEVICE_SERVICE,
+            &hardware_bridge::deviceActionCallback, this);
     // Output message container
-    msg_out.layout.dim.push_back(std_msgs::MultiArrayDimension());
-    msg_out.layout.dim[0].size = RequestMessage::length;
-    msg_out.layout.dim[0].stride = RequestMessage::length;
-    msg_out.layout.dim[0].label = "msg_out";
-
-    // Initializing hardware_bridge timer, 0.05 ms
-    timer = n.createTimer(ros::Duration(0.05), &hardware_bridge::timerCallback, this);
+    outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    outputMessage.layout.dim[0].size = RequestMessage::length;
+    outputMessage.layout.dim[0].stride = RequestMessage::length;
+    outputMessage.layout.dim[0].label = "outputMessage";
+    // Initializing timer for publishing messages. Callback interval: 0.05 ms
+    publishingTimer = nodeHandle.createTimer(ros::Duration(0.05),
+            &hardware_bridge::timerCallback, this);
 }
 
-void hardware_bridge::set_bit(uint8_t &byte, uint8_t bit, bool state)
-{
-    uint8_t value = 1;
-    if(state) {
-        byte = byte | (value << bit);
-    }
-    else {
-        byte = byte & ~(value << bit);
-    }
-}
-
-/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
-  *
-  * @param[in]  &input String to parse.
-  */
-void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg)
-{
+void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg) {
     std::vector<uint8_t> received_vector;
     for(int i = 0; i < ResponseMessage::length; i++) {
         received_vector.push_back(msg->data[i]);
     }
-    bool ok = response.parseVector(received_vector);
+    bool ok = responseMessage.parseVector(received_vector);
     if (ok) {
-        NODELET_DEBUG("Received depth: %f", response.depth);
-        current_depth = std::abs(static_cast<int>(response.depth * 100.0f)); // Convert metres to centimetres
+        NODELET_DEBUG("Received depth: %f", responseMessage.depth);
+        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
+        // TODO: Test yaw obtaining
+        yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
     }
     else
         NODELET_ERROR("Wrong checksum");
 }
 
-/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
-  *
-  * @param[in]  &input String to parse.
-  */
 bool hardware_bridge::lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
                                           stingray_msgs::SetLagAndMarch::Response& lagAndMarchResponse) {
-    //request.roll	= static_cast<int16_t> (lagAndMarchRequest.twist.angular.x);
-    //request.yaw		= static_cast<int16_t> (lagAndMarchRequest.twist.angular.y);
-    //request.pitch	= static_cast<int16_t> (lagAndMarchRequest.twist.angular.z);
-    request.march	= static_cast<int16_t> (lagAndMarchRequest.march);
-    request.lag	    = static_cast<int16_t> (lagAndMarchRequest.lag);
+    requestMessage.march = static_cast<int16_t> (lagAndMarchRequest.march);
+    requestMessage.lag = static_cast<int16_t> (lagAndMarchRequest.lag);
 
+    isReady = true;
     lagAndMarchResponse.success = true;
-    isTopicUpdated = true;
-
     return true;
 }
 
-bool hardware_bridge::depthCallback(stingray_msgs::SetFloat64::Request& depthRequest,
-                                    stingray_msgs::SetFloat64::Response& depthResponse) {
-    NODELET_DEBUG("Setting depth to %f", depthRequest.value);
-    request.depth	= -(static_cast<int16_t> (depthRequest.value * 10)); // For low-level stabilization purposes
-    NODELET_DEBUG("Sending to STM32 depth value: %d", request.depth);
+bool hardware_bridge::depthCallback(stingray_msgs::SetInt32::Request& depthRequest,
+                                    stingray_msgs::SetInt32::Response& depthResponse) {
+    if (!depthStabilizationEnabled) {
+        depthResponse.success = false;
+        depthResponse.message = "Depth stabilization is not enabled";
+        return true;
+    }
+    NODELET_DEBUG("Setting depth to %d", depthRequest.value);
+    requestMessage.depth	= -(static_cast<int16_t> (depthRequest.value * 10)); // For low-level stabilization purposes
+    NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.depth);
 
+    isReady = true;
     depthResponse.success = true;
-    isTopicUpdated = true;
-
     return true;
 }
 
-bool hardware_bridge::yawCallback(stingray_msgs::SetFloat64::Request& yawRequest,
-                                  stingray_msgs::SetFloat64::Response& yawResponse) {
-    NODELET_DEBUG("Setting depth to %f", yawRequest.value);
-    request.yaw		= static_cast<int16_t> (yawRequest.value);
-    NODELET_DEBUG("Sending to STM32 depth value: %d", request.depth);
+bool hardware_bridge::yawCallback(stingray_msgs::SetInt32::Request& yawRequest,
+                                  stingray_msgs::SetInt32::Response& yawResponse) {
+    if (!yawStabilizationEnabled) {
+        yawResponse.success = false;
+        yawResponse.message = "Yaw stabilization is not enabled";
+        return true;
+    }
+    NODELET_DEBUG("Setting depth to %d", yawRequest.value);
+    requestMessage.yaw = yawRequest.value;
+    NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.yaw);
 
+    isReady = true;
     yawResponse.success = true;
-    isTopicUpdated = true;
-
     return true;
 }
 
-bool hardware_bridge::imuCallback(stingray_msgs::SetFloat64::Request& imuRequest,
-                                  stingray_msgs::SetFloat64::Response& imuResponse) {
-    // TODO: IMPLEMENT
+bool hardware_bridge::imuCallback(std_srvs::SetBool::Request& imuRequest,
+                                  std_srvs::SetBool::Response& imuResponse) {
+    NODELET_DEBUG("Setting SHORE_STABILIZE_IMU_BIT to %d", imuRequest.data);
+    sabilizationState(requestMessage, SHORE_STABILIZE_IMU_BIT, imuRequest.data);
 
+    isReady = true;
     imuResponse.success = true;
-    isTopicUpdated = true;
-
-    return true;
-}
-
-bool hardware_bridge::deviceActionCallback(stingray_msgs::SetDeviceAction::Request& deviceRequest,
-                                           stingray_msgs::SetDeviceAction::Response& deviceResponse) {
-    // TODO: IMPLEMENT
-
-    deviceResponse.success = true;
-    isTopicUpdated = true;
-
     return true;
 }
 
 bool hardware_bridge::stabilizationCallback(stingray_msgs::SetStabilization::Request& stabilizationRequest,
                                             stingray_msgs::SetStabilization::Response& stabilizationResponse) {
     NODELET_DEBUG("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
+    sabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
-    set_bit(request.stabilize_flags, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
-    set_bit(request.stabilize_flags, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
+    sabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
 
+    isReady = true;
     stabilizationResponse.success = true;
-    isTopicUpdated = true;
+    return true;
+}
 
+bool hardware_bridge::deviceActionCallback(stingray_msgs::SetDeviceAction::Request& deviceRequest,
+                                           stingray_msgs::SetDeviceAction::Response& deviceResponse) {
+    ROS_INFO("Setting device [%d] action value to %d", deviceRequest.device, deviceRequest.value);
+    requestMessage.dev[deviceRequest.device]  = deviceRequest.value;
+
+    isReady = true;
+    deviceResponse.success = true;
     return true;
 }
 
 /** @brief Timer callback. Make byte array to publish for protocol_node and publishes it
   *
   */
-void hardware_bridge::timerCallback(const ros::TimerEvent& event)
-{
+void hardware_bridge::timerCallback(const ros::TimerEvent& event) {
     NODELET_DEBUG("Timer callback");
-    if (isTopicUpdated){
-        std::vector<uint8_t> output_vector = request.formVector();
-
-        msg_out.data.clear();
+    if (isReady){
+        // Make output message
+        std::vector<uint8_t> output_vector = requestMessage.formVector();
+        outputMessage.data.clear();
         for(int i=0; i<RequestMessage::length; i++) {
-            msg_out.data.push_back(output_vector[i]);
+            outputMessage.data.push_back(output_vector[i]);
         }
-        outputMessage_pub.publish(msg_out);
-        depth_message.data = current_depth;
-        depth_pub.publish(depth_message);
+        // Publish messages
+        outputMessagePublisher.publish(outputMessage);
+        depthPublisher.publish(depthMessage);
+        yawPublisher.publish(yawMessage);
         NODELET_DEBUG("HARDWARE BRIDGE PUBLISH");
     }
     else NODELET_DEBUG("Wait for topic updating");

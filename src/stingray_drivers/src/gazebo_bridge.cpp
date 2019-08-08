@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-//#include <stingray_msgs/SetTwist.h>
 #include <stingray_msgs/SetFloat64.h>
 #include <stingray_msgs/SetInt32.h>
 #include <stingray_msgs/SetStabilization.h>

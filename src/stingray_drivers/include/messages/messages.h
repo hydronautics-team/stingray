@@ -5,6 +5,21 @@
 #include <unistd.h>
 #include <vector>
 
+/** Bits to initialize stabilization
+ */
+#define SHORE_STABILIZE_DEPTH_BIT       0
+#define SHORE_STABILIZE_ROLL_BIT        1
+#define SHORE_STABILIZE_PITCH_BIT       2
+#define SHORE_STABILIZE_YAW_BIT         3
+#define SHORE_STABILIZE_IMU_BIT         4
+#define SHORE_STABILIZE_SAVE_BIT        5
+
+/// Number of the propellers
+static const uint8_t VmaAmount = 8;
+/// Number of the control constants
+static const uint8_t ControlAmount = 7;
+/// Number of the devs
+static const uint8_t DevAmount = 6;
 
 /** Enumerator for VMA names
  * H - horizontal, V - verical
@@ -21,8 +36,6 @@ enum VmaNames {
     VMA_VL,
     VMA_VR
 };
-/// Number of the propellers
-static const uint8_t VmaAmount = 8;
 
 /** Enumerator for constants in the automatic control system
  */
@@ -35,8 +48,6 @@ enum ControlConstantNames {
     CONTROL_PGAIN,
     CONTROL_IGAIN
 };
-/// Number of the control constants
-static const uint8_t ControlAmount = 7;
 
 /** Enumerator for devs names
  */
@@ -48,22 +59,6 @@ enum DevNames {
     DEV_ADDITIONAL_1,
     DEV_ADDITIONAL_2
 };
-/// Number of the devs
-static const uint8_t DevAmount = 6;
-
-void pushToVector(std::vector<uint8_t> &vector, int8_t var);
-void pushToVector(std::vector<uint8_t> &vector, uint8_t var);
-void pushToVector(std::vector<uint8_t> &vector, int16_t var, bool revert = false);
-void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert = false);
-void pushToVector(std::vector<uint8_t> &vector, float var, bool revert = false);
-
-void popFromVector(std::vector<uint8_t> &container, int8_t &output);
-void popFromVector(std::vector<uint8_t> &container, uint8_t &output);
-void popFromVector(std::vector<uint8_t> &container, int16_t &output, bool revert = true);
-void popFromVector(std::vector<uint8_t> &container, uint16_t &output, bool revert = true);
-void popFromVector(std::vector<uint8_t> &container, float &output, bool revert = true);
-
-uint16_t getChecksum16b(std::vector<uint8_t> &msg);
 
 /** @brief Structure for storing and processing data from the STM32 normal request message protocol
  * Shore send requests and STM send responses
@@ -156,19 +151,22 @@ struct ResponseMessage
     bool parseVector(std::vector<uint8_t> &input);
 };
 
-/* Direct mode */
-#define REQUEST_DIRECT_CODE             0xAA
-#define REQUEST_DIRECT_LENGTH           11
+void pushToVector(std::vector<uint8_t> &vector, int8_t var);
+void pushToVector(std::vector<uint8_t> &vector, uint8_t var);
+void pushToVector(std::vector<uint8_t> &vector, int16_t var, bool revert = false);
+void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert = false);
+void pushToVector(std::vector<uint8_t> &vector, float var, bool revert = false);
 
-#define REQUEST_DIRECT_TYPE             0
-#define REQUEST_DIRECT_1                1
-#define REQUEST_DIRECT_2                2
-#define REQUEST_DIRECT_3                3
-#define REQUEST_DIRECT_4                4
-#define REQUEST_DIRECT_5                5
-#define REQUEST_DIRECT_6                6
-#define REQUEST_DIRECT_7                7
-#define REQUEST_DIRECT_8                8
-#define REQUEST_DIRECT_CHECKSUM         9
+void popFromVector(std::vector<uint8_t> &container, int8_t &output);
+void popFromVector(std::vector<uint8_t> &container, uint8_t &output);
+void popFromVector(std::vector<uint8_t> &container, int16_t &output, bool revert = true);
+void popFromVector(std::vector<uint8_t> &container, uint16_t &output, bool revert = true);
+void popFromVector(std::vector<uint8_t> &container, float &output, bool revert = true);
+
+uint16_t getChecksum16b(std::vector<uint8_t> &msg);
+
+bool pickBit(uint8_t &input, uint8_t bit);
+void setBit(uint8_t &byte, uint8_t bit, bool state);
+void sabilizationState(RequestMessage& request, uint8_t bit, bool state);
 
 #endif //STINGRAY_MESSAGES_H

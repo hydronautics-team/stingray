@@ -1,21 +1,16 @@
-//
-// Created by VLADUSHKED on 25.07.2019.
-//
-
 #ifndef STINGRAY_DRIVERS_UART_DRIVER_NODELET_H
 #define STINGRAY_DRIVERS_UART_DRIVER_NODELET_H
 
 #include "ros/ros.h"
 #include "nodelet/nodelet.h"
-
 #include "std_msgs/UInt16.h"
 #include "std_msgs/UInt8MultiArray.h"
 #include "serial/serial.h"
-#include "messages/messages.h"
-
 #include <sstream>
 #include <string>
 #include <vector>
+#include "messages/messages.h"
+#include "TopicsAndServices.h"
 
 class uart_driver : public nodelet::Nodelet {
 public:

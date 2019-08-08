@@ -110,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_msgs nodelet
-  LIBRARIES stingray_connection
+#  LIBRARIES stingray_connection
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_drivers
 #  CATKIN_DEPENDS other_catkin_pkg
