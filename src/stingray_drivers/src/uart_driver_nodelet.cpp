@@ -11,37 +11,44 @@
 #include <pluginlib/class_list_macros.h>
 #include "../include/uart_driver_nodelet.h"
 
-static const std::string PARAM_DEVICE = "device";
-static const std::string PARAM_BAUDRATE = "baudrate";
-static const std::string PARAM_DATA_BYTES = "dataBytes";
-static const std::string PARAM_PARITY = "parity";
-static const std::string PARAM_STOP_BITS = "stopBits";
-static const std::string PARITY_NONE = "none";
-static const std::string PARITY_EVEN = "even";
-static const std::string PARITY_ODD = "odd";
-
-static const std::string DEFAULT_DEVICE = "/dev/ttyS0";
-static const int DEFAULT_BAUDRATE = 57600;
-static const int DEFAULT_DATA_BYTES = 8;
-static const std::string DEFAULT_PARITY = PARITY_NONE;
-static const int DEFAULT_STOP_BITS = 1;
-
-// Needed for serial port library
-static const int DEFAULT_SERIAL_TIMEOUT = 1000;
-
-void uart_driver::onInit()
-{
-    NODELET_INFO("Initializing nodelet: uart_driver");
-
-    /* Initializing node and parameters */
+void uart_driver::onInit() {
+    // Initializing nodelet and parameters
+    NODELET_INFO_STREAM("Initializing nodelet: " << UART_DRIVER_NODE_NAME);
     ros::NodeHandle& nodeHandle = getNodeHandle();
-
+    //Serial port initialization
+    portInitialize(nodeHandle);
+    // ROS publishers
+    NODELET_DEBUG_STREAM("Initializing publisher" << INPUT_PARCEL_TOPIC);
+    outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(INPUT_PARCEL_TOPIC,1000);
+    // ROS subscribers
+    NODELET_DEBUG_STREAM("Initializing subscriber" << OUTPUT_PARCEL_TOPIC);
+    inputMessage_sub = nodeHandle.subscribe(OUTPUT_PARCEL_TOPIC, 1000,
+            &uart_driver::inputMessage_callback, this);
+    // Input message container
+    NODELET_DEBUG_STREAM("Initializing " << UART_DRIVER_NODE_NAME << " input message container");
+    inputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    inputMessage.layout.dim[0].size = RequestMessage::length;
+    inputMessage.layout.dim[0].stride = RequestMessage::length;
+    inputMessage.layout.dim[0].label = "inputMessage";
+    inputMessage.data = {0};
+    // Outnput message container
+    NODELET_DEBUG_STREAM("Initializing " << UART_DRIVER_NODE_NAME << " output message container");
+    outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    outputMessage.layout.dim[0].size = ResponseMessage::length;
+    outputMessage.layout.dim[0].stride = ResponseMessage::length;
+    outputMessage.layout.dim[0].label = "outputMessage";
+    outputMessage.data = {0};
+}
+/**
+ * Initialasing serial port
+ * Closes port if it is closed, initialized it
+ * with given parameter and DOES NOT OPEN IT.
+ */
+void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
     std::string device;
     nodeHandle.param(PARAM_DEVICE, device, DEFAULT_DEVICE);
-
     int baudrate;
     nodeHandle.param(PARAM_BAUDRATE, baudrate, DEFAULT_BAUDRATE);
-
     int dataBytesInt;
     nodeHandle.param(PARAM_DATA_BYTES, dataBytesInt, DEFAULT_DATA_BYTES);
     serial::bytesize_t dataBytes;
@@ -62,7 +69,6 @@ void uart_driver::onInit()
             NODELET_ERROR("Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
             return;
     }
-
     std::string parityStr;
     nodeHandle.param(PARAM_PARITY, parityStr, DEFAULT_PARITY);
     std::transform(parityStr.begin(), parityStr.end(), parityStr.begin(), ::tolower);
@@ -78,7 +84,6 @@ void uart_driver::onInit()
                       parityStr.c_str());
         return;
     }
-
     int stopBitsInt;
     nodeHandle.param(PARAM_STOP_BITS, stopBitsInt, DEFAULT_STOP_BITS);
     serial::stopbits_t stopBits;
@@ -93,27 +98,9 @@ void uart_driver::onInit()
             NODELET_ERROR("Forbidden stop bits size %d, available sizes: 1, 2", stopBitsInt);
             return;
     }
-
-    // ROS publishers
-    NODELET_DEBUG("Initializing publisher /hard_bridge/uart");
-    outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>("/hard_bridge/uart",
-                                                                        1000);
-    // **************
-
-    // ROS subscribers
-    NODELET_DEBUG("Initializing subscriber /hard_bridge/parcel");
-    inputMessage_sub = nodeHandle.subscribe("/hard_bridge/parcel", 1000,
-                                            &uart_driver::inputMessage_callback, this);
-    // **************
-    /**
-     * Initialasing serial port
-     * Closes port if it is closed, initialized it
-     * with given parameter and DOES NOT OPEN IT.
-     */
     NODELET_DEBUG("UART settings: Device: %s, Baudrate: %d, Data bytes: %d, Parity: %s, Stop bits: %d",
-                 device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
+                  device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
     if (port.isOpen()) port.close();
-
     port.setPort(device);
     serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(DEFAULT_SERIAL_TIMEOUT);
     port.setTimeout(serialTimeout);
@@ -121,29 +108,12 @@ void uart_driver::onInit()
     port.setBytesize(dataBytes);
     port.setParity(parity);
     port.setStopbits(stopBits);
-
-    // Input message container
-    NODELET_DEBUG("Initializing uart_driver input message container");
-    msg_in.layout.dim.push_back(std_msgs::MultiArrayDimension());
-    msg_in.layout.dim[0].size = RequestMessage::length;
-    msg_in.layout.dim[0].stride = RequestMessage::length;
-    msg_in.layout.dim[0].label = "msg_in";
-    msg_in.data = { 0 };
-
-    // Outnput message container
-    NODELET_DEBUG("Initializing uart_driver output message container");
-    msg_out.layout.dim.push_back(std_msgs::MultiArrayDimension());
-    msg_out.layout.dim[0].size = ResponseMessage::length;
-    msg_out.layout.dim[0].stride = ResponseMessage::length;
-    msg_out.layout.dim[0].label = "outputMessage";
-    msg_out.data = { 0 };
 }
 
-bool uart_driver::sendData()
-{
+bool uart_driver::sendData() {
     std::vector<uint8_t> msg;
     for(int i=0; i<RequestMessage::length; i++)
-        msg.push_back(msg_in.data[i]);
+        msg.push_back(inputMessage.data[i]);
     size_t toWrite = sizeof(uint8_t) * msg.size();
     try {
         port.flush();
@@ -156,19 +126,14 @@ bool uart_driver::sendData()
     }
 }
 
-bool uart_driver::receiveData()
-{
-    if(port.available() < ResponseMessage::length) {
+bool uart_driver::receiveData() {
+    if(port.available() < ResponseMessage::length)
         return false;
-    }
-
     std::vector<uint8_t> answer;
     port.read(answer, ResponseMessage::length);
-
-    msg_out.data.clear();
-    for(int i=0; i<ResponseMessage::length; i++) {
-        msg_out.data.push_back(answer[i]);
-    }
+    outputMessage.data.clear();
+    for(int i=0; i<ResponseMessage::length; i++)
+        outputMessage.data.push_back(answer[i]);
     NODELET_DEBUG("RECEIVE FROM STM");
 
     return true;
@@ -178,12 +143,11 @@ bool uart_driver::receiveData()
   *
   * @param[in]  &input String to parse.
   */
-void uart_driver::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg)
-{
-    NODELET_DEBUG("uart_driver message callback");
-    msg_in.data.clear();
+void uart_driver::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg) {
+    NODELET_DEBUG_STREAM(UART_DRIVER_NODE_NAME << " message callback");
+    inputMessage.data.clear();
     for(int i = 0; i < RequestMessage::length; i++)
-        msg_in.data.push_back(msg->data[i]);
+        inputMessage.data.push_back(msg->data[i]);
     try {
         if (!port.isOpen()) {
             port.open();
@@ -196,15 +160,14 @@ void uart_driver::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr 
         return;
     }
     if(!sendData()) {
-        NODELET_ERROR("Unable to send msg to STM32");
+        NODELET_ERROR("Unable to send message to STM32");
         return;
     }
     if(receiveData())
-        outputMessage_pub.publish(msg_out);
+        outputMessage_pub.publish(outputMessage);
     else {
-        NODELET_ERROR("Unable to receive msg from STM32");
+        NODELET_ERROR("Unable to receive message from STM32");
         return;
     }
 }
-
 PLUGINLIB_EXPORT_CLASS(uart_driver, nodelet::Nodelet);
