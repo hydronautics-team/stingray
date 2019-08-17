@@ -11,7 +11,6 @@
 #include <vector>
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
-#include "protocolConstants.h"
 
 class uart_driver : public nodelet::Nodelet {
 public:
