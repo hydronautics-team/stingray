@@ -167,6 +167,6 @@ uint16_t getChecksum16b(std::vector<uint8_t> &msg);
 
 bool pickBit(uint8_t &input, uint8_t bit);
 void setBit(uint8_t &byte, uint8_t bit, bool state);
-void sabilizationState(RequestMessage& request, uint8_t bit, bool state);
+void setStabilizationState(RequestMessage& request, uint8_t bit, bool state);
 
 #endif //STINGRAY_MESSAGES_H
