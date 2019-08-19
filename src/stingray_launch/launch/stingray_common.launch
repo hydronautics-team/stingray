@@ -28,7 +28,7 @@
     <group unless="$(arg simulation)">
         <group if="$(arg hardware_connection)">
 
-	    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
+	    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>
 
   	    <node pkg="nodelet" type="nodelet" name="uart_driver" args="stingray_connection/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
                 <param name="device" value="$(arg uart_device)" />
