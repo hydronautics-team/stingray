@@ -107,8 +107,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs stingray_msgs
-#  INCLUDE_DIRS include
-#  LIBRARIES stingray_steering
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -125,7 +125,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-        include/Steerer.h
+        include/stingray_steering_lib/Steerer.h
         src/Steerer.cpp
 )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} stingray_msgs_generate_messages_cpp)
