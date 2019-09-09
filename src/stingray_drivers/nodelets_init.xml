@@ -1,0 +1,12 @@
+<library path="lib/libstingray_connection">
+  <class name="stingray_drivers/uart_driver" type="uart_driver" base_class_type="nodelet::Nodelet">
+    <description>
+      Uart_driver nodelet.
+    </description>
+  </class>
+  <class name="stingray_drivers/hardware_bridge" type="hardware_bridge" base_class_type="nodelet::Nodelet">
+    <description>
+      Hardware_bridge nodelet.
+    </description>
+  </class>
+</library>

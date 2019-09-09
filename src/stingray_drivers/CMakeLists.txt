@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   serial
   stingray_msgs
+  nodelet
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_msgs
+  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_msgs nodelet
+#  LIBRARIES stingray_connection
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_drivers
 #  CATKIN_DEPENDS other_catkin_pkg
@@ -126,44 +128,38 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(hardware_bridge
-  src/hardware_bridge.cpp
-  include/messages/messages.h
-  src/messages/messages.cpp
-  include/TopicsAndServices.h
-)
-target_link_libraries(hardware_bridge ${catkin_LIBRARIES})
-add_dependencies(hardware_bridge stingray_msgs_generate_messages_cpp)
-
-add_executable(uart_driver
-  src/uart_driver.cpp
-  include/messages/messages.h
-  src/messages/messages.cpp
-  include/TopicsAndServices.h
-)
-target_link_libraries(uart_driver ${catkin_LIBRARIES})
-
-add_executable(gazebo_bridge
-  src/gazebo_bridge.cpp
-  include/TopicsAndServices.h
-)
-target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
-add_dependencies(gazebo_bridge stingray_msgs_generate_messages_cpp)
-
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/stingray_drivers.cpp
 # )
+
+add_library(stingray_connection
+        src/uart_driver_nodelet.cpp
+        src/hardware_bridge_nodelet.cpp
+        src/messages/messages.cpp
+        include/uart_driver_nodelet.h
+        include/hardware_bridge_nodelet.h
+        include/messages/messages.h)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_dependencies(stingray_connection stingray_msgs_generate_messages_cpp)
+if(catkin_EXPORTED_LIBRARIES)
+    add_dependencies(stingray_connection ${catkin_EXPORTED_LIBRARIES})
+endif()
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/stingray_drivers_node.cpp)
+
+add_executable(gazebo_bridge
+        src/gazebo_bridge.cpp
+        include/TopicsAndServices.h
+        )
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -175,10 +171,15 @@ add_dependencies(gazebo_bridge stingray_msgs_generate_messages_cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_dependencies(gazebo_bridge stingray_msgs_generate_messages_cpp)
+
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+target_link_libraries(stingray_connection ${catkin_LIBRARIES})
+target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
 
 #############
 ## Install ##
