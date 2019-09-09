@@ -78,12 +78,6 @@ class VideoRecorder:
     def add_subscription(self, subscription):
         self.frame_wrappers.append(subscription)
 
-    def set_broadcast(self, publish_topic):
-        if not publish_topic:
-            self.pub_img = None
-        else:
-            self.pub_img = rospy.Publisher(publish_topic, Image, queue_size=1)
-
     def start_record(self):
         self.start_time = time.time()
         curr_time = self.start_time
@@ -137,32 +131,11 @@ if __name__ == '__main__':
     output_width = int(rospy.get_param('~output_width', '640'))
     output_height = int(rospy.get_param('~output_height', '480'))
     output_fps = int(rospy.get_param('~output_fps', '30'))
-    output_format = rospy.get_param('~output_format', 'xvid')
-    output_topic = rospy.get_param('~output_topic', '')
-    output_path = rospy.get_param('~output_path', '')
+    output_format = rospy.get_param('~output_format', 'h264')
+    output_path = rospy.get_param('~output_path', '/records')
     output_path = output_path.replace('[timestamp]', datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-    num_videos = int(rospy.get_param('~num_videos', '1000'))
 
     ft = VideoRecorder(output_width, output_height, output_fps, output_format, output_path)
-
-    # get parameters for videos and initialize subscriptions
-    for idx in range(num_videos):
-        source_info = rospy.get_param('~source%d' % (idx + 1), '')
-        if not source_info:
-            break
-        source_info_list = source_info.split(',')
-
-        source_topic = source_info_list[0].strip()
-        target_x = int(source_info_list[1])
-        target_y = int(source_info_list[2])
-        target_w = int(source_info_list[3])
-        target_h = int(source_info_list[4])
-
-        vf = VideoFrames(source_topic, target_x, target_y, target_w, target_h)
-        ft.add_subscription(vf)
-
-    if output_topic:
-        ft.set_broadcast(output_topic)
 
     # recording.
     try:
