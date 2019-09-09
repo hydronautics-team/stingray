@@ -402,3 +402,23 @@ uint16_t getChecksum16b(std::vector<uint8_t> &vector)
     return crc;
 }
 
+bool pickBit(uint8_t &input, uint8_t bit)
+{
+    return static_cast<bool>((input << (8 - bit)) >> 8);
+}
+
+void setBit(uint8_t &byte, uint8_t bit, bool state)
+{
+    uint8_t value = 1;
+    if(state) {
+        byte = byte | (value << bit);
+    }
+    else {
+        byte = byte & ~(value << bit);
+    }
+}
+
+void setStabilizationState(RequestMessage& request, uint8_t bit, bool state)
+{
+    setBit(request.stabilize_flags, bit, state);
+}
