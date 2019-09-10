@@ -17,6 +17,8 @@ def opencv_version():
         return 2
     elif v == '3':
         return 3
+    elif v == '4':
+        return 4
     raise Exception('opencv version can not be parsed. v={}'.format(v))
 
 
@@ -49,7 +51,7 @@ class VideoFrames:
 
 
 class VideoRecorder:
-    def __init__(self, output_width, output_height, output_fps, output_format, output_path):
+    def __init__(self, output_width, output_height, output_fps, output_format, output_path, source):
         self.frame_wrappers = []
         self.start_time = -1
         self.end_time = -1
@@ -63,7 +65,7 @@ class VideoRecorder:
 
         if opencv_version() == 2:
             fourcc = cv2.cv.FOURCC(*output_format)
-        elif opencv_version() == 3:
+        elif opencv_version() == 3 or opencv_version() == 4:
             fourcc = cv2.VideoWriter_fourcc(*output_format)
         else:
             raise
@@ -75,8 +77,9 @@ class VideoRecorder:
         else:
             self.video_writer = None
 
-    def add_subscription(self, subscription):
-        self.frame_wrappers.append(subscription)
+        vf = VideoFrames(source, target_x=0, target_y=0, target_w=640, target_h=480)
+
+        self.frame_wrappers.append(vf)
 
     def start_record(self):
         self.start_time = time.time()
@@ -128,14 +131,18 @@ if __name__ == '__main__':
     rospy.init_node('video_recorder', anonymous=True)
 
     # parameters
+    source_topic = rospy.get_param('~source_topic', '/cameras/cam1')
     output_width = int(rospy.get_param('~output_width', '640'))
     output_height = int(rospy.get_param('~output_height', '480'))
     output_fps = int(rospy.get_param('~output_fps', '30'))
     output_format = rospy.get_param('~output_format', 'h264')
-    output_path = rospy.get_param('~output_path', '/records')
-    output_path = output_path.replace('[timestamp]', datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+    output_path = rospy.get_param('~record_dir', '/records/')
+    path_part = source_topic
+    if path_part[0] == '/':
+        path_part = path_part[1:]
+    output_path += path_part + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.avi'
 
-    ft = VideoRecorder(output_width, output_height, output_fps, output_format, output_path)
+    ft = VideoRecorder(output_width, output_height, output_fps, output_format, output_path, source_topic)
 
     # recording.
     try:
