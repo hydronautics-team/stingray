@@ -1,0 +1,51 @@
+<!--
+    This launch configuration can be used for testing cameras and recording the video.
+-->
+<launch>
+
+    <!-- Defines device that will be used as camera -->
+    <arg name="device" />
+
+    <!-- Defines FPS -->
+    <arg name="fps" default="25" />
+
+    <!-- Enables video streaming -->
+    <arg name="stream" default="false" />
+
+    <!-- Enables video recording -->
+    <arg name="record" default="true" />
+    
+    <!-- Camera interface node -->
+    <node name="device_camera" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+        <param name="video_device" value="$(arg device)" />
+        <param name="image_width" value="640" />
+        <param name="image_height" value="480" />
+        <param name="pixel_format" value="yuyv" />
+        <param name="framerate" value="$(arg fps)" />
+        <param name="camera_frame_id" value="device_camera" />
+        <param name="camera_name" value="device_camera" />
+        <param name="io_method" value="mmap"/>
+    </node>
+
+    <group if="$(arg record)">
+        <!-- Video recorder node -->
+        <node name="video_recorder" pkg="stingray_utils" type="video_recorder.py" output="screen" respawn="true">
+            <param name="source_topic" value="/device_camera/image_raw" />
+            <param name="output_width" value="640" />
+            <param name="output_height" value="480" />
+            <param name="output_fps" value="$(arg fps)" />
+            <param name="output_format" value="h264" />
+            <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+        </node>
+    </group>
+
+    <group if="$(arg stream)">
+        <!-- Video web server -->
+        <!-- Stream will be available at http://<hostname>:8080/stream_viewer?topic=/device_camera/image_raw -->
+        <node name="video_server" pkg="web_video_server" type="web_video_server" output="screen" respawn="true">
+            <param name="server_threads" value="4" />
+            <param name="ros_threads" value="10" />
+        </node>
+    </group>
+
+</launch>

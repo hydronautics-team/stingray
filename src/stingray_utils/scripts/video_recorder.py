@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
 import cv2
 import numpy as np
 import datetime
 import time
+import os
 
 import rospy
 
@@ -131,16 +133,22 @@ if __name__ == '__main__':
     rospy.init_node('video_recorder', anonymous=True)
 
     # parameters
-    source_topic = rospy.get_param('~source_topic', '/cameras/cam1')
+    source_topic = rospy.get_param('~source_topic')
     output_width = int(rospy.get_param('~output_width', '640'))
     output_height = int(rospy.get_param('~output_height', '480'))
     output_fps = int(rospy.get_param('~output_fps', '30'))
     output_format = rospy.get_param('~output_format', 'h264')
-    output_path = rospy.get_param('~record_dir', '/records/')
-    path_part = source_topic
-    if path_part[0] == '/':
+    output_path = rospy.get_param('~record_dir', './records/')
+
+    if output_path[-1] != '/':
+        output_path += '/'
+    if not os.path.isdir(output_path):
+        os.makedirs(output_path)
+
+    path_part = source_topic.replace('~', '').replace('/', '_')
+    if path_part[0] == '_':
         path_part = path_part[1:]
-    output_path += path_part + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.avi'
+    output_path += path_part + '_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.avi'
 
     ft = VideoRecorder(output_width, output_height, output_fps, output_format, output_path, source_topic)
 
