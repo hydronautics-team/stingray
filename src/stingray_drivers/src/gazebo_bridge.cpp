@@ -5,6 +5,10 @@
 #include <std_msgs/UInt8MultiArray.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include <gazebo_msgs/ModelState.h>
+#include <gazebo_msgs/GetModelState.h>
+#include <gazebo_msgs/SetModelState.h>
+#include <tf/tf.h>
 #include <std_srvs/SetBool.h>
 
 #include <sstream>
@@ -22,9 +26,11 @@
 
 static const std::string GAZEBO_BRIDGE_NODE_NAME = "gazebo_bridge";
 
+static const std::string MODEL_NAME = "my_robot";
+
 static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = 100;
 
-nav_msgs::Odometry currentOdometry;
+ros::NodeHandle nodeHandle;
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
@@ -34,40 +40,118 @@ bool isReady = false;
 bool depthStabilizationEnabled = false;
 bool yawStabilizationEnabled = false;
 
+/**
+ * Obtains model state from Gazebo, transforms and updates it.
+ * @param transform Function that transforms current model state
+ * @throws {@code std::runtime_error} if fails to get or set model state in Gazebo
+ */
+void updateModelState(const std::function<void(gazebo_msgs::ModelState&)>& transform) {
+  gazebo_msgs::GetModelState modelState;
+  modelState.request.model_name = MODEL_NAME;
+  bool result = ros::service::call(GAZEBO_GET_STATE_SERVICE, modelState);
+  if (!result || !modelState.response.success) {
+    throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
+  }
+
+  gazebo_msgs::SetModelState newModelState;
+  newModelState.request.model_state.pose = modelState.response.pose;
+  newModelState.request.model_state.twist = modelState.response.twist;
+  newModelState.request.model_state.model_name = MODEL_NAME;
+
+  transform(newModelState.request.model_state);
+
+  result = ros::service::call(GAZEBO_SET_STATE_SERVICE, newModelState);
+  if (!result || !newModelState.response.success) {
+    throw std::runtime_error("Failed to update state in Gazebo: " + modelState.response.status_message);
+  }
+}
+
+/**
+ * Sets vehicle lag and march speed
+ * @param request Service request with lag and march speed in Gazebo-related units
+ * @param response Service response
+ * @return {@code true} if service call didn't fail
+ */
 bool lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request &request,
                          stingray_msgs::SetLagAndMarch::Response &response) {
-  currentOdometry.twist.twist.linear.x = request.march;
-  currentOdometry.twist.twist.linear.y = request.lag;
+  try {
+    updateModelState([request] (gazebo_msgs::ModelState& modelState) {
+      modelState.twist.linear.x = request.march;
+      modelState.twist.linear.y = request.lag;
+    });
+  } catch (std::runtime_error& e) {
+    response.success = false;
+    response.message = "Failed to set lag and march in Gazebo: " + std::string(e.what());
+    return true;
+  }
 
   isReady = true;
   response.success = true;
   return true;
 }
 
+/**
+ * Dives vehicle on specified depth
+ * @param request Service request with depth in centimetres
+ * @param response Service response
+ * @return {@code true} if service call didn't fail
+ */
 bool depthCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetInt32::Response &response) {
+  /*
+   * Here we simulate enabled depth stabilization: we just pass desired depth
+   * for Gazebo like it is low-level control system that stabilizes this depth.
+   */
+
   if (!depthStabilizationEnabled) {
     response.success = false;
     response.message = "Depth stabilization is not enabled";
     return true;
   }
 
-  // TODO: Test it
-  currentOdometry.pose.pose.position.z = request.value;
+  try {
+    updateModelState([request] (gazebo_msgs::ModelState& modelState) {
+      /* In our simulator scale is 1.0 = 1 metre, and target depth is passed in centimetres */
+      modelState.pose.position.z = request.value / 100.0;
+    });
+  } catch (std::runtime_error& e) {
+    response.success = false;
+    response.message = "Failed to set depth in Gazebo: " + std::string(e.what());
+    return true;
+  }
 
   isReady = true;
   response.success = true;
   return true;
 }
 
+/**
+ * Rotates vehicle on specified yaw angle
+ * @param request Service request with yaw angle in degrees
+ * @param response Service response
+ * @return {@code true} if service call didn't fail
+ */
 bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetInt32::Response &response) {
+  /*
+   * Here we simulate enabled yaw stabilization: we just pass desired yaw angle
+   * for Gazebo like it is low-level control system that stabilizes this angle.
+   */
+
   if (!yawStabilizationEnabled) {
     response.success = false;
     response.message = "Yaw stabilization is not enabled";
     return true;
   }
 
-  // TODO: Test it
-  currentOdometry.pose.pose.orientation.z = request.value;
+  try {
+    updateModelState([request] (gazebo_msgs::ModelState& modelState) {
+      // TODO: Check it
+      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, request.value);
+    });
+  } catch (std::runtime_error& e) {
+    response.success = false;
+    response.message = "Failed to set depth in Gazebo: " + std::string(e.what());
+    return true;
+  }
 
   isReady = true;
   response.success = true;
@@ -99,17 +183,7 @@ bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request &request,
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, GAZEBO_BRIDGE_NODE_NAME);
-  ros::NodeHandle nodeHandle;
   ros::Rate communicationDelay(1000.0 / COMMUNICATION_DELAY_MILLISECONDS);
-
-  currentOdometry.twist.twist.linear.x = 0;
-  currentOdometry.twist.twist.linear.y = 0;
-  currentOdometry.twist.twist.linear.z = 0;
-  currentOdometry.twist.twist.angular.x = 0;
-  currentOdometry.twist.twist.angular.y = 0;
-  currentOdometry.twist.twist.angular.z = 0;
-
-  ros::Publisher gazeboOdometryPublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(GAZEBO_ODOMETRY_PUBLISH_TOPIC, 100);
 
   // TODO: Obtain depth and yaw from simulator
   ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(DEPTH_PUBLISH_TOPIC, 20);
@@ -122,11 +196,22 @@ int main(int argc, char **argv) {
   ros::ServiceServer stabilizationService = nodeHandle.advertiseService(SET_STABILIZATION_SERVICE, stabilizationCallback);
   ros::ServiceServer deviceService = nodeHandle.advertiseService(SET_DEVICE_SERVICE, deviceActionCallback);
 
+  gazebo_msgs::GetModelState modelState;
+  modelState.request.model_name = MODEL_NAME;
+
   while (ros::ok()) {
     if (isReady) {
-      gazeboOdometryPublisher.publish(currentOdometry);
-      //depthPublisher.publish(depthMessage);
-      //yawPublisher.publish(yawMessage);
+
+      bool result = ros::service::call(GAZEBO_GET_STATE_SERVICE, modelState);
+      if (!result || !modelState.response.success) {
+        ROS_ERROR("Failed to obtain current model state from Gazebo!");
+      } else {
+        depthMessage.data = modelState.response.pose.position.z * 100; // Convert to centimetres
+        yawMessage.data = tf::getYaw(modelState.response.pose.orientation);
+      }
+
+      depthPublisher.publish(depthMessage);
+      yawPublisher.publish(yawMessage);
     }
 
     ros::spinOnce();

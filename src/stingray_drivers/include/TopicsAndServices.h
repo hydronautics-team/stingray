@@ -17,5 +17,7 @@ static const std::string    SET_YAW_SERVICE                 = "/stingray/service
 static const std::string    SET_IMU_ENABLED_SERVICE         = "/stingray/services/control/set_imu_enabled";
 static const std::string    SET_STABILIZATION_SERVICE       = "/stingray/services/control/set_stabilization";
 static const std::string    SET_DEVICE_SERVICE              = "/stingray/services/control/set_device";
+static const std::string    GAZEBO_GET_STATE_SERVICE        = "/gazebo/get_model_state";
+static const std::string    GAZEBO_SET_STATE_SERVICE        = "/gazebo/set_model_state";
 
 #endif //STINGRAY_SRC_STINGRAY_DRIVERS_INCLUDE_TOPICSANDSERVICES_H_
