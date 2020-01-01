@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include <stingray_msgs/SetFloat64.h>
 #include <stingray_msgs/SetInt32.h>
@@ -26,11 +27,13 @@
 
 static const std::string GAZEBO_BRIDGE_NODE_NAME = "gazebo_bridge";
 
-static const std::string MODEL_NAME = "my_robot";
+static const std::string MODEL_NAME = "ROV_model_URDF";
 
 static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = 100;
 
-ros::NodeHandle nodeHandle;
+static const double INITIAL_YAW = 1.570806;
+static const double INITIAL_ROLL = 1.570796;
+static const double INITIAL_PITCH = -0.000136;
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
@@ -107,11 +110,12 @@ bool depthCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::Set
     response.message = "Depth stabilization is not enabled";
     return true;
   }
-
+  
   try {
     updateModelState([request] (gazebo_msgs::ModelState& modelState) {
-      /* In our simulator scale is 1.0 = 1 metre, and target depth is passed in centimetres */
-      modelState.pose.position.z = request.value / 100.0;
+      /* In our simulator scale is 1.0 = 1 metre, and target depth is passed in centimetres.
+       * Bias is needed due to simulator implementation details. */
+      modelState.pose.position.z = 2.9 - request.value / 100.0;
     });
   } catch (std::runtime_error& e) {
     response.success = false;
@@ -144,8 +148,8 @@ bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetIn
 
   try {
     updateModelState([request] (gazebo_msgs::ModelState& modelState) {
-      // TODO: Check it
-      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0.0, 0.0, request.value);
+      double newYaw = INITIAL_YAW + request.value * M_PI / 180.0;
+      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(INITIAL_ROLL, INITIAL_PITCH, newYaw);
     });
   } catch (std::runtime_error& e) {
     response.success = false;
@@ -183,6 +187,8 @@ bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request &request,
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, GAZEBO_BRIDGE_NODE_NAME);
+  ros::NodeHandle nodeHandle;
+
   ros::Rate communicationDelay(1000.0 / COMMUNICATION_DELAY_MILLISECONDS);
 
   // TODO: Obtain depth and yaw from simulator
