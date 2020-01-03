@@ -1,11 +1,6 @@
 #include <ros/ros.h>
-#include <std_msgs/UInt16.h>
 #include <std_msgs/UInt32.h>
 #include <std_msgs/Int32.h>
-#include <std_msgs/UInt8MultiArray.h>
-#include <geometry_msgs/Twist.h>
-#include <nav_msgs/Odometry.h>
-#include <gazebo_msgs/ModelState.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <gazebo_msgs/SetModelState.h>
 #include <tf/tf.h>
@@ -16,7 +11,6 @@
 #include <vector>
 #include <cmath>
 
-#include <stingray_msgs/SetFloat64.h>
 #include <stingray_msgs/SetInt32.h>
 #include <stingray_msgs/SetStabilization.h>
 #include <stingray_msgs/SetDeviceAction.h>
@@ -34,11 +28,13 @@ static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = 100;
 static const double INITIAL_YAW = 1.570806;
 static const double INITIAL_ROLL = 1.570796;
 static const double INITIAL_PITCH = -0.000136;
+static const double INITIAL_DEPTH = 2.9;
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
 
-bool isReady = false;
+geometry_msgs::Twist currentTwist;
+
 
 bool depthStabilizationEnabled = false;
 bool yawStabilizationEnabled = false;
@@ -77,18 +73,10 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState&)>& trans
  */
 bool lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request &request,
                          stingray_msgs::SetLagAndMarch::Response &response) {
-  try {
-    updateModelState([request] (gazebo_msgs::ModelState& modelState) {
-      modelState.twist.linear.x = request.march;
-      modelState.twist.linear.y = request.lag;
-    });
-  } catch (std::runtime_error& e) {
-    response.success = false;
-    response.message = "Failed to set lag and march in Gazebo: " + std::string(e.what());
-    return true;
-  }
 
-  isReady = true;
+  currentTwist.linear.x = request.march;
+  currentTwist.linear.y = request.lag;
+
   response.success = true;
   return true;
 }
@@ -115,7 +103,7 @@ bool depthCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::Set
     updateModelState([request] (gazebo_msgs::ModelState& modelState) {
       /* In our simulator scale is 1.0 = 1 metre, and target depth is passed in centimetres.
        * Bias is needed due to simulator implementation details. */
-      modelState.pose.position.z = 2.9 - request.value / 100.0;
+      modelState.pose.position.z = INITIAL_DEPTH - request.value / 100.0;
     });
   } catch (std::runtime_error& e) {
     response.success = false;
@@ -123,7 +111,6 @@ bool depthCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::Set
     return true;
   }
 
-  isReady = true;
   response.success = true;
   return true;
 }
@@ -157,13 +144,11 @@ bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetIn
     return true;
   }
 
-  isReady = true;
   response.success = true;
   return true;
 }
 
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response) {
-  isReady = true;
   response.success = true;
   return true;
 }
@@ -173,14 +158,12 @@ bool stabilizationCallback(stingray_msgs::SetStabilization::Request &request,
   depthStabilizationEnabled = request.depthStabilization;
   yawStabilizationEnabled = request.yawStabilization;
 
-  isReady = true;
   response.success = true;
   return true;
 }
 
 bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request &request,
                           stingray_msgs::SetDeviceAction::Response &response) {
-  isReady = true;
   response.success = true;
   return true;
 }
@@ -191,9 +174,9 @@ int main(int argc, char **argv) {
 
   ros::Rate communicationDelay(1000.0 / COMMUNICATION_DELAY_MILLISECONDS);
 
-  // TODO: Obtain depth and yaw from simulator
   ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(DEPTH_PUBLISH_TOPIC, 20);
   ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(YAW_PUBLISH_TOPIC, 20);
+  ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(GAZEBO_VELOCITY_TOPIC, 20);
 
   ros::ServiceServer velocityService = nodeHandle.advertiseService(SET_LAG_AND_MARCH_SERVICE, lagAndMarchCallback);
   ros::ServiceServer depthService = nodeHandle.advertiseService(SET_DEPTH_SERVICE, depthCallback);
@@ -205,20 +188,24 @@ int main(int argc, char **argv) {
   gazebo_msgs::GetModelState modelState;
   modelState.request.model_name = MODEL_NAME;
 
+  currentTwist.linear.x = currentTwist.linear.y = currentTwist.linear.z =
+      currentTwist.angular.x = currentTwist.angular.y = currentTwist.angular.z = 0;
+
   while (ros::ok()) {
-    if (isReady) {
 
       bool result = ros::service::call(GAZEBO_GET_STATE_SERVICE, modelState);
       if (!result || !modelState.response.success) {
         ROS_ERROR("Failed to obtain current model state from Gazebo!");
       } else {
-        depthMessage.data = modelState.response.pose.position.z * 100; // Convert to centimetres
-        yawMessage.data = tf::getYaw(modelState.response.pose.orientation);
+        // Convert back to initial values
+        depthMessage.data = -(modelState.response.pose.position.z - INITIAL_DEPTH) * 100;
+        yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - INITIAL_YAW) * 180.0 / M_PI;
       }
 
       depthPublisher.publish(depthMessage);
       yawPublisher.publish(yawMessage);
-    }
+
+      velocityPublisher.publish(currentTwist);
 
     ros::spinOnce();
     communicationDelay.sleep();
