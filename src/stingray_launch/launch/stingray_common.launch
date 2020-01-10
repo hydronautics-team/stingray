@@ -5,11 +5,10 @@
     <!-- Settings for "output" parameter of nodes -->
     <arg name="ros_output" default="screen" />
 
-    <!-- Enables simulation mode -->
-    <arg name="simulation" default="false" />
+    <arg name="simulation" default="true" />
 
     <!-- Enables connection with hardware platform -->
-    <arg name="hardware_connection" default="true" />
+    <arg name="hardware_connection" default="false" />
 
     <!-- Velocity levels. Note: in simulation used mode hard-coded velocity values. -->
     <arg name="velocity_slow" default="4300.0" />
