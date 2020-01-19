@@ -138,16 +138,22 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(basic_movement
-        include/AbstractMovementActionServer.h
-        include/LinearMovementServer.h
-        src/LinearMovementServer.cpp
-        include/DiveServer.h
-        src/DiveServer.cpp
-        include/RotateServer.h
-        src/RotateServer.cpp
+        include/common/AbstractMovementActionServer.h
+        include/basic/LinearMovementServer.h
+        src/basic/LinearMovementServer.cpp
+        include/basic/DiveServer.h
+        src/basic/DiveServer.cpp
+        include/basic/RotateServer.h
+        src/basic/RotateServer.cpp
         src/basic_movement.cpp)
 target_link_libraries(basic_movement ${catkin_LIBRARIES})
 add_dependencies(basic_movement ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
+
+add_executable(movement_patterns
+        include/common/AbstractMovementActionServer.h
+        src/movement_patterns.cpp)
+target_link_libraries(movement_patterns ${catkin_LIBRARIES})
+add_dependencies(movement_patterns ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
