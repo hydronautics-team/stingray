@@ -2,6 +2,7 @@
 
 #include <stingray_msgs/SetLagAndMarch.h>
 
+
 LinearMovementServer::LinearMovementServer(const std::string &actionName, double velocityCoefficient) :
     AbstractMovementActionServer<stingray_movement_msgs::LinearMoveAction,
                                  stingray_movement_msgs::LinearMoveGoalConstPtr>(actionName, velocityCoefficient) {};
@@ -23,6 +24,8 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
   }
   auto duration = goal->duration / 1000.0;
 
+  auto isStop = false;
+
   switch (goal->direction) {
     case stingray_movement_msgs::LinearMoveGoal::DIRECTION_MARCH_FORWARD:
       serviceCall.request.march = velocity;
@@ -36,6 +39,9 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     case stingray_movement_msgs::LinearMoveGoal::DIRECTION_LAG_RIGHT:
       serviceCall.request.lag = -velocity;
       break;
+    case stingray_movement_msgs::LinearMoveGoal::DIRECTION_STOP:
+      isStop = true;
+      break;
     default:
       actionServer.setAborted(stingray_movement_msgs::LinearMoveResult(), "Wrong direction value");
       return;;
@@ -46,6 +52,10 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     ROS_ERROR("Unable to set march and lag: %s", serviceCall.response.message.c_str());
     actionServer.setAborted(stingray_movement_msgs::LinearMoveResult(),
                             "Unable to set march and lag: %s" + serviceCall.response.message);
+    return;
+  }
+  if (isStop) {
+    actionServer.setSucceeded();
     return;
   }
 

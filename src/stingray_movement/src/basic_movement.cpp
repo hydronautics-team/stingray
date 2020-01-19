@@ -1,11 +1,12 @@
 #include <LinearMovementServer.h>
-
+#include <DiveServer.h>
 
 static const std::string NODE_NAME = "basic_movement";
 
 static const std::string PARAM_VELOCITY_COEFFICIENT = "velocity_coefficient";
 
 static const std::string ACTION_LINEAR_MOVEMENT = "stingray_action_linear_movement";
+static const std::string ACTION_DIVE = "stingray_action_dive";
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, NODE_NAME);
@@ -25,6 +26,7 @@ int main(int argc, char **argv) {
   }
 
   LinearMovementServer linearMovementServer(ACTION_LINEAR_MOVEMENT, velocityCoefficient);
+  DiveServer diveServer(ACTION_DIVE);
 
   ros::spin();
 
