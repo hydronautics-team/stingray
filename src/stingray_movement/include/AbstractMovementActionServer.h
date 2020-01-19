@@ -47,7 +47,9 @@ AbstractMovementActionServer<TAction, TGoalPtr>::AbstractMovementActionServer(co
     actionName,
     boost::bind(&AbstractMovementActionServer<TAction, TGoalPtr>::goalCallback,
                 this, _1),
-    false), velocityCoefficient(velocityCoefficient) {}
+    false), velocityCoefficient(velocityCoefficient) {
+      actionServer.start();
+    }
 
 
 #endif //STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTMOVEMENTACTIONSERVER_H_
