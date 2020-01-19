@@ -19,6 +19,10 @@ class AbstractMovementActionServer {
  protected:
 
   static const std::string LAG_MARCH_SERVICE;
+  static const std::string DEPTH_SERVICE;
+  static const std::string YAW_SERVICE;
+
+  static const std::string DEPTH_TOPIC;
 
   ros::NodeHandle nodeHandle;
   actionlib::SimpleActionServer<TAction> actionServer;
@@ -39,6 +43,18 @@ class AbstractMovementActionServer {
 template <class TAction, class TGoalPtr>
 const std::string AbstractMovementActionServer<TAction, TGoalPtr>::LAG_MARCH_SERVICE =
     "/stingray/services/control/set_lag_and_march";
+
+template <class TAction, class TGoalPtr>
+const std::string AbstractMovementActionServer<TAction, TGoalPtr>::DEPTH_SERVICE =
+    "/stingray/services/control/set_depth";
+
+template <class TAction, class TGoalPtr>
+const std::string AbstractMovementActionServer<TAction, TGoalPtr>::YAW_SERVICE =
+    "/stingray/services/control/set_yaw";
+
+template <class TAction, class TGoalPtr>
+const std::string AbstractMovementActionServer<TAction, TGoalPtr>::DEPTH_TOPIC =
+    "/stingray/topics/position/depth";
 
 template <class TAction, class TGoalPtr>
 AbstractMovementActionServer<TAction, TGoalPtr>::AbstractMovementActionServer(const std::string &actionName,

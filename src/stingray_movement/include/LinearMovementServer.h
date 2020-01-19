@@ -5,6 +5,11 @@
 
 #include "AbstractMovementActionServer.h"
 
+
+/**
+ * Action server that is responsible for moving vehicle
+ * by march and lag.
+ */
 class LinearMovementServer: AbstractMovementActionServer<stingray_movement_msgs::LinearMoveAction,
                                                          stingray_movement_msgs::LinearMoveGoalConstPtr> {
 

@@ -141,6 +141,8 @@ add_executable(basic_movement
         include/AbstractMovementActionServer.h
         include/LinearMovementServer.h
         src/LinearMovementServer.cpp
+        include/DiveServer.h
+        src/DiveServer.cpp
         src/basic_movement.cpp)
 target_link_libraries(basic_movement ${catkin_LIBRARIES})
 add_dependencies(basic_movement ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})

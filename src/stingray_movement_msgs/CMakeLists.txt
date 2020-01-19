@@ -67,10 +67,10 @@ find_package(catkin REQUIRED
 add_action_files(
    FILES
    LinearMove.action
-#   action/Dive.action
-#   action/Rotate.action
-#   action/Tack.action
-#   action/Align.action
+   Dive.action
+#   Rotate.action
+#   Tack.action
+#   Align.action
 )
 
 ## Generate added messages and services with any dependencies listed here
