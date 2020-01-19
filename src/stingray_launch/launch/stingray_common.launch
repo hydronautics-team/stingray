@@ -26,22 +26,25 @@
     <!-- Connection with real vehicle -->
     <group unless="$(arg simulation)">
         <group if="$(arg hardware_connection)">
-            <node pkg="stingray_drivers" name="uart_driver" type="uart_driver" output="$(arg ros_output)" respawn="true">
+
+	    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>
+
+  	    <node pkg="nodelet" type="nodelet" name="uart_driver" args="stingray_connection/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
                 <param name="device" value="$(arg uart_device)" />
                 <param name="baudrate" value="$(arg uart_baudrate)" />
                 <param name="data_bytes" value="$(arg uart_data_bytes)" />
                 <param name="parity" value="$(arg uart_parity)" />
                 <param name="stop_bits" value="$(arg uart_stop_bits)" />
             </node>
+
+            <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_connection/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
         </group>
-        <node pkg="stingray_drivers" name="hardware_bridge" type="hardware_bridge" output="$(arg ros_output)" respawn="true" />
     </group>
 
     <!-- Connection with simulator -->
     <group if="$(arg simulation)">
         <node pkg="stingray_drivers" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
     </group>
-
 
     <!-- Movement nodes, real vehicle -->
     <group unless="$(arg simulation)">

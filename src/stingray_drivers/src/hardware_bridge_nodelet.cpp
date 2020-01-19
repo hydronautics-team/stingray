@@ -1,7 +1,3 @@
-//
-// Created by VLADUSHKED on 04.07.19.
-//
-
 /**
  * This node:
  * - receives movement data from pilot and transforms it into byte array and publishes it
