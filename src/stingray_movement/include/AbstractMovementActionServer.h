@@ -23,6 +23,7 @@ class AbstractMovementActionServer {
   static const std::string YAW_SERVICE;
 
   static const std::string DEPTH_TOPIC;
+  static const std::string YAW_TOPIC;
 
   ros::NodeHandle nodeHandle;
   actionlib::SimpleActionServer<TAction> actionServer;
@@ -55,6 +56,10 @@ const std::string AbstractMovementActionServer<TAction, TGoalPtr>::YAW_SERVICE =
 template <class TAction, class TGoalPtr>
 const std::string AbstractMovementActionServer<TAction, TGoalPtr>::DEPTH_TOPIC =
     "/stingray/topics/position/depth";
+
+template <class TAction, class TGoalPtr>
+const std::string AbstractMovementActionServer<TAction, TGoalPtr>::YAW_TOPIC =
+    "/stingray/topics/position/yaw";
 
 template <class TAction, class TGoalPtr>
 AbstractMovementActionServer<TAction, TGoalPtr>::AbstractMovementActionServer(const std::string &actionName,

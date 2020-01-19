@@ -135,7 +135,8 @@ bool yawCallback(stingray_msgs::SetInt32::Request &request, stingray_msgs::SetIn
 
   try {
     updateModelState([request] (gazebo_msgs::ModelState& modelState) {
-      double newYaw = INITIAL_YAW + request.value * M_PI / 180.0;
+      double desiredYaw = request.value % 360;
+      double newYaw = INITIAL_YAW + desiredYaw * M_PI / 180.0;
       modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(INITIAL_ROLL, INITIAL_PITCH, newYaw);
     });
   } catch (std::runtime_error& e) {

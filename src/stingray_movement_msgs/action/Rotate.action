@@ -1,0 +1,11 @@
+# Goal
+
+# Angle in degrees
+# Positive is for counterclockwise, negative - for clockwise
+int32 yaw
+---
+# Result
+std_msgs/Empty empty
+---
+# Feedback
+std_msgs/Empty empty
