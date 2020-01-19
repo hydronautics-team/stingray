@@ -3,7 +3,7 @@
 
 #include <stingray_movement_msgs/LinearMoveAction.h>
 
-#include "AbstractMovementActionServer.h"
+#include "common/AbstractMovementActionServer.h"
 
 
 /**

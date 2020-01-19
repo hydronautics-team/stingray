@@ -1,6 +1,6 @@
-#include <LinearMovementServer.h>
-#include <DiveServer.h>
-#include <RotateServer.h>
+#include <basic/LinearMovementServer.h>
+#include <basic/DiveServer.h>
+#include <basic/RotateServer.h>
 
 static const std::string NODE_NAME = "basic_movement";
 
