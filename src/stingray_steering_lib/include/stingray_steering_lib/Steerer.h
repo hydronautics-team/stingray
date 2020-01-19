@@ -183,7 +183,7 @@ class Steerer {
    * Rotates vehicle to specified degree by yaw. Blocks calling
    * thread until angle is not reached.
    *
-   * @param angleDegree Angle in degree to rotate on, positive - clockwise, negative - counterclockwise.
+   * @param angleDegree Angle in degree to rotate on, positive - counterclockwise, negative - clockwise.
    */
   void rotateToAngle(int angleDegree);
 
