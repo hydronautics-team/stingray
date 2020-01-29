@@ -10,6 +10,10 @@ from states.special_states import InitializationState
 def main():
     rospy.init_node("control_fsm")
 
+    missions_module = rospy.get_param("~missions_module", None)
+    if missions_module is None:
+        rospy.logerr("Parameter 'missions_module' must be specified!")
+        return
     delay_after_init = rospy.get_param("~delay_after_init", None)
     if delay_after_init is None:
         rospy.logerr("Parameter 'delay_after_init' must be specified!")
@@ -21,6 +25,7 @@ def main():
     with state_machine:
         smach.StateMachine.add("INITIALIZATION", InitializationState(delay_after_init),
                                transitions={"INIT_OK": "CONTROL_FSM_SUCCEEDED"})
+        # TODO: Missions loading
 
     server = None
     if introspection_needed:
