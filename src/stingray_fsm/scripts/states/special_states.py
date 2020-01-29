@@ -7,9 +7,9 @@ from stingray_msgs.srv import SetStabilization
 
 
 class InitializationState(smach.State):
-    def __init__(self, delayAfterInit):
+    def __init__(self, delay_after_init):
         smach.State.__init__(self, outcomes=["INIT_OK"])
-        self.delayAfterInit_ = delayAfterInit
+        self.delayAfterInit_ = delay_after_init
 
     def execute(self, userdata):
         service = rospy.ServiceProxy("/stingray/services/control/set_imu_enabled", SetBool)

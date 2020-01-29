@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_fsm</name>
+  <name>stingray_missions_lib</name>
   <version>0.1.0</version>
-  <description>Package contains main FSM node for vehicle control.</description>
+  <description>Package contains classes to implement missions that are states of control FSM.</description>
 
   <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
 
@@ -15,7 +15,5 @@
   <depend>rospy</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>stingray_msgs</depend>
-  <depend>stingray_missions_lib</depend>
 
 </package>
