@@ -418,7 +418,7 @@ void setBit(uint8_t &byte, uint8_t bit, bool state)
     }
 }
 
-void sabilizationState(RequestMessage& request, uint8_t bit, bool state)
+void setStabilizationState(RequestMessage& request, uint8_t bit, bool state)
 {
     setBit(request.stabilize_flags, bit, state);
 }
