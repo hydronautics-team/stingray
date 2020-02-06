@@ -34,6 +34,9 @@ void TackServer::goalCallback(const stingray::TackGoalConstPtr& goal)
 			return ;
 	}
 
+	stingray_movement_msgs::TackFeedback feedback;
+	feedback.number = 0;
+
 	int i;
 	for (i = 0; i < goal->number: i++)
 	{
@@ -110,5 +113,12 @@ void TackServer::goalCallback(const stingray::TackGoalConstPtr& goal)
 		}
 
 		result = ros::service::call(YAW_SERVICE, rotateService);
+
+		feedback.number++;
+		actionServer.publishFeedback(feedback);
 	}
+
+	stingray_movement_msgs::TackResult result;
+	result.number = i;
+	actionServer.setSucceded(result);
 }
