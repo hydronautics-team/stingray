@@ -70,27 +70,33 @@ class ObserverActionExecutor:
         self.ready_ = False
         self.outcome_ = None
         self.lock_ = Lock()
+        self.action_client_ = actionlib.SimpleActionClient(self.action_name_, self.action_type_)
 
-    def set_outcome_(self, outcome):
+    def set_outcome_(self, outcome, cancel_goal=False):
         self.lock_.acquire()
         if not self.ready_:
             self.ready_ = True
             self.outcome_ = outcome
+        if cancel_goal:
+            self.action_client_.cancel_goal()
         self.lock_.release()
 
     def execute(self, action_goal):
-        action_client = actionlib.SimpleActionClient(self.action_name_, self.action_type_)
         self.ready_ = False
         self.outcome_ = None
+        self.action_client_.wait_for_server()
 
         for observer in self.observers_:
-            observer[0].set_callback(lambda data, outcome=observer[1]: self.set_outcome_(outcome))
+            observer[0].set_callback(lambda data, outcome=observer[1]: self.set_outcome_(outcome, True))
             observer[0].start()
 
-        action_client.send_goal(action_goal)
-        action_client.wait_for_result()
+        self.action_client_.send_goal(action_goal,
+                                      active_cb=None,
+                                      feedback_cb=lambda: self.set_outcome_(None),
+                                      done_cb=None)
+        while not self.ready_:
+            pass
 
-        self.set_outcome_(None)
         for observer in self.observers_:
             observer[0].stop()
         return self.outcome_

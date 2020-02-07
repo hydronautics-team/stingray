@@ -25,6 +25,9 @@
     <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
     <arg name="delay_after_init" default="50000" />
 
+    <!-- Enables missions -->
+    <arg name="missions_enabled" default="true" />
+
     <!-- FSM visualization using SMACH viewer -->
     <arg name="fsm_introspection" default="false" />
 
@@ -65,10 +68,12 @@
         </node>
     </group>
 
-    <!-- Top-level control FSM -->
-    <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">
-        <param name="delay_after_init" value="$(arg delay_after_init)" />
-        <param name="introspection" value="$(arg fsm_introspection)" />
-    </node>
+    <group if="$(arg missions_enabled)">
+        <!-- Top-level control FSM -->
+        <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">
+            <param name="delay_after_init" value="$(arg delay_after_init)" />
+            <param name="introspection" value="$(arg fsm_introspection)" />
+        </node>
+    </group>
 
 </launch>
