@@ -36,8 +36,8 @@ std_msgs::Int32 yawMessage;
 geometry_msgs::Twist currentTwist;
 
 
-bool depthStabilizationEnabled = false;
-bool yawStabilizationEnabled = false;
+bool depthStabilizationEnabled = true;
+bool yawStabilizationEnabled = true;
 
 /**
  * Obtains model state from Gazebo, transforms and updates it.

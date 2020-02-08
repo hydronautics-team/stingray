@@ -19,6 +19,15 @@ class Mission(smach.State):
         pass
 
 
+class MissionsFSM(smach.State):
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        self.outcome_ok_ = "MISSIONS_OK"
+        self.outcome_failed_ = "MISSIONS_FAILED"
+        smach.State.__init__(self, outcomes=[self.outcome_ok_, self.outcome_failed_])
+
+
 class Observer:
     __metaclass__ = ABCMeta
 

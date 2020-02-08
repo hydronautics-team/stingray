@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 catkin_python_setup()
+catkin_package()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -159,11 +160,11 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS
-   scripts/missions/missions_fsm.py
-   scripts/missions/steering.py
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#install(PROGRAMS
+#        scripts/stingray_missions_lib/missions_fsm.py
+#        scripts/stingray_missions_lib/steering.py
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
