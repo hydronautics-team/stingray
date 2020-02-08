@@ -12,6 +12,9 @@ class BasicSteerer:
                                                          stingray_movement_msgs.msg.DiveAction)
         self.linear_client_ = actionlib.SimpleActionClient('stingray_action_linear_movement',
                                                            stingray_movement_msgs.msg.LinearMoveAction)
+        self.rotation_client_.wait_for_server()
+        self.dive_client_.wait_for_server()
+        self.linear_client_.wait_for_server()
 
     def create_rotate_goal(self, yaw):
         return stingray_movement_msgs.msg.RotateGoal(yaw=yaw)
