@@ -11,7 +11,7 @@ class Mission(smach.State):
 
     def __init__(self, mission_name):
         self.outcome_ok_ = mission_name.upper() + "_OK"
-        self.outcome_failed_ = mission_name.upper + "_FAILED"
+        self.outcome_failed_ = mission_name.upper() + "_FAILED"
         smach.State.__init__(self, outcomes=[self.outcome_ok_, self.outcome_failed_])
 
     @abstractmethod
@@ -19,13 +19,16 @@ class Mission(smach.State):
         pass
 
 
-class MissionsFSM(smach.State):
+class MissionsFSMFactory(smach.StateMachine):
     __metaclass__ = ABCMeta
 
     def __init__(self):
         self.outcome_ok_ = "MISSIONS_OK"
         self.outcome_failed_ = "MISSIONS_FAILED"
-        smach.State.__init__(self, outcomes=[self.outcome_ok_, self.outcome_failed_])
+
+    @abstractmethod
+    def create_fsm(self):
+        pass
 
 
 class Observer:
@@ -109,5 +112,3 @@ class ObserverActionExecutor:
         for observer in self.observers_:
             observer[0].stop()
         return self.outcome_
-
-
