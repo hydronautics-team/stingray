@@ -37,7 +37,7 @@ def main():
         missions_class = getattr(missions_module, missions_fsm_class_name)
         missions_instance = missions_class()
 
-        smach.StateMachine.add("MISSIONS", missions_instance,
+        smach.StateMachine.add("MISSIONS", missions_instance.create_fsm(),
                                transitions={"MISSIONS_OK": "CONTROL_FSM_SUCCEEDED",
                                             "MISSIONS_FAILED": "CONTROL_FSM_FAILED"})
 
