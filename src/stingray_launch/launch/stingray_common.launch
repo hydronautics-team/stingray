@@ -64,11 +64,17 @@
         <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
             <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
         </node>
+        <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
+            <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
+        </node>
     </group>
 
     <!-- Movement nodes, simulator -->
     <group if="$(arg simulation)">
         <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
+            <param name="velocity_coefficient" value="4.3" />
+        </node>
+        <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
             <param name="velocity_coefficient" value="4.3" />
         </node>
     </group>

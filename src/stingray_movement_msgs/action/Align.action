@@ -1,0 +1,13 @@
+# Goal
+
+# Topic to obtain value for centering
+string topicName
+
+# Threshold that shows if value is centered
+float64 delta
+---
+# Result
+std_msgs/Empty empty
+---
+# Feedback
+std_msgs/Empty empty
