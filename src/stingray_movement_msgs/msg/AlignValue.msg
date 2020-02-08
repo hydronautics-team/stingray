@@ -1,0 +1,2 @@
+bool hasValue
+float64 difference
