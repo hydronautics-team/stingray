@@ -69,7 +69,7 @@ add_action_files(
    LinearMove.action
    Dive.action
    Rotate.action
-#   Tack.action
+   Tack.action
 #   Align.action
 )
 
