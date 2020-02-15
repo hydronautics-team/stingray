@@ -23,7 +23,7 @@
     <arg name="velocity_coefficient" default="20000.0" />
 
     <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
-    <arg name="delay_after_init" default="50000" />
+    <arg name="delay_after_init" default="1000" />
 
     <!-- Missions FSM module -->
     <arg name="missions_module" default="" />
@@ -42,7 +42,7 @@
 
 	    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>
 
-  	    <node pkg="nodelet" type="nodelet" name="uart_driver" args="stingray_connection/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
+	    <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_drivers/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
                 <param name="device" value="$(arg uart_device)" />
                 <param name="baudrate" value="$(arg uart_baudrate)" />
                 <param name="data_bytes" value="$(arg uart_data_bytes)" />
@@ -50,7 +50,7 @@
                 <param name="stop_bits" value="$(arg uart_stop_bits)" />
             </node>
 
-            <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_connection/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
+            <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_drivers/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
         </group>
     </group>
 
