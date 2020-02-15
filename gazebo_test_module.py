@@ -9,16 +9,16 @@ def main():
 
     auv = AUV()
 
-    auv.forward(1000, 0.3)      # initial move from base position
+    auv.forward_locked(1000, 0.3)      # initial move from base position
     auv.dive(95)
 
     for i in range(6):          # making a hexagonal "circle". TODO test this in water
         auv.rotate(60)
-        auv.forward(1000, 0.35)
+        auv.forward_locked(1000, 0.35)
     auv.rotate(60)
 
     auv.rotate(-180)            # return to base position
-    auv.forward(1000, 0.3)
+    auv.forward_locked(1000, 0.3)
     auv.rotate(180)
 
 
