@@ -72,7 +72,7 @@ bool hardware_bridge::depthCallback(stingray_msgs::SetInt32::Request& depthReque
         return true;
     }
     NODELET_DEBUG("Setting depth to %d", depthRequest.value);
-    requestMessage.depth	= -(static_cast<int16_t> (depthRequest.value * 10)); // For low-level stabilization purposes
+    requestMessage.depth	= -(static_cast<int16_t> (depthRequest.value * 100)); // For low-level stabilization purposes
     NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.depth);
 
     isReady = true;
@@ -103,6 +103,7 @@ bool hardware_bridge::imuCallback(std_srvs::SetBool::Request& imuRequest,
 
     isReady = true;
     imuResponse.success = true;
+
     return true;
 }
 
@@ -112,6 +113,8 @@ bool hardware_bridge::stabilizationCallback(stingray_msgs::SetStabilization::Req
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
+    depthStabilizationEnabled = true;
+    yawStabilizationEnabled = true;
 
     isReady = true;
     stabilizationResponse.success = true;

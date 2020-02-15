@@ -19,6 +19,7 @@
   <depend>serial</depend>
   <depend>stingray_msgs</depend>
   <depend>nodelet</depend>
+  <depend>pluginlib</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelets_init.xml"/>
