@@ -22,13 +22,15 @@ class BasicSteerer:
     def create_march_goal(self, duration_ms, velocity):
         direction = stingray_movement_msgs.msg.LinearMoveGoal.DIRECTION_MARCH_FORWARD if velocity >= 0 \
             else stingray_movement_msgs.msg.LinearMoveGoal.DIRECTION_MARCH_BACKWARDS
-        goal = stingray_movement_msgs.msg.LinearMoveGoal(direction=direction, duration=duration_ms, velocity=velocity)
+        goal = stingray_movement_msgs.msg.LinearMoveGoal(direction=direction, duration=duration_ms,
+                                                         velocity=abs(velocity))
         return goal
 
     def create_lag_goal(self, duration_ms, velocity):
         direction = stingray_movement_msgs.msg.LinearMoveGoal.DIRECTION_LAG_RIGHT if velocity >= 0 \
             else stingray_movement_msgs.msg.LinearMoveGoal.DIRECTION_LAG_LEFT
-        goal = stingray_movement_msgs.msg.LinearMoveGoal(direction=direction, duration=duration_ms, velocity=velocity)
+        goal = stingray_movement_msgs.msg.LinearMoveGoal(direction=direction, duration=duration_ms,
+                                                         velocity=abs(velocity))
         return goal
 
     def create_stop_goal(self):
@@ -49,6 +51,11 @@ class BasicSteerer:
         goal = self.create_lag_goal(duration_ms, velocity)
         self.linear_client_.send_goal(goal)
         self.linear_client_.wait_for_result()
+
+    def dive(self, depth_cm):
+        goal = stingray_movement_msgs.msg.DiveGoal(depth=depth_cm)
+        self.dive_client_.send_goal(goal)
+        self.dive_client_.wait_for_result()
 
     def stop(self):
         goal = self.create_stop_goal()
