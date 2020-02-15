@@ -1,14 +1,34 @@
 #!/usr/bin/env python
 
 import rospy
-import rospkg
 import actionlib
 import stingray_movement_msgs.msg as msg
 
 
 class AUV:
     """All actions are unlocked and are supposed to be used asynchronously"""
-    absolute_angle = 0
+
+    def __init__(self):
+        rospy.loginfo("Initializing action servers")
+
+        rospy.loginfo("Plane move init")
+        self.MoveClient = actionlib.SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
+        rospy.loginfo("Waiting for server")
+        self.MoveClient.wait_for_server()
+        rospy.loginfo("Success")
+
+        rospy.loginfo("Rotation init")
+        self.RotateClient = actionlib.SimpleActionClient('stingray_action_rotate', msg.RotateAction)
+        rospy.loginfo("Waiting for server")
+        self.absolute_angle = 0
+        self.RotateClient.wait_for_server()
+        rospy.loginfo("Success")
+
+        rospy.loginfo("Vertical control init")
+        self.DiveClient = actionlib.SimpleActionClient('stingray_action_dive', msg.DiveAction)
+        rospy.loginfo("Waiting for server")
+        self.DiveClient.wait_for_server()
+        rospy.loginfo("Success")
 
     @staticmethod
     def callback_active():
@@ -27,55 +47,49 @@ class AUV:
         rospy.loginfo("Absolute angle is %{} now".format(self.absolute_angle))
 
         if angle != 0:
-            rospy.loginfo("Rotation init")
-            client = actionlib.SimpleActionClient('stingray_action_rotate', msg.RotateAction)
-            rospy.loginfo("Waiting for server")
-            client.wait_for_server()
             goal = msg.RotateGoal(yaw=self.absolute_angle)
             rospy.loginfo("Sending goal")
-            client.send_goal(goal,
-                             active_cb=self.callback_active,
-                             feedback_cb=self.callback_feedback,
-                             done_cb=self.callback_done)
+            self.RotateClient.send_goal(goal,
+                                        active_cb=self.callback_active,
+                                        feedback_cb=self.callback_feedback,
+                                        done_cb=self.callback_done)
 
-    def forward(self, duration=0, velocity=0.0):
+    def forward_locked(self, duration=0, velocity=0.0):
         """angle in degrees, duration in ms, velocity is relative(from 0 to 1)"""
         if duration != 0 and velocity != 0:
-            rospy.loginfo("Marching init")
-            client = actionlib.SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
-            rospy.loginfo("Waiting for server")
-            client.wait_for_server()
             goal = msg.LinearMoveGoal(direction=1, duration=duration, velocity=velocity)
             rospy.loginfo("Sending goal")
-            client.send_goal(goal,
-                             active_cb=self.callback_active,
-                             feedback_cb=self.callback_feedback,
-                             done_cb=self.callback_done)
+            self.MoveClient.send_goal(goal,
+                                      active_cb=self.callback_active,
+                                      feedback_cb=self.callback_feedback,
+                                      done_cb=self.callback_done)
 
-        rospy.sleep(duration / 1000)    # TODO check if it breaks the async
+            rospy.loginfo("Waiting for result")
+            self.MoveClient.wait_for_result()
+            rospy.loginfo("Forward/backwards movement done")
+
+    def backwards_locked(self, duration=0, velocity=0.0):
+        self.forward_locked(duration, -velocity)
 
     def lag_right(self, duration=0, velocity=0.0):
         if duration != 0 and velocity != 0:
-            rospy.loginfo("Lagging init")
-            client = actionlib.SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
-            rospy.loginfo("Waiting for server")
-            client.wait_for_server()
             goal = msg.LinearMoveGoal(direction=3, duration=duration, velocity=velocity)
             rospy.loginfo("Sending goal")
-            client.send_goal(goal,
-                             active_cb=self.callback_active,
-                             feedback_cb=self.callback_feedback,
-                             done_cb=self.callback_done)
+            self.MoveClient.send_goal(goal,
+                                      active_cb=self.callback_active,
+                                      feedback_cb=self.callback_feedback,
+                                      done_cb=self.callback_done)
+
+    def lag_left(self, duration=0, velocity=0.0):
+        self.lag_right(duration, -velocity)
 
     def dive(self, depth=100):
-        client = actionlib.SimpleActionClient('stingray_action_dive', msg.DiveAction)
-        print("Waiting for server")
-        client.wait_for_server()
         goal = msg.DiveGoal(depth=depth)
-        print("Sending goal")
-        client.send_goal(goal,
-                         active_cb=self.callback_active,
-                         feedback_cb=self.callback_feedback,
-                         done_cb=self.callback_done)
+        print("Sending diving goal")
+        self.DiveClient.send_goal(goal,
+                                  active_cb=self.callback_active,
+                                  feedback_cb=self.callback_feedback,
+                                  done_cb=self.callback_done)
 
-
+    def execute_pattern(self):
+        pass
