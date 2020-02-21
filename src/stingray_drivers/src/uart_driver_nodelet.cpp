@@ -25,7 +25,6 @@ static const int            DEFAULT_SERIAL_TIMEOUT  = 1000; // Needed for serial
 
 void uart_driver::onInit() {
     // Initializing nodelet and parameters
-    ROS_INFO("STAAAAAAAART");
     NODELET_INFO_STREAM("Initializing nodelet: " << UART_DRIVER_NODE_NAME);
     ros::NodeHandle& nodeHandle = getNodeHandle();
     //Serial port initialization
@@ -113,7 +112,6 @@ void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
     }
     NODELET_DEBUG("UART settings: Device: %s, Baudrate: %d, Data bytes: %d, Parity: %s, Stop bits: %d",
                   device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
-    std::cout << "STAAAAAAAAART" << std::endl;
     if (port.isOpen()) port.close();
     port.setPort(device);
     serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(DEFAULT_SERIAL_TIMEOUT);
