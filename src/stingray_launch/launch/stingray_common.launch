@@ -23,7 +23,7 @@
     <arg name="velocity_coefficient" default="20000.0" />
 
     <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
-    <arg name="delay_after_init" default="1000" />
+    <arg name="delay_after_init" default="50000" />
 
     <!-- Missions FSM module -->
     <arg name="missions_module" default="" />
