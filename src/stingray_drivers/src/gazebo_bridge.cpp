@@ -75,7 +75,7 @@ bool lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request &request,
                          stingray_msgs::SetLagAndMarch::Response &response) {
 
   currentTwist.linear.x = request.march;
-  currentTwist.linear.y = request.lag;
+  currentTwist.linear.y = -request.lag;
 
   response.success = true;
   return true;
