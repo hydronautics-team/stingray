@@ -1,10 +1,14 @@
 #include <patterns/AlignServer.h>
+#include <patterns/AlignLowLevelServer.h>
 
 static const std::string NODE_NAME = "movement_patterns";
 
 static const std::string PARAM_VELOCITY_COEFFICIENT = "velocity_coefficient";
 
 static const std::string ACTION_ALIGN = "stingray_action_align";
+
+static const std::string ACTION_ALIGN_LOW_LEVEL = "stingray_action_align_low_level";
+
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, NODE_NAME);
@@ -23,7 +27,8 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  AlignServer linearMovementServer(ACTION_ALIGN, velocityCoefficient);
+  AlignServer alignServer(ACTION_ALIGN, velocityCoefficient);
+  AlignLowLevelServer alignLowLevelServer(ACTION_ALIGN_LOW_LEVEL, velocityCoefficient);
 
   ros::spin();
 
