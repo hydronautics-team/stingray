@@ -29,9 +29,10 @@ void AlignServer::goalCallback(const stingray_movement_msgs::AlignGoalConstPtr &
         serviceCall.request.lag = 0.0;
         inRange = true;
       } else {
-        direction = message->difference > 0.0 ? 1 : -1;
+        direction = message->difference > 0.0 ? -1 : 1;
         serviceCall.request.lag = 0.1 * direction;
       }
+      ROS_INFO("Difference: %f, direction: %d", message->difference, direction);
     } else {
       direction = -direction;
       serviceCall.request.lag = 0.1 * direction;

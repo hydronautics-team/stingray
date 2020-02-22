@@ -38,20 +38,17 @@
 
     <!-- Connection with real vehicle -->
     <group unless="$(arg simulation)">
-        <group if="$(arg hardware_connection)">
-
 	    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>
-
-	    <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_drivers/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
+        <group if="$(arg hardware_connection)">
+	        <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_drivers/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
                 <param name="device" value="$(arg uart_device)" />
                 <param name="baudrate" value="$(arg uart_baudrate)" />
                 <param name="data_bytes" value="$(arg uart_data_bytes)" />
                 <param name="parity" value="$(arg uart_parity)" />
                 <param name="stop_bits" value="$(arg uart_stop_bits)" />
             </node>
-
-            <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_drivers/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
         </group>
+        <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_drivers/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
     </group>
 
     <!-- Connection with simulator -->

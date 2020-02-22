@@ -138,6 +138,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(basic_movement
+        include/common/AsyncTimer.h
+        src/common/AsyncTimer.cpp
         include/common/AbstractMovementActionServer.h
         include/basic/LinearMovementServer.h
         src/basic/LinearMovementServer.cpp
@@ -150,6 +152,8 @@ target_link_libraries(basic_movement ${catkin_LIBRARIES})
 add_dependencies(basic_movement ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
 
 add_executable(movement_patterns
+        include/common/AsyncTimer.h
+        src/common/AsyncTimer.cpp
         include/common/AbstractMovementActionServer.h
         include/patterns/AlignServer.h
         src/patterns/AlignServer.cpp
