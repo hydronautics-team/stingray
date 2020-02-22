@@ -113,8 +113,11 @@ bool hardware_bridge::stabilizationCallback(stingray_msgs::SetStabilization::Req
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
-    depthStabilizationEnabled = true;
-    yawStabilizationEnabled = true;
+    NODELET_DEBUG("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, stabilizationRequest.lagStabilization);
+    depthStabilizationEnabled = stabilizationRequest.depthStabilization;
+    yawStabilizationEnabled = stabilizationRequest.yawStabilization;
+    lagStabilizationEnabled = stabilizationRequest.lagStabilization;
 
     isReady = true;
     stabilizationResponse.success = true;
