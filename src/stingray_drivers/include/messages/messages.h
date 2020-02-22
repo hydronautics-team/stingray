@@ -11,10 +11,10 @@
 #define SHORE_STABILIZE_ROLL_BIT        1
 #define SHORE_STABILIZE_PITCH_BIT       2
 #define SHORE_STABILIZE_YAW_BIT         3
-#define SHORE_STABILIZE_LAG_BIT         4
-#define SHORE_STABILIZE_MARCH_BIT       5
-#define SHORE_STABILIZE_IMU_BIT         6
-#define SHORE_STABILIZE_SAVE_BIT        7
+// #define SHORE_STABILIZE_LAG_BIT         4
+// #define SHORE_STABILIZE_MARCH_BIT       5
+#define SHORE_STABILIZE_IMU_BIT         4
+#define SHORE_STABILIZE_SAVE_BIT        5
 
 /// Number of the propellers
 static const uint8_t VmaAmount = 8;
@@ -136,7 +136,7 @@ struct ResponseMessage
     float yawSpeed;
 
     float depth;
-    float lag;
+    //float lag;
     float in_pressure;
 
     uint8_t dev_state;
