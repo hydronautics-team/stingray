@@ -67,6 +67,7 @@ private:
     bool isReady = false; // isTopicUpdated flag
     bool depthStabilizationEnabled = false;
     bool yawStabilizationEnabled = false;
+    bool lagStabilizationEnabled = false;
 };
 
 #endif //STINGRAY_DRIVERS_HARDWARE_BRIDGE_NODELET_H

@@ -153,6 +153,7 @@ ResponseMessage::ResponseMessage()
     yawSpeed = 0;
 
     depth = 0;
+    lag = 0;
     in_pressure = 0;
 
     dev_state = 0;
@@ -204,6 +205,7 @@ bool ResponseMessage::parseVector(std::vector<uint8_t> &input)
 
     popFromVector(input, in_pressure);
     popFromVector(input, depth);
+    popFromVector(input, lag);
 
     popFromVector(input, yawSpeed);
     popFromVector(input, pitchSpeed);
