@@ -157,6 +157,8 @@ add_executable(movement_patterns
         include/common/AbstractMovementActionServer.h
         include/patterns/AlignServer.h
         src/patterns/AlignServer.cpp
+        include/patterns/AlignLowLevelServer.h
+        src/patterns/AlignLowLevelServer.cpp
         src/movement_patterns.cpp)
 target_link_libraries(movement_patterns ${catkin_LIBRARIES})
 add_dependencies(movement_patterns ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
