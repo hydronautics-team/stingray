@@ -4,6 +4,7 @@
 #include <stingray_movement_msgs/TackAction.h>
 #include <stingray_msgs/SetLagAndMarch.h>
 #include <stingray_msgs/SetInt32.h>
+#include <std_msgs/Int32.h>
 
 TackServer::TackServer(const std::string& actionName, double velocityCoefficient) :
 	AbstractMovementActionServer<stingray_movement_msgs::TackAction,
@@ -21,18 +22,23 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 	auto velocity = goal->velocity * velocityCoefficient;
 	lagAndMarchService.request.march = velocity;
 
+	std_msgs::Int32 yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(YAW_TOPIC, nodeHandle);
+	int currentYaw = yawMessage.data;
+	int rotation;
+
 	switch (goal->direction)
 	{
 		case stingray_movement_msgs::TackGoal::DIRECTION_RIGHT:
-			rotateService.request.value = -90;
+			rotation = -90;
 			break;
 		case stingray_movement_msgs::TackGoal::DIRECTION_LEFT:
-			rotateService.request.value = 90;
+			rotation = 90;
 			break;
 		default:
 			actionServer.setAborted(stingray_movement_msgs::TackResult(), "Wrong direction value");
 			return ;
 	}
+	rotateService.request.value = currentYaw + rotation;
 
 	stingray_movement_msgs::TackFeedback feedback;
 	feedback.currentNumber = 0;
@@ -65,6 +71,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 					"Unable to set yaw: %s" + rotateService.response.message);
 			return;
 		}
+		rotateService.request.value += rotation;
 
 		result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
 		if (!result || !lagAndMarchService.response.success) {
@@ -90,6 +97,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 					"Unable to set yaw: %s" + rotateService.response.message);
 			return;
 		}
+		rotateService.request.value -= rotation;
 
 		result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
 		if (!result || !lagAndMarchService.response.success) {
@@ -107,8 +115,6 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 
-		rotateService.request.value = -rotateService.request.value;
-
 		result = ros::service::call(YAW_SERVICE, rotateService);
 
 		if (!result || !rotateService.response.success) {
@@ -117,6 +123,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 					"Unable to set yaw: %s" + rotateService.response.message);
 			return;
 		}
+		rotateService.request.value -= rotation;
 		result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
 		if (!result || !lagAndMarchService.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", lagAndMarchService.response.message.c_str());

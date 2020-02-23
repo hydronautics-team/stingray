@@ -10,8 +10,11 @@ RotateServer::RotateServer(const std::string &actionName) :
                                  stingray_movement_msgs::RotateGoalConstPtr>(actionName, 0.0) {};
 
 void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr &goal) {
+  std_msgs::Int32 yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(YAW_TOPIC, nodeHandle);
+  int currentYaw = yawMessage.data;
+
   stingray_msgs::SetInt32 serviceCall;
-  serviceCall.request.value = goal->yaw;
+  serviceCall.request.value = goal->yaw + currentYaw;
   auto result = ros::service::call(YAW_SERVICE, serviceCall);
   if (!result || !serviceCall.response.success) {
     ROS_ERROR("Unable to set yaw: %s", serviceCall.response.message.c_str());
@@ -22,8 +25,8 @@ void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr
 
   int desiredYaw = goal->yaw;
   while (true) {
-    std_msgs::Int32 yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(YAW_TOPIC, nodeHandle);
-    int currentYaw = yawMessage.data;
+    yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(YAW_TOPIC, nodeHandle);
+    currentYaw = yawMessage.data;
 
     ROS_INFO("Current yaw: %d, desired yaw: %d", currentYaw, desiredYaw);
 
