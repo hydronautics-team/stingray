@@ -24,7 +24,7 @@ RequestMessage::RequestMessage()
 }
 
 /** @brief Form bitwise correct string with computed 16bit checksum from the data stored in RequestMessage
-  *
+  *lag_error
   */
 std::vector<uint8_t> RequestMessage::formVector()
 {
@@ -44,6 +44,7 @@ std::vector<uint8_t> RequestMessage::formVector()
         pushToVector(container, dev[i]);
     }
 
+    pushToVector(container, lag_error); 
     pushToVector(container, dev_flags);
     pushToVector(container, stabilize_flags);
     pushToVector(container, cameras);
@@ -281,6 +282,24 @@ void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert)
   * @param[in]  revert  Revert bytes or not.
   */
 void pushToVector(std::vector<uint8_t> &vector, float var, bool revert)
+{
+    uint8_t *ptr = reinterpret_cast<uint8_t*>(&var);
+    for(int i=0; i<4; i++) {
+        if(revert) {
+            vector.push_back(ptr[3-i]);
+        }
+        else {
+            vector.push_back(ptr[i]);
+        }
+    }
+}
+
+/** @brief Overloaded transform to string function, transforms value to string bitwise correctly
+  *
+  * @param[in]  var     Variable to transform.
+  * @param[in]  revert  Revert bytes or not.
+  */
+void pushToVector(std::vector<uint8_t> &vector, int32_t var, bool revert)
 {
     uint8_t *ptr = reinterpret_cast<uint8_t*>(&var);
     for(int i=0; i<4; i++) {
