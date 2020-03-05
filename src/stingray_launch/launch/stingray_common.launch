@@ -5,7 +5,7 @@
     <!-- Settings for "output" parameter of nodes -->
     <arg name="ros_output" default="screen" />
 
-    <arg name="simulation" default="true" />  <!-- можно передавать эти параметры через двоеточие simulation:true-->
+    <arg name="simulation" default="false" />  <!-- можно передавать эти параметры через двоеточие simulation:true-->
 
     <!-- Enables connection with hardware platform -->
     <arg name="hardware_connection" default="true" />
