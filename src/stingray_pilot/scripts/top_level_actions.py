@@ -2,7 +2,7 @@
 
 import rospy
 import actionlib
-import stingray_movement_msgs.msg as msg
+import src.stingray_movement_msgs.msg as msg
 
 
 class AUV:
@@ -91,5 +91,53 @@ class AUV:
                                   feedback_cb=self.callback_feedback,
                                   done_cb=self.callback_done)
 
-    def execute_pattern(self):
+    def execute_pattern(self, path, size=1000, speed=0.35, clockwise=True, straight=True):
+        """
+        :param path: string, path to pattern script
+        :param size: int, base work time for engines in ms, used to scale pattern
+        :param speed:  float from 0 to 1. Ratio of current speed to max
+        :param clockwise: If False, executes reversed/mirrored pattern actions
+        :param straight:  If False, executes pattern script from last action to first
+        :return:
+        """
+        scriptf = open(path)
+        script = scriptf.readlines()
+        scriptf.close()
+
+        # here script name should be read
+        if not straight:
+            script = script[::-1]
+
+        if clockwise:
+            clockwise = 1
+        else:
+            clockwise = -1
+
+        for action in script:
+            if not action:
+                continue
+            elif action[0] == '#':
+                continue
+
+            action = action.split()
+
+            if action[0] == "mvf":
+                if action[1].isdigit():
+                    self.forward_locked(int(action[1])*size, speed*clockwise)
+
+        # TODO create movement patterns config or smth like that
         pass
+
+    def circle(self, radius, speed=0.35, clockwise=True):
+        if clockwise:
+            clockwise = 1
+        else:
+            clockwise = -1
+
+        self.rotate(-clockwise*60)
+        self.forward_locked(radius, speed)
+        for i in range(5):
+            self.rotate(clockwise*60)
+            self.forward_locked(radius, speed)
+        self.rotate(clockwise*120)
+

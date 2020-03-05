@@ -1,0 +1,40 @@
+# syntax:
+# the interpreter should read and execute the movement pattern line by line
+# from # starts comments, interpreter ignores them
+#
+# nam -- string for the name of pattern, should be used for complex patterns creation, not used now
+#
+# rot is rotate, angle is an argument after a space
+#
+# mvf is forward movement, mvb -- backwards, argument is
+#
+# lgr -- lag right, lgl -- left
+#
+# div -- dive/set depth, int argument in cm
+
+nam Circle
+rot -30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 30
+mov 1
+rot 150

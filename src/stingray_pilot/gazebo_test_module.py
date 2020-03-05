@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from src.stingray_pilot.scripts.top_level_actions import AUV
-
+from scripts.top_level_actions import AUV
 
 def main():
     rospy.init_node("action_test")
@@ -12,10 +11,8 @@ def main():
     auv.forward_locked(1000, 0.3)      # initial move from base position
     auv.dive(95)
 
-    for i in range(6):          # making a hexagonal "circle". TODO test this in water
-        auv.rotate(60)
-        auv.forward_locked(1000, 0.35)
-    auv.rotate(60)
+    # making a hexagonal "circle". TODO test this in water
+    auv.circle(1500)
 
     auv.rotate(-180)            # return to base position
     auv.forward_locked(1000, 0.3)
