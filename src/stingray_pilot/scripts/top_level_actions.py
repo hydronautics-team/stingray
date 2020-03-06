@@ -123,7 +123,34 @@ class AUV:
 
             if action[0] == "mvf":
                 if action[1].isdigit():
-                    self.forward_locked(int(action[1])*size, speed*clockwise)
+                    self.forward_locked(int(action[1]) * size, speed * clockwise)
+                else:
+                    rospy.loginfo("Invalid argument in script, executing next action")
+            elif action[0] == "mvb":
+                if action[1].isdigit():
+                    self.backwards_locked(int(action[1]) * size, speed * clockwise)
+                else:
+                    rospy.loginfo("Invalid argument in script, executing next action")
+            elif action[0] == "lgr":
+                if action[1].isdigit():
+                    self.lag_right(int(action[1]) * size, speed * clockwise)
+                else:
+                    rospy.loginfo("Invalid argument in script, executing next action")
+            elif action[0] == "lgl":
+                if action[1].isdigit():
+                    self.lag_left(int(action[1]) * size, speed * clockwise)
+                else:
+                    rospy.loginfo("Invalid argument in script, executing next action")
+            elif action[0] == "div":
+                if action[1].isdigit():
+                    self.dive(int(action[1]))  # research for anticlockwise/reverse dive
+                else:
+                    rospy.loginfo("Invalid argument in script, executing next action")
+            elif action[0] == "rot":
+                if action[1].isdigit():
+                    self.rotate(int(action[1])*clockwise)
+                else:
+                    rospy.loginfo("Invalid argument in script, executing next action")
 
         # TODO create movement patterns config or smth like that
         pass
@@ -134,10 +161,9 @@ class AUV:
         else:
             clockwise = -1
 
-        self.rotate(-clockwise*60)
+        self.rotate(-clockwise * 60)
         self.forward_locked(radius, speed)
         for i in range(5):
-            self.rotate(clockwise*60)
+            self.rotate(clockwise * 60)
             self.forward_locked(radius, speed)
-        self.rotate(clockwise*120)
-
+        self.rotate(clockwise * 120)
