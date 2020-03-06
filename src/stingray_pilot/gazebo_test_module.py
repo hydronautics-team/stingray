@@ -18,6 +18,9 @@ def main():
     auv.forward_locked(1000, 0.3)
     auv.rotate(180)
 
+    # making a dodecagon "circle"
+    auv.execute_pattern("movement_patterns/circle", 1000, 0.4, True, False)
+
 
 if __name__ == '__main__':
     try:
