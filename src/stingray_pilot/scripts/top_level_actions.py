@@ -2,33 +2,33 @@
 
 import rospy
 import actionlib
-import src.stingray_movement_msgs.msg as msg
+import stingray_movement_msgs.msg as msg
 
 
 class AUV:
     """All actions are unlocked and are supposed to be used asynchronously"""
 
     def __init__(self):
-        rospy.loginfo("Initializing action servers")
+        rospy.loginfo("Initializing action clients")
 
-        rospy.loginfo("Plane move init")
+        rospy.loginfo("Lag/march client: Initialization")
         self.MoveClient = actionlib.SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
-        rospy.loginfo("Waiting for server")
+        rospy.loginfo("Lag/march client: Waiting for server")
         self.MoveClient.wait_for_server()
-        rospy.loginfo("Success")
+        rospy.loginfo("Lag/march client: Success")
 
-        rospy.loginfo("Rotation init")
+        rospy.loginfo("Yaw client: Initialization")
         self.RotateClient = actionlib.SimpleActionClient('stingray_action_rotate', msg.RotateAction)
-        rospy.loginfo("Waiting for server")
+        rospy.loginfo("Yaw client: Waiting for server")
         self.absolute_angle = 0
         self.RotateClient.wait_for_server()
-        rospy.loginfo("Success")
+        rospy.loginfo("Yaw client: Success")
 
-        rospy.loginfo("Vertical control init")
+        rospy.loginfo("Dive client: Initialization")
         self.DiveClient = actionlib.SimpleActionClient('stingray_action_dive', msg.DiveAction)
-        rospy.loginfo("Waiting for server")
+        rospy.loginfo("Dive client: Waiting for server")
         self.DiveClient.wait_for_server()
-        rospy.loginfo("Success")
+        rospy.loginfo("Dive client: Success")
 
     @staticmethod
     def callback_active():
@@ -44,7 +44,13 @@ class AUV:
 
     def rotate(self, angle=0):
         self.absolute_angle += angle
-        rospy.loginfo("Absolute angle is %{} now".format(self.absolute_angle))
+
+        if self.absolute_angle > 360:
+            self.absolute_angle -= 360
+        elif self.absolute_angle < -360:
+            self.absolute_angle += 360
+
+        rospy.loginfo("Absolute angle is {} now".format(self.absolute_angle))
 
         if angle != 0:
             goal = msg.RotateGoal(yaw=self.absolute_angle)
@@ -56,9 +62,11 @@ class AUV:
 
     def forward_locked(self, duration=0, velocity=0.0):
         """angle in degrees, duration in ms, velocity is relative(from 0 to 1)"""
+
         if duration != 0 and velocity != 0:
             goal = msg.LinearMoveGoal(direction=1, duration=duration, velocity=velocity)
             rospy.loginfo("Sending goal")
+
             self.MoveClient.send_goal(goal,
                                       active_cb=self.callback_active,
                                       feedback_cb=self.callback_feedback,
