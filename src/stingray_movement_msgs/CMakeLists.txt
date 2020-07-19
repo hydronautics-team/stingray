@@ -69,7 +69,7 @@ add_action_files(
    Dive.action
    Rotate.action
    Align.action
-#   Tack.action
+   Tack.action
 )
 
 ## Generate added messages and services with any dependencies listed here
