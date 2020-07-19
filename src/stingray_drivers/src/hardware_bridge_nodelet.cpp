@@ -56,8 +56,15 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
 
 bool hardware_bridge::lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
                                           stingray_msgs::SetLagAndMarch::Response& lagAndMarchResponse) {
-    requestMessage.march = static_cast<int16_t> (lagAndMarchRequest.march);
-    requestMessage.lag = static_cast<int16_t> (lagAndMarchRequest.lag);
+
+    if (lagStabilizationEnabled) {
+      requestMessage.march = static_cast<int16_t> (0.0);
+      requestMessage.lag = static_cast<int16_t> (0.0);
+      requestMessage.lag_error = static_cast<int16_t> (lagAndMarchRequest.lag);
+    } else {
+      requestMessage.march = static_cast<int16_t> (lagAndMarchRequest.march);
+      requestMessage.lag = static_cast<int16_t> (lagAndMarchRequest.lag);
+    }
 
     isReady = true;
     lagAndMarchResponse.success = true;
