@@ -1,6 +1,8 @@
 #include <patterns/AlignServer.h>
 #include <patterns/AlignLowLevelServer.h>
 
+#include "patterns/TackServer.h"
+
 static const std::string NODE_NAME = "movement_patterns";
 
 static const std::string PARAM_VELOCITY_COEFFICIENT = "velocity_coefficient";
@@ -29,6 +31,7 @@ int main(int argc, char **argv) {
 
   AlignServer alignServer(ACTION_ALIGN, velocityCoefficient);
   AlignLowLevelServer alignLowLevelServer(ACTION_ALIGN_LOW_LEVEL, velocityCoefficient);
+  TackServer server("stingray_action_tack", 1.0);
 
   ros::spin();
 
