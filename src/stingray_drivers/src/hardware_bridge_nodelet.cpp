@@ -56,8 +56,15 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
 
 bool hardware_bridge::lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
                                           stingray_msgs::SetLagAndMarch::Response& lagAndMarchResponse) {
-    requestMessage.march = static_cast<int16_t> (lagAndMarchRequest.march);
-    requestMessage.lag = static_cast<int16_t> (lagAndMarchRequest.lag);
+
+    if (lagStabilizationEnabled) {
+      requestMessage.march = static_cast<int16_t> (0.0);
+      requestMessage.lag = static_cast<int16_t> (0.0);
+      requestMessage.lag_error = static_cast<int16_t> (lagAndMarchRequest.lag);
+    } else {
+      requestMessage.march = static_cast<int16_t> (lagAndMarchRequest.march);
+      requestMessage.lag = static_cast<int16_t> (lagAndMarchRequest.lag);
+    }
 
     isReady = true;
     lagAndMarchResponse.success = true;
@@ -72,7 +79,7 @@ bool hardware_bridge::depthCallback(stingray_msgs::SetInt32::Request& depthReque
         return true;
     }
     NODELET_DEBUG("Setting depth to %d", depthRequest.value);
-    requestMessage.depth	= -(static_cast<int16_t> (depthRequest.value * 10)); // For low-level stabilization purposes
+    requestMessage.depth	= -(static_cast<int16_t> (depthRequest.value * 100)); // For low-level stabilization purposes
     NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.depth);
 
     isReady = true;
@@ -103,6 +110,7 @@ bool hardware_bridge::imuCallback(std_srvs::SetBool::Request& imuRequest,
 
     isReady = true;
     imuResponse.success = true;
+
     return true;
 }
 
@@ -112,6 +120,11 @@ bool hardware_bridge::stabilizationCallback(stingray_msgs::SetStabilization::Req
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
+    NODELET_DEBUG("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, stabilizationRequest.lagStabilization);
+    depthStabilizationEnabled = stabilizationRequest.depthStabilization;
+    yawStabilizationEnabled = stabilizationRequest.yawStabilization;
+    lagStabilizationEnabled = stabilizationRequest.lagStabilization;
 
     isReady = true;
     stabilizationResponse.success = true;

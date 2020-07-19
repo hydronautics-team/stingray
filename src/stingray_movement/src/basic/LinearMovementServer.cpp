@@ -1,5 +1,6 @@
 #include <basic/LinearMovementServer.h>
 
+#include "common/AsyncTimer.h"
 #include <stingray_msgs/SetLagAndMarch.h>
 
 
@@ -22,7 +23,9 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
                             "Duration value must not be less than 0.0");
     return;
   }
-  auto duration = goal->duration / 1000.0;
+
+  ros::Rate checkRate(5);
+  AsyncTimer timer(goal->duration);
 
   auto isStop = false;
 
@@ -33,10 +36,10 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     case stingray_movement_msgs::LinearMoveGoal::DIRECTION_MARCH_BACKWARDS:
       serviceCall.request.march = -velocity;
       break;
-    case stingray_movement_msgs::LinearMoveGoal::DIRECTION_LAG_LEFT:
+    case stingray_movement_msgs::LinearMoveGoal::DIRECTION_LAG_RIGHT:
       serviceCall.request.lag = velocity;
       break;
-    case stingray_movement_msgs::LinearMoveGoal::DIRECTION_LAG_RIGHT:
+    case stingray_movement_msgs::LinearMoveGoal::DIRECTION_LAG_LEFT:
       serviceCall.request.lag = -velocity;
       break;
     case stingray_movement_msgs::LinearMoveGoal::DIRECTION_STOP:
@@ -59,7 +62,12 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     return;
   }
 
-  ros::Duration(duration).sleep();
+  timer.start();
+  bool preempted = false;
+  while (timer.isBusy() && !preempted) {
+    preempted = actionServer.isPreemptRequested() || !ros::ok();
+    checkRate.sleep();
+  }
 
   serviceCall.request.march = 0.0;
   serviceCall.request.lag = 0.0;
@@ -71,5 +79,9 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     return;
   }
 
-  actionServer.setSucceeded();
+  if (!preempted) {
+    actionServer.setSucceeded();
+  } else {
+    actionServer.setPreempted();
+  }
 }
