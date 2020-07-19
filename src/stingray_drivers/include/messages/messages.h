@@ -23,22 +23,6 @@ static const uint8_t ControlAmount = 7;
 /// Number of the devs
 static const uint8_t DevAmount = 6;
 
-/** Enumerator for VMA names
- * H - horizontal, V - verical
- * L - left, R - right
- * B - back, F - forward
- */
-enum VmaNames {
-    VMA_HLB = 0,
-    VMA_HLF,
-    VMA_HRB,
-    VMA_HRF,
-    VMA_VB,
-    VMA_VF,
-    VMA_VL,
-    VMA_VR
-};
-
 /** Enumerator for constants in the automatic control system
  */
 enum ControlConstantNames {
@@ -70,7 +54,7 @@ struct RequestMessage
     RequestMessage();
 
     /// Length in bytes of the normal message protocol
-    const static uint8_t length = 26;
+    const static uint8_t length = 30;
 
     /// Type code for the normal message protocol
     const static uint8_t type = 0xA5;
@@ -82,6 +66,7 @@ struct RequestMessage
     int16_t pitch;
     int16_t yaw;
     int8_t dev[DevAmount];
+    int32_t lag_error;
     uint8_t dev_flags;
     uint8_t stabilize_flags;
     uint8_t cameras;
@@ -136,7 +121,7 @@ struct ResponseMessage
     float yawSpeed;
 
     float depth;
-    float lag;
+    //float lag;
     float in_pressure;
 
     uint8_t dev_state;
@@ -159,6 +144,7 @@ void pushToVector(std::vector<uint8_t> &vector, uint8_t var);
 void pushToVector(std::vector<uint8_t> &vector, int16_t var, bool revert = false);
 void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert = false);
 void pushToVector(std::vector<uint8_t> &vector, float var, bool revert = false);
+void pushToVector(std::vector<uint8_t> &vector, int32_t var, bool revert = false);
 
 void popFromVector(std::vector<uint8_t> &container, int8_t &output);
 void popFromVector(std::vector<uint8_t> &container, uint8_t &output);
