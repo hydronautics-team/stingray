@@ -1,20 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(stingray_movement)
+project(stingray_missions_lib)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
   rospy
   std_msgs
-  actionlib
-  actionlib_msgs
-  stingray_msgs
-  stingray_movement_msgs
+  std_srvs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -24,7 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
+catkin_package()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -107,9 +104,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs actionlib actionlib_msgs stingray_msgs stingray_movement_msgs
-#  LIBRARIES stingray_movement
-#  CATKIN_DEPENDS roscpp
+#  INCLUDE_DIRS include
+#  LIBRARIES stingray_missions_lib
+  CATKIN_DEPENDS rospy std_msgs std_srvs
 #  DEPENDS system_lib
 )
 
@@ -120,13 +117,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
+# include
   ${catkin_INCLUDE_DIRS}
-  "include"
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/stingray_movement.cpp
+#   src/${PROJECT_NAME}/stingray_missions_lib.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -137,31 +134,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(basic_movement
-        include/common/AsyncTimer.h
-        src/common/AsyncTimer.cpp
-        include/common/AbstractMovementActionServer.h
-        include/basic/LinearMovementServer.h
-        src/basic/LinearMovementServer.cpp
-        include/basic/DiveServer.h
-        src/basic/DiveServer.cpp
-        include/basic/RotateServer.h
-        src/basic/RotateServer.cpp
-        src/basic_movement.cpp)
-target_link_libraries(basic_movement ${catkin_LIBRARIES})
-add_dependencies(basic_movement ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
-
-add_executable(movement_patterns
-        include/common/AsyncTimer.h
-        src/common/AsyncTimer.cpp
-        include/common/AbstractMovementActionServer.h
-        include/patterns/AlignServer.h
-        src/patterns/AlignServer.cpp
-        include/patterns/AlignLowLevelServer.h
-        src/patterns/AlignLowLevelServer.cpp
-        src/movement_patterns.cpp)
-target_link_libraries(movement_patterns ${catkin_LIBRARIES})
-add_dependencies(movement_patterns ${stingray_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
+# add_executable(${PROJECT_NAME}_node src/stingray_missions_lib_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -187,10 +160,11 @@ add_dependencies(movement_patterns ${stingray_msgs_EXPORTED_TARGETS} ${stingray_
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
+#install(PROGRAMS
+#        scripts/stingray_missions_lib/missions_fsm.py
+#        scripts/stingray_missions_lib/steering.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+#)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -225,7 +199,7 @@ add_dependencies(movement_patterns ${stingray_msgs_EXPORTED_TARGETS} ${stingray_
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_stingray_movement.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_stingray_missions_lib.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

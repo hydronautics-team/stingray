@@ -36,8 +36,8 @@ std_msgs::Int32 yawMessage;
 geometry_msgs::Twist currentTwist;
 
 
-bool depthStabilizationEnabled = true;
-bool yawStabilizationEnabled = true;
+bool depthStabilizationEnabled = false;
+bool yawStabilizationEnabled = false;
 
 /**
  * Obtains model state from Gazebo, transforms and updates it.
@@ -75,7 +75,7 @@ bool lagAndMarchCallback(stingray_msgs::SetLagAndMarch::Request &request,
                          stingray_msgs::SetLagAndMarch::Response &response) {
 
   currentTwist.linear.x = request.march;
-  currentTwist.linear.y = request.lag;
+  currentTwist.linear.y = -request.lag;
 
   response.success = true;
   return true;
