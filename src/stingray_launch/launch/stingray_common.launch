@@ -66,7 +66,7 @@
         <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
             <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
         </node>
-        <node pkg="stingray_pilot" type="pilot" name="pilot" output="$(arg ros_output)" respawn="true">
+        <node pkg="stingray_pilot" type="pilot" name="stingray_pilot" output="$(arg ros_output)" respawn="true">
 
         </node>
     </group>
