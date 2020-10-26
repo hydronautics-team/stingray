@@ -2,7 +2,20 @@
 <package format="2">
   <name>stingray_vision</name>
   <version>0.1.0</version>
-  <description>The stingray_vision package</description>
+  <description>
+  The stingray_vision package
+  
+  This package contains:
+  - scripts to handle with convolutional neural networks
+  - ...
+
+  Scripts:
+  - opencv_dnn_detector.py
+
+  Supported dnn frameworks and modules:
+  - opencv.dnn module
+
+  </description>
 
   <maintainer email="vladislav.a.plotnikov@yandex.ru">Vladislav Plotnikov</maintainer>
   <license>MIT</license>

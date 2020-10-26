@@ -18,18 +18,18 @@ from sensor_msgs.msg import Image
 
 
 class ObjectDetector:
-    def __init__(self, input_image_topic, confidence, enable_output_image_publishing, package_name_with_net):
+    def __init__(self, input_image_topic, confidence_threshold, enable_output_image_publishing, net_package):
         # get node name
         node_name = rospy.get_name()
         rospy.loginfo("{} node initializing".format(node_name))
         # get paths
         rospack = rospkg.RosPack()
-        path = rospack.get_path(package_name_with_net)
+        path = rospack.get_path(net_package)
         weights_path = os.path.sep.join(
             [path, "net", "frozen_inference_graph.pb"])
         labels_path = os.path.sep.join([path, "net", "labels.json"])
         config_path = os.path.sep.join([path, "net", "opencv_graph.pbtxt"])
-        self.confidence = confidence
+        self.confidence_threshold = confidence_threshold
         # read labels
         with open(labels_path) as json_file:
             self.labels = json.loads(json_file.read())["labels"]
@@ -94,7 +94,7 @@ class ObjectDetector:
                 # publish output image
                 self.image_pub.publish(ros_image)
         except CvBridgeError as e:
-            print(e)
+            rospy.logerr(e)
 
     def detector(self, img):
         # construct a blob from the input image and then perform a
@@ -115,7 +115,7 @@ class ObjectDetector:
             confidence = cvOut[0, 0, i, 2]
             # filter out weak predictions by ensuring the detected probability
             # is greater than the minimum probability
-            if confidence > self.confidence:
+            if confidence > self.confidence_threshold:
                 object_ = {}
                 object_["name"] = self.labels[classID-1]["name"]
                 object_["confidence"] = confidence
@@ -130,6 +130,11 @@ class ObjectDetector:
         return self.deleteMultipleObjects(objects)
 
     def deleteMultipleObjects(self, objects):
+        """This function gets from labels.json a maximum number of objects that can be found and deletes unnecessary.
+
+        Groups by name and kick out ones with lower probability
+        """
+
         # filter founded objects
         # group by name and sort
         groups = [(group_name, list(group)) for group_name, group in groupby(
@@ -182,13 +187,13 @@ if __name__ == '__main__':
     rospy.init_node('object_detector')
     # parameters
     input_image_topic = rospy.get_param('~input_image_topic')
-    dnn_confidence_threshold = rospy.get_param('~dnn_confidence_threshold')
+    confidence_threshold = rospy.get_param('~dnn_confidence_threshold')
     enable_output_image_publishing = rospy.get_param(
         '~enable_output_image_publishing')
-    package_name_with_net = rospy.get_param('~package_name_with_net')
+    net_package = rospy.get_param('~net_package')
     try:
-        ot = ObjectDetector(input_image_topic, dnn_confidence_threshold,
-                            enable_output_image_publishing, package_name_with_net)
+        ot = ObjectDetector(input_image_topic, confidence_threshold,
+                            enable_output_image_publishing, net_package)
         rospy.spin()
     except rospy.ROSInterruptException:
-        print("Shutting down {} node".format(rospy.get_name()))
+        rospy.logerr("Shutting down {} node".format(rospy.get_name()))
