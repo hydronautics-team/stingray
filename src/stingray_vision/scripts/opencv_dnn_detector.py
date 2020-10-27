@@ -18,13 +18,13 @@ from sensor_msgs.msg import Image
 
 
 class ObjectDetector:
-    def __init__(self, input_image_topic, confidence_threshold, enable_output_image_publishing, net_package):
+    def __init__(self, input_image_topic, confidence_threshold, enable_output_image_publishing, dnn_weights_pkg, resize_input_to):
         # get node name
         node_name = rospy.get_name()
         rospy.loginfo("{} node initializing".format(node_name))
         # get paths
         rospack = rospkg.RosPack()
-        path = rospack.get_path(net_package)
+        path = rospack.get_path(dnn_weights_pkg)
         weights_path = os.path.sep.join(
             [path, "net", "frozen_inference_graph.pb"])
         labels_path = os.path.sep.join([path, "net", "labels.json"])
@@ -38,6 +38,12 @@ class ObjectDetector:
         for label in self.labels:
             color = (randint(0, 255), randint(0, 255), randint(0, 255))
             self.colors[label["name"]] = color
+        # load input size
+        (x,y) = resize_input_to.split()
+        self.input_size_x = int(x)
+        self.input_size_y = int(y)
+        rospy.loginfo(type(self.input_size_x))
+        rospy.loginfo(self.input_size_y)
 
         # init cv_bridge
         self.bridge = CvBridge()
@@ -101,7 +107,7 @@ class ObjectDetector:
         # forward pass, giving us the bounding box
         # coordinates of the objects in the image
         self.cvNet.setInput(cv.dnn.blobFromImage(
-            img, size=(300, 300), swapRB=True, crop=False))
+            img, size=(self.input_size_x, self.input_size_y), swapRB=True, crop=False))
         start = time.time()
         cvOut = self.cvNet.forward()
         end = time.time()
@@ -190,10 +196,11 @@ if __name__ == '__main__':
     confidence_threshold = rospy.get_param('~dnn_confidence_threshold')
     enable_output_image_publishing = rospy.get_param(
         '~enable_output_image_publishing')
-    net_package = rospy.get_param('~net_package')
+    dnn_weights_pkg = rospy.get_param('~dnn_weights_pkg')
+    resize_input_to = rospy.get_param('~resize_input_to')
     try:
         ot = ObjectDetector(input_image_topic, confidence_threshold,
-                            enable_output_image_publishing, net_package)
+                            enable_output_image_publishing, dnn_weights_pkg, resize_input_to)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.logerr("Shutting down {} node".format(rospy.get_name()))
