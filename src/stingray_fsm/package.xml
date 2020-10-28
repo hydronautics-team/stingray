@@ -15,7 +15,7 @@
   <depend>rospy</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>stingray_msgs</depend>
+  <depend>stingray_drivers_msgs</depend>
   <depend>stingray_missions_lib</depend>
 
 </package>

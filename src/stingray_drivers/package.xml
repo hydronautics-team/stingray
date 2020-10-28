@@ -17,7 +17,7 @@
   <depend>std_srvs</depend>
   <depend>nav_msgs</depend>
   <depend>serial</depend>
-  <depend>stingray_msgs</depend>
+  <depend>stingray_drivers_msgs</depend>
   <depend>nodelet</depend>
   <depend>pluginlib</depend>
 

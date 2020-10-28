@@ -18,7 +18,7 @@
   <depend>geometry_msgs</depend>
   <depend>actionlib</depend>
   <depend>actionlib_msgs</depend>
-  <depend>stingray_msgs</depend>
+  <depend>stingray_drivers_msgs</depend>
   <depend>stingray_movement_msgs</depend>
 
 </package>

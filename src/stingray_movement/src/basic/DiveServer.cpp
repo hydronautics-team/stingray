@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include <stingray_msgs/SetInt32.h>
+#include <stingray_drivers_msgs/SetInt32.h>
 #include <std_msgs/UInt32.h>
 
 DiveServer::DiveServer(const std::string &actionName) :
@@ -10,7 +10,7 @@ DiveServer::DiveServer(const std::string &actionName) :
                                  stingray_movement_msgs::DiveGoalConstPtr>(actionName, 0.0) {};
 
 void DiveServer::goalCallback(const stingray_movement_msgs::DiveGoalConstPtr &goal) {
-  stingray_msgs::SetInt32 serviceCall;
+  stingray_drivers_msgs::SetInt32 serviceCall;
   serviceCall.request.value = goal->depth;
   auto result = ros::service::call(DEPTH_SERVICE, serviceCall);
   if (!result || !serviceCall.response.success) {
