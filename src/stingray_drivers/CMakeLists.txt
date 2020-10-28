@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   nav_msgs
   serial
-  stingray_msgs
+  stingray_drivers_msgs
   nodelet
 )
 
@@ -109,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_msgs nodelet
+  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_drivers_msgs nodelet
 #  LIBRARIES stingray_connection
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_drivers
@@ -146,7 +146,7 @@ add_library(stingray_connection
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(stingray_connection stingray_msgs_generate_messages_cpp)
+add_dependencies(stingray_connection stingray_drivers_msgs_generate_messages_cpp)
 if(catkin_EXPORTED_LIBRARIES)
     add_dependencies(stingray_connection ${catkin_EXPORTED_LIBRARIES})
 endif()
@@ -171,7 +171,7 @@ add_executable(gazebo_bridge
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(gazebo_bridge stingray_msgs_generate_messages_cpp)
+add_dependencies(gazebo_bridge stingray_drivers_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node

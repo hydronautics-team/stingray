@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_msgs</name>
+  <name>stingray_drivers_msgs</name>
   <version>0.1.0</version>
   <description>Package contains message, service and action definitions of Stingray platform.</description>
 
