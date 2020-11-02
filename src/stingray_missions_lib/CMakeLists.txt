@@ -162,7 +162,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 #install(PROGRAMS
 #        scripts/stingray_missions_lib/missions_fsm.py
-#        scripts/stingray_missions_lib/steering.py
+#        scripts/stingray_missions_lib/controller.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #)
 
