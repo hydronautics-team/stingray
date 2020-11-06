@@ -1,3 +1,4 @@
+import rospy
 from actionlib import SimpleActionClient, SimpleGoalState
 import stingray_movement_msgs.msg
 from .event import EventBase
@@ -148,6 +149,9 @@ class AUVController:
                                 active_cb=None,
                                 feedback_cb=None,
                                 done_cb=None)
+
+        check_rate = rospy.Rate(100)
+
         while True:
             goal_state = action_client.get_state()
             if goal_state == SimpleGoalState.DONE:
@@ -156,3 +160,4 @@ class AUVController:
             if stopping_event.is_triggered():
                 action_client.cancel_goal()
                 return True
+            check_rate.sleep()

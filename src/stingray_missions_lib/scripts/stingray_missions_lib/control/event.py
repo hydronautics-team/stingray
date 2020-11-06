@@ -41,7 +41,7 @@ class TopicEvent(EventBase):
     # TODO: Improve concurrency safety
 
     def __init__(self, topic_name: str, topic_type, trigger_fn,
-                 n_triggers: int = 1, trigger_reset: bool = True, queue_size:int = 2):
+                 n_triggers: int = 1, trigger_reset: bool = True, queue_size: int = 10):
         """The constructor.
 
         :param topic_name: Name of the topic.
@@ -80,7 +80,7 @@ class TopicEvent(EventBase):
         self._triggers_count = 0
         self._topic_sub = rospy.Subscriber(self._topic_name,
                                            self._topic_type,
-                                           callback=self._trigger_fn,
+                                           callback=self._topic_callback,
                                            queue_size=self._queue_size)
 
     def stop_listening(self):
@@ -95,7 +95,7 @@ class ObjectDetectionEvent(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size: int = 1):
+                 n_triggers: int = 1, queue_size: int = 10):
         """The constructor.
 
         :param topic_name: Object detection topic name.
