@@ -12,6 +12,7 @@ bool AsyncTimer::start() {
   busy = true;
   std::thread timerThread([=]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(this->milliseconds));
+    busy = false;
   });
   timerThread.detach();
 

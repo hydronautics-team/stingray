@@ -54,8 +54,7 @@
     <!-- Connection with simulator -->
     <group if="$(arg simulation)">
         <node pkg="stingray_drivers" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
-        <node pkg="stingray_pilot" name="stingray_pilot" type="gazebo_test_module.py" output="$(arg ros_output)" respawn="true" respawn_delay="120"/>
-        <node pkg="stingray_steering_lib" name="stingray_steerer" type="Steerer" output="$(arg ros_output)" respawn="true"/>
+<!--        <node pkg="stingray_pilot" name="stingray_pilot" type="gazebo_test_module.py" output="$(arg ros_output)" respawn="true" respawn_delay="120"/>-->
     </group>
 
     <!-- Movement nodes, real vehicle -->
