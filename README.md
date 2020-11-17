@@ -20,3 +20,7 @@ Do not forget to setup workspace before you start to work:
 ```bash
 source devel/setup.bash
 ```
+
+## Cuda installation
+
+[NVIDIA CUDA Installation Guide for Linux](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
