@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>stingray_devices</name>
+  <version>0.0.1</version>
+  <description>Package with devices API</description>
+
+  <maintainer email="davtart2000@yandex.ru">Davtyan Artyom</maintainer>
+
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>geometry_msgs</depend>
+  <depend>stingray_devices_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>rospy</depend>
+  <depend>roscpp</depend>
+  <depend>smach</depend>
+
+
+</package>
