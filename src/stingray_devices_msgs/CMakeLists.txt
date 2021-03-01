@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(stingray_msgs)
+project(stingray_devices_msgs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -12,8 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
   std_msgs
-  geometry_msgs
-  sensor_msgs
   actionlib_msgs
 )
 
@@ -65,16 +63,14 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 add_service_files(
   FILES
-  SetFloat64.srv
-  SetStabilization.srv
-  SetInt32.srv
-  SetLagAndMarch.srv
+  SetDeviceAction.srv
 )
 
 ## Generate actions in the 'action' folder
-#add_action_files(
-#   FILES
-#)
+add_action_files(
+   FILES
+   UpDown.action
+)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
@@ -84,8 +80,6 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
-  geometry_msgs
-  sensor_msgs
   actionlib_msgs
 )
 
@@ -119,7 +113,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs sensor_msgs message_runtime actionlib_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime actionlib_msgs
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_common
 #  CATKIN_DEPENDS other_catkin_pkg
@@ -194,13 +188,6 @@ include_directories(
 #   PATTERN ".svn" EXCLUDE
 # )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-#[[install(FILES
-   scripts/topics.py
-   scripts/services.py
-   scripts/actions.py
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
- )]]
 
 #############
 ## Testing ##
@@ -214,3 +201,8 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+
+
+
