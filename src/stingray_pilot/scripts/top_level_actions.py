@@ -2,7 +2,7 @@
 
 import rospy
 import actionlib
-import stingray_movement_msgs.msg as msg
+import src.stingray_movement_msgs.msg as msg
 
 
 class AUV:
