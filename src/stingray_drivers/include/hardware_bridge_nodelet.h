@@ -17,7 +17,7 @@
 #include <stingray_msgs/SetLagAndMarch.h>
 #include <stingray_msgs/SetFloat64.h>
 #include <stingray_msgs/SetInt32.h>
-#include <stingray_msgs/SetDeviceAction.h>
+#include <stingray_devices_msgs/SetDeviceAction.h>
 #include <stingray_msgs/SetStabilization.h>
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
@@ -36,8 +36,8 @@ private:
                        stingray_msgs::SetInt32::Response& yawResponse);
     bool imuCallback(std_srvs::SetBool::Request& imuRequest,
                      std_srvs::SetBool::Response& imuResponse);
-    bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request& deviceRequest,
-                              stingray_msgs::SetDeviceAction::Response& deviceResponse);
+    bool deviceActionCallback(stingray_devices_msgs::SetDeviceAction::Request& deviceRequest,
+                              stingray_devices_msgs::SetDeviceAction::Response& deviceResponse);
     bool stabilizationCallback(stingray_msgs::SetStabilization::Request& stabilizationRequest,
                                 stingray_msgs::SetStabilization::Response& stabilizationResponse);
     void timerCallback(const ros::TimerEvent& event);

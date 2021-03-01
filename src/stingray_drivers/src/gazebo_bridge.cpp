@@ -13,7 +13,7 @@
 
 #include <stingray_msgs/SetInt32.h>
 #include <stingray_msgs/SetStabilization.h>
-#include <stingray_msgs/SetDeviceAction.h>
+#include <stingray_devices_msgs/SetDeviceAction.h>
 #include <stingray_msgs/SetLagAndMarch.h>
 
 #include "messages/messages.h"
@@ -163,9 +163,9 @@ bool stabilizationCallback(stingray_msgs::SetStabilization::Request &request,
   return true;
 }
 
-bool deviceActionCallback(stingray_msgs::SetDeviceAction::Request &request,
-                          stingray_msgs::SetDeviceAction::Response &response) {
-  response.success = true;
+bool deviceActionCallback(stingray_devices_msgs::SetDeviceAction::Request& deviceRequest,
+                          stingray_devices_msgs::SetDeviceAction::Response& deviceResponse) {
+  deviceResponse.success = true;
   return true;
 }
 

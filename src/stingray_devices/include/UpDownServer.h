@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <stingray_msgs/UpDownAction.h>
+#include <stingray_devices_msgs/UpDownAction.h>
 
 class UpDownServer {
 
@@ -12,9 +12,9 @@ private:
     std::string deviceActionService;
 
     ros::NodeHandle nodeHandle;
-    actionlib::SimpleActionServer<stingray_msgs::UpDownAction> actionServer;
+    actionlib::SimpleActionServer<stingray_devices_msgs::UpDownAction> actionServer;
 
-    void goalCallback(const stingray_msgs::UpDownGoalConstPtr &goal);
+    void goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr &goal);
 
 public:
 

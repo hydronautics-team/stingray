@@ -131,8 +131,8 @@ bool hardware_bridge::stabilizationCallback(stingray_msgs::SetStabilization::Req
     return true;
 }
 
-bool hardware_bridge::deviceActionCallback(stingray_msgs::SetDeviceAction::Request& deviceRequest,
-                                           stingray_msgs::SetDeviceAction::Response& deviceResponse) {
+bool hardware_bridge::deviceActionCallback(stingray_devices_msgs::SetDeviceAction::Request& deviceRequest,
+                                           stingray_devices_msgs::SetDeviceAction::Response& deviceResponse) {
     ROS_INFO("Setting device [%d] action value to %d", deviceRequest.device, deviceRequest.value);
     requestMessage.dev[deviceRequest.device]  = deviceRequest.value;
 
