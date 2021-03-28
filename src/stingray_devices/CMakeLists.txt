@@ -105,7 +105,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-
+catkin_package(
+  CATKIN_DEPENDS roscpp std_msgs actionlib actionlib_msgs stingray_devices_msgs
+#  LIBRARIES stingray_movement
+#  CATKIN_DEPENDS roscpp
+#  DEPENDS system_lib
+)
 
 ###########
 ## Build ##
@@ -114,7 +119,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  "include"
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -128,7 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(stingray_devices
+add_executable(updown_device
         src/UpDownServer.cpp
         src/Devices.cpp
         include/UpDownServer.h
@@ -144,8 +149,8 @@ add_executable(stingray_devices
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(stingray_devices ${catkin_LIBRARIES})
-add_dependencies(stingray_devices ${stingray_devices_msgs_EXPORTED_TARGETS})
+target_link_libraries(updown_device ${catkin_LIBRARIES})
+add_dependencies(updown_device ${stingray_devices_msgs_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
