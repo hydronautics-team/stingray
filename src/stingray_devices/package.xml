@@ -15,9 +15,9 @@
   <depend>nav_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>rospy</depend>
   <depend>roscpp</depend>
-  <depend>smach</depend>
+  <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
 
 
 </package>

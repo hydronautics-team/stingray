@@ -2,7 +2,7 @@
 #include <string>
 #include "../include/UpDownServer.h"
 
-static const std::string NODE_NAME = "stingray_devices";
+static const std::string NODE_NAME = "updown_device";
 
 static const std::string UPDOWN_ACTION = "stingray_action_updown";
 
