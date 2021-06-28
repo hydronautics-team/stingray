@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(stingray_fsm)
+cmake_minimum_required(VERSION 3.0.2)
+project(stingray_vision)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,11 +8,11 @@ project(stingray_fsm)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  roscpp
   rospy
+  sensor_msgs
   std_msgs
-  std_srvs
-  stingray_drivers_msgs
-  stingray_missions_lib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,7 +72,7 @@ catkin_python_setup()
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   sensor_msgs#   std_msgs
 # )
 
 ################################################
@@ -106,8 +106,8 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES stingray_fsm
-  CATKIN_DEPENDS rospy std_msgs std_srvs stingray_drivers_msgs stingray_missions_lib
+#  LIBRARIES stingray_vision_2
+ CATKIN_DEPENDS cv_bridge roscpp rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -124,7 +124,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/stingray_fsm.cpp
+#   src/${PROJECT_NAME}/stingray_vision_2.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -135,7 +135,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/stingray_fsm_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/stingray_vision_2_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -161,11 +161,9 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS
-#   scripts/my_python_script
-   scripts/states/special_states.py
-   scripts/control_fsm_node.py
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+catkin_install_python(PROGRAMS
+        scripts/opencv_dnn_detector.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark executables for installation
@@ -201,7 +199,7 @@ install(PROGRAMS
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_stingray_fsm.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_stingray_vision_2.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
