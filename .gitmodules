@@ -1,3 +1,6 @@
 [submodule "src/control/serial"]
 	path = src/control/serial
 	url = https://github.com/wjwwood/serial.git
+[submodule "src/zed-ros-wrapper"]
+	path = src/zed-ros-wrapper
+	url = https://github.com/stereolabs/zed-ros-wrapper.git

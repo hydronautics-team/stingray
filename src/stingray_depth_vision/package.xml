@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>stingray_depth_vision</name>
+  <version>0.0.1</version>
+  <description>The stingray_depth_vision package</description>
+
+  <maintainer email="sofin.vadim.shared@gmail.com">Sofin Vadim</maintainer>
+
+  <license>MIT</license>
+
+  <author email="sofin.vadim.shared@gmail.com">Sofin Vadim</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <export></export>
+</package>
