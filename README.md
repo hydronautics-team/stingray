@@ -1,10 +1,10 @@
 # stingray
-Autonomous underwater vehicle platform based on ROS
+Autonomous underwater vehicle platform based on ROS2 Galactic
 
 ## Building
 Install dependencies:
 ```bash
-sudo apt-get install ros-melodic-rosbridge-server ros-melodic-web-video-server ros-melodic-image-view ros-melodic-actionlib ros-melodic-serial ros-melodic-smach ros-melodic-smach-viewer
+sudo apt-get install ros-galactic-desktop
 ```
 Initialize and update git submodules used in project:
 ```bash
@@ -13,10 +13,10 @@ git submodule update
 ```
 Use following commands to build:
 ```bash
-source /opt/ros/melodic/setup.bash
-catkin_make
+source /opt/ros/galactic/setup.bash
+colcon build
 ```
 Do not forget to setup workspace before you start to work:
 ```bash
-source devel/setup.bash
+source install/setup.bash
 ```
