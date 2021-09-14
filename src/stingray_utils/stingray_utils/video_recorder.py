@@ -1,16 +1,16 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
 import cv2
 import numpy as np
 import datetime
 import time
 import os
 
-import rospy
+import rclpy
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+
+
+# TODO cleanup and refactor
 
 
 def opencv_version():
@@ -24,9 +24,15 @@ def opencv_version():
     raise Exception('opencv version can not be parsed. v={}'.format(v))
 
 
+class VideoRecorderNode(rclpy.Node):
+    def __init__(self, name):
+        super(VideoRecorderNode, self).__init__(name)
+
+
 class VideoFrames:
-    def __init__(self, image_topic, target_x, target_y, target_w, target_h):
-        self.image_sub = rospy.Subscriber(image_topic, Image, self.callback_image, queue_size=1)
+    def __init__(self, image_topic, target_x, target_y, target_w, target_h, working_node: VideoRecorderNode):
+        self.node = working_node
+        self.image_sub = self.node.create_subscription(Image, image_topic, self.callback_image, 1)
         self.bridge = CvBridge()
         self.frames = []
         self.target_x, self.target_y, self.target_w, self.target_h = target_x, target_y, target_w, target_h
@@ -35,7 +41,7 @@ class VideoFrames:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
-            rospy.logerr('[ros-video-recorder][VideoFrames] Converting Image Error. ' + str(e))
+            self.node.get_logger().error('[ros-video-recorder][VideoFrames] Converting Image Error. ' + str(e))
             return
 
         self.frames.append((time.time(), cv_image))
@@ -53,10 +59,12 @@ class VideoFrames:
 
 
 class VideoRecorder:
-    def __init__(self, output_width, output_height, output_fps, output_format, output_path, source):
+    def __init__(self, output_width, output_height, output_fps, output_format, output_path, source, node: VideoRecorderNode):
+        self.node = node
         self.frame_wrappers = []
         self.start_time = -1
         self.end_time = -1
+        self.rate = None
         self.pub_img = None
         self.bridge = CvBridge()
 
@@ -79,11 +87,12 @@ class VideoRecorder:
         else:
             self.video_writer = None
 
-        vf = VideoFrames(source, target_x=0, target_y=0, target_w=640, target_h=480)
+        vf = VideoFrames(source, target_x=0, target_y=0, target_w=640, target_h=480, working_node=self.node)
 
         self.frame_wrappers.append(vf)
 
     def start_record(self):
+        self.rate = self.node.create_rate(self.fps)
         self.start_time = time.time()
         curr_time = self.start_time
         while self.end_time < 0 or curr_time <= self.end_time:
@@ -106,15 +115,15 @@ class VideoRecorder:
                     try:
                         self.pub_img.publish(self.bridge.cv2_to_imgmsg(canvas, 'bgr8'))
                     except CvBridgeError as e:
-                        rospy.logerr('cvbridgeerror, e={}'.format(str(e)))
+                        self.node.get_logger().error('cvbridgeerror, e={}'.format(str(e)))
                         pass
-                rospy.sleep(0.01)
+                self.rate.sleep()
 
-                if rospy.is_shutdown() and self.end_time < 0:
+                if not self.node.context.ok() and self.end_time < 0:
                     self.terminate()
 
                 while curr_time + self.interval > time.time():
-                    rospy.sleep(self.interval)
+                    self.rate.sleep()
 
                 curr_time += self.interval
             except KeyboardInterrupt:
@@ -125,20 +134,26 @@ class VideoRecorder:
             self.video_writer.release()
 
     def terminate(self):
-        rospy.loginfo("[ros-video-recorder] Video Saved. path={}".format(self.output_path))
+        self.node.get_logger().info("[ros-video-recorder] Video Saved. path={}".format(self.output_path))
         self.end_time = time.time()
 
 
-if __name__ == '__main__':
-    rospy.init_node('video_recorder', anonymous=True)
+def main(*args, **kwargs):
+    node = VideoRecorderNode("stingray_recorder")
 
     # parameters
-    source_topic = rospy.get_param('~source_topic')
-    output_width = int(rospy.get_param('~output_width', '640'))
-    output_height = int(rospy.get_param('~output_height', '480'))
-    output_fps = int(rospy.get_param('~output_fps', '30'))
-    output_format = rospy.get_param('~output_format', 'h264')
-    output_path = rospy.get_param('~record_dir', './records/')
+    source_topic = node.get_parameter('~source_topic').value()
+    output_width = int(node.get_parameter_or('~output_width', rclpy.Parameter(
+        'int', rclpy.Parameter.Type.INTEGER, 640)).value())
+    output_height = int(node.get_parameter_or('~output_height', rclpy.Parameter(
+        'int', rclpy.Parameter.Type.INTEGER, 480)).value())
+    output_fps = int(node.get_parameter_or('~output_fps', rclpy.Parameter(
+        'int', rclpy.Parameter.Type.INTEGER, 30)).value())
+    output_format = node.get_parameter_or('~output_format', rclpy.Parameter(
+        'str', rclpy.Parameter.Type.STRING, 'h264')).value()
+
+    output_path = node.get_parameter_or('~record_dir', rclpy.Parameter(
+        'str', rclpy.Parameter.Type.STRING, './records/')).value()
 
     if output_path[-1] != '/':
         output_path += '/'
@@ -156,6 +171,10 @@ if __name__ == '__main__':
     try:
         ft.start_record()
     except KeyboardInterrupt:
-        rospy.logerr("[ros-video-recorder] Shutting down+")
+        node.get_logger().error("[ros-video-recorder] Shutting down+")
 
     ft.terminate()
+
+
+if __name__ == '__main__':
+    main()
