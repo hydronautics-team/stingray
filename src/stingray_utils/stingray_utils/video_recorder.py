@@ -5,13 +5,13 @@ import time
 import os
 
 import rclpy
+from rclpy.node import Node
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 
 # TODO cleanup and refactor
-
 
 def opencv_version():
     v = cv2.__version__.split('.')[0]
@@ -24,9 +24,15 @@ def opencv_version():
     raise Exception('opencv version can not be parsed. v={}'.format(v))
 
 
-class VideoRecorderNode(rclpy.Node):
+class VideoRecorderNode(Node):
     def __init__(self, name):
         super(VideoRecorderNode, self).__init__(name)
+        self.declare_parameter('source_topic')
+        self.declare_parameter('output_width')
+        self.declare_parameter('output_height')
+        self.declare_parameter('output_fps')
+        self.declare_parameter('output_format')
+        self.declare_parameter('record_dir')
 
 
 class VideoFrames:
@@ -59,7 +65,8 @@ class VideoFrames:
 
 
 class VideoRecorder:
-    def __init__(self, output_width, output_height, output_fps, output_format, output_path, source, node: VideoRecorderNode):
+    def __init__(self, output_width, output_height, output_fps,
+                 output_format, output_path, source, node: VideoRecorderNode):
         self.node = node
         self.frame_wrappers = []
         self.start_time = -1
@@ -139,21 +146,22 @@ class VideoRecorder:
 
 
 def main(*args, **kwargs):
+    rclpy.init()
     node = VideoRecorderNode("stingray_recorder")
 
     # parameters
-    source_topic = node.get_parameter('~source_topic').value()
-    output_width = int(node.get_parameter_or('~output_width', rclpy.Parameter(
-        'int', rclpy.Parameter.Type.INTEGER, 640)).value())
-    output_height = int(node.get_parameter_or('~output_height', rclpy.Parameter(
-        'int', rclpy.Parameter.Type.INTEGER, 480)).value())
-    output_fps = int(node.get_parameter_or('~output_fps', rclpy.Parameter(
-        'int', rclpy.Parameter.Type.INTEGER, 30)).value())
-    output_format = node.get_parameter_or('~output_format', rclpy.Parameter(
-        'str', rclpy.Parameter.Type.STRING, 'h264')).value()
+    source_topic = node.get_parameter('source_topic').value
+    output_width = int(node.get_parameter_or('output_width', rclpy.Parameter(
+        'int', rclpy.Parameter.Type.INTEGER, 640)).value)
+    output_height = int(node.get_parameter_or('output_height', rclpy.Parameter(
+        'int', rclpy.Parameter.Type.INTEGER, 480)).value)
+    output_fps = int(node.get_parameter_or('output_fps', rclpy.Parameter(
+        'int', rclpy.Parameter.Type.INTEGER, 30)).value)
+    output_format = node.get_parameter_or('output_format', rclpy.Parameter(
+        'str', rclpy.Parameter.Type.STRING, 'h264')).value
 
-    output_path = node.get_parameter_or('~record_dir', rclpy.Parameter(
-        'str', rclpy.Parameter.Type.STRING, './records/')).value()
+    output_path = node.get_parameter_or('record_dir', rclpy.Parameter(
+        'str', rclpy.Parameter.Type.STRING, './records/')).value
 
     if output_path[-1] != '/':
         output_path += '/'
@@ -165,7 +173,7 @@ def main(*args, **kwargs):
         path_part = path_part[1:]
     output_path += path_part + '_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.avi'
 
-    ft = VideoRecorder(output_width, output_height, output_fps, output_format, output_path, source_topic)
+    ft = VideoRecorder(output_width, output_height, output_fps, output_format, output_path, source_topic, node=node)
 
     # recording.
     try:
