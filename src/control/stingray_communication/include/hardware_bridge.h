@@ -30,7 +30,7 @@ public:
     HardwareBridge() : Node("hardware_bridge");
 
 private:
-    void inputMessage_callback(const std_msgs::msg::UInt8MultiArrayConstPtr::SharedPtr msg);
+    void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const;
     void lagAndMarchCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetLagAndMarch::Request> request,
                              std::shared_ptr <tutorial_interfaces::srv::SetLagAndMarch::Response> response);
     void depthCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Request> request,
@@ -45,13 +45,15 @@ private:
     void
     stabilizationCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetStabilization::Request> request,
                           std::shared_ptr <tutorial_interfaces::srv::SetStabilization::Response> response);
-    void timerCallback();
+    void timer_callback();
+
+private:
     // ROS publishers
-    rclcpp::Publisher<std_msgs::msg::UInt8MultiArrayConstPtr>::SharedPtr outputMessagePublisher;
+    rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessagePublisher;
     rclcpp::Publisher<std_msgs::msg::UInt32>::SharedPtr depthPublisher;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr yawPublisher;
     // ROS subscribers
-    rclcpp::Subscription<std_msgs::msg::UInt8MultiArrayConstPtr>::SharedPtr inputMessageSubscriber;
+    rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr inputMessageSubscriber;
     // ROS services
     rclcpp::Service<stingray_communication_msgs::srv::SetLagAndMarch>::SharedPtr lagAndMarchService;
     rclcpp::Service<stingray_communication_msgs::srv::SetInt32>::SharedPtr depthService;
@@ -62,7 +64,7 @@ private:
     // Other
     rclcpp::TimerBase::SharedPtr publishingTimer; // Timer for publishing messages
     // Message containers
-    std_msgs::msg::UInt8MultiArrayConstPtr outputMessage; // Hardware bridge -> Protocol_bridge
+    std_msgs::msg::UInt8MultiArray outputMessage; // Hardware bridge -> Protocol_bridge
     std_msgs::msg::UInt32 depthMessage;
     std_msgs::msg::Int32 yawMessage;
     RequestMessage requestMessage;
