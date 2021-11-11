@@ -5,7 +5,7 @@
  */
 
 #include <pluginlib/class_list_macros.h>
-#include "../include/uart_driver_nodelet.h"
+#include "../include/uart_bridge.h"
 
 static const std::string    UART_DRIVER_NODE_NAME   = "uart_driver";
 static const std::string    PARAM_DEVICE            = "device";

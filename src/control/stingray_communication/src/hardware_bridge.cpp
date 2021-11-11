@@ -5,7 +5,7 @@
  */
 
 #include <pluginlib/class_list_macros.h>
-#include "../include/hardware_bridge_nodelet.h"
+#include "../include/hardware_bridge.h"
 
 void hardware_bridge::onInit() {
     // Initializing nodelet and parameters
