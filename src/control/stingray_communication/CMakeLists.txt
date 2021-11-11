@@ -17,7 +17,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(serial REQUIRED)
-find_package(stingray_drivers_msgs REQUIRED)
+find_package(stingray_communication_msgs REQUIRED)
 
 
 include_directories(
@@ -29,7 +29,7 @@ add_executable(gazebo_bridge
         include/TopicsAndServices.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(gazebo_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_drivers_msgs)
+ament_target_dependencies(gazebo_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs)
 
 add_executable(uart_bridge
         src/uart_bridge.cpp
@@ -37,7 +37,7 @@ add_executable(uart_bridge
         include/TopicsAndServices.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(uart_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_drivers_msgs)
+ament_target_dependencies(uart_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs)
 
 add_executable(hardware_bridge
         src/hardware_bridge.cpp
@@ -45,7 +45,7 @@ add_executable(hardware_bridge
         include/TopicsAndServices.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(hardware_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_drivers_msgs)
+ament_target_dependencies(hardware_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs)
 
 install(TARGETS
         hardware_bridge
