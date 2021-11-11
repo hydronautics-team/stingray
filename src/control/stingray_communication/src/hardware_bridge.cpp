@@ -4,8 +4,33 @@
  * - receives byte array from protocol_bridge, parses it and publishes it
  */
 
-#include <pluginlib/class_list_macros.h>
 #include "../include/hardware_bridge.h"
+
+void HardwareBridge::HardwareBridge() {
+
+    inputMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArrayConstPtr>(INPUT_PARCEL_TOPIC,
+                                                                                               1000,
+                                                                                               std::bind(
+                                                                                                       &MinimalSubscriber::inputMessage_callback,
+                                                                                                       this, _1));
+
+}
+
+void HardwareBridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg) {
+    std::vector<uint8_t> received_vector;
+    for(int i = 0; i < ResponseMessage::length; i++) {
+        received_vector.push_back(msg->data[i]);
+    }
+    bool ok = responseMessage.parseVector(received_vector);
+    if (ok) {
+        NODELET_DEBUG("Received depth: %f", responseMessage.depth);
+        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
+        // TODO: Test yaw obtaining
+        yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
+    }
+    else
+        NODELET_ERROR("Wrong checksum");
+}
 
 void hardware_bridge::onInit() {
     // Initializing nodelet and parameters
@@ -36,22 +61,6 @@ void hardware_bridge::onInit() {
     // Initializing timer for publishing messages. Callback interval: 0.05 ms
     publishingTimer = nodeHandle.createTimer(ros::Duration(0.05),
             &hardware_bridge::timerCallback, this);
-}
-
-void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg) {
-    std::vector<uint8_t> received_vector;
-    for(int i = 0; i < ResponseMessage::length; i++) {
-        received_vector.push_back(msg->data[i]);
-    }
-    bool ok = responseMessage.parseVector(received_vector);
-    if (ok) {
-        NODELET_DEBUG("Received depth: %f", responseMessage.depth);
-        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
-        // TODO: Test yaw obtaining
-        yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
-    }
-    else
-        NODELET_ERROR("Wrong checksum");
 }
 
 bool hardware_bridge::lagAndMarchCallback(stingray_drivers_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
@@ -163,4 +172,18 @@ void hardware_bridge::timerCallback(const ros::TimerEvent& event) {
 
 }
 
-PLUGINLIB_EXPORT_CLASS(hardware_bridge, nodelet::Nodelet);
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<MinimalSubscriber>());
+
+    std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("add_three_ints_server");
+
+    rclcpp::Service<tutorial_interfaces::srv::AddThreeInts>::SharedPtr service =
+            node->create_service<tutorial_interfaces::srv::AddThreeInts>("add_three_ints", &add);
+
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Ready to add three ints.");
+
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+}
