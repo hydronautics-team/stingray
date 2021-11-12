@@ -22,24 +22,24 @@ static const std::string DEFAULT_PARITY = PARITY_NONE;
 static const int DEFAULT_STOP_BITS = 1;
 static const int DEFAULT_SERIAL_TIMEOUT = 1000; // Needed for serial port library
 
-void UartBridge::UartBridge() : Node(UART_BRIDGE_NODE_NAME) {
+UartBridge::UartBridge() : Node(UART_BRIDGE_NODE_NAME) {
     //Serial port initialization
-    portInitialize(nodeHandle);
+    portInitialize();
     // ROS publishers
     outputMessage_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>(INPUT_PARCEL_TOPIC, 1000);
     // ROS subscribers
     inputMessage_sub = this->create_subscription<std_msgs::msg::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 1000,
                                                                                  std::bind(
-                                                                                         &HardwareBridge::inputMessage_callback,
+                                                                                         &UartBridge::inputMessage_callback,
                                                                                          this, _1));
     // Input message container
-    inputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    inputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
     inputMessage.layout.dim[0].size = RequestMessage::length;
     inputMessage.layout.dim[0].stride = RequestMessage::length;
     inputMessage.layout.dim[0].label = "inputMessage";
     inputMessage.data = {0};
     // Outnput message container
-    outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    outputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
     outputMessage.layout.dim[0].size = ResponseMessage::length;
     outputMessage.layout.dim[0].stride = ResponseMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
@@ -51,7 +51,7 @@ void UartBridge::UartBridge() : Node(UART_BRIDGE_NODE_NAME) {
  * Closes port if it is closed, initialized it
  * with given parameter and DOES NOT OPEN IT.
  */
-void UartBridge::portInitialize(ros::NodeHandle &nodeHandle) {
+void UartBridge::portInitialize() {
     std::string device;
     this->declare_parameter<std::string>(PARAM_DEVICE, DEFAULT_DEVICE);
     this->get_parameter(PARAM_DEVICE, device);

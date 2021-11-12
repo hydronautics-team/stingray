@@ -1,9 +1,9 @@
 #ifndef STINGRAY_COMMUNICATION_UART_BRIDGE_H
 #define STINGRAY_COMMUNICATION_UART_BRIDGE_H
 
-
-#include "std_msgs/msg/UInt16.hpp"
-#include "std_msgs/msg/UInt8MultiArray.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/u_int16.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 #include <serial/serial.h>
 #include <sstream>
 #include <string>
@@ -11,13 +11,16 @@
 #include "messages/messages.h"
 #include "topics_and_services.h"
 
+using std::placeholders::_1;
+
+
 class UartBridge : public rclcpp::Node {
 public:
     UartBridge();
 
 private:
     void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const;
-    void portInitialize(ros::NodeHandle& nodeHandle);
+    void portInitialize();
     bool sendData();
     bool receiveData();
 
