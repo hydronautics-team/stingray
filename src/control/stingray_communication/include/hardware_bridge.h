@@ -8,7 +8,7 @@
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/u_int8_multi_array.hpp"
 #include "geometry_msgs/msg/twist.hpp"
-#include <std_srvs/srv/set_bool.h>
+#include <std_srvs/srv/set_bool.hpp>
 
 #include "stingray_communication_msgs/srv/set_device_action.hpp"
 #include "stingray_communication_msgs/srv/set_float64.hpp"
@@ -23,14 +23,12 @@
 #include <vector>
 
 
-using std::placeholders::_1;
-
 class HardwareBridge : public rclcpp::Node {
 public:
     HardwareBridge();
 
 private:
-    void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const;
+    void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg);
     void lagAndMarchCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetLagAndMarch::Request> request,
                              std::shared_ptr <stingray_communication_msgs::srv::SetLagAndMarch::Response> response);
     void depthCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Request> request,

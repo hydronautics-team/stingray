@@ -46,20 +46,22 @@ UartBridge::UartBridge() : Node(UART_BRIDGE_NODE_NAME) {
     outputMessage.data = {0};
 }
 
+
 /**
  * Initialasing serial port
  * Closes port if it is closed, initialized it
  * with given parameter and DOES NOT OPEN IT.
  */
 void UartBridge::portInitialize() {
+
     std::string device;
     this->declare_parameter<std::string>(PARAM_DEVICE, DEFAULT_DEVICE);
     this->get_parameter(PARAM_DEVICE, device);
     int baudrate;
-    this->declare_parameter<std::string>(PARAM_BAUDRATE, DEFAULT_BAUDRATE);
+    this->declare_parameter<int>(PARAM_BAUDRATE, DEFAULT_BAUDRATE);
     this->get_parameter(PARAM_BAUDRATE, baudrate);
     int dataBytesInt;
-    this->declare_parameter<std::string>(PARAM_DATA_BYTES, DEFAULT_DATA_BYTES);
+    this->declare_parameter<int>(PARAM_DATA_BYTES, DEFAULT_DATA_BYTES);
     this->get_parameter(PARAM_DATA_BYTES, dataBytesInt);
     serial::bytesize_t dataBytes;
     switch (dataBytesInt) {
@@ -96,7 +98,7 @@ void UartBridge::portInitialize() {
         return;
     }
     int stopBitsInt;
-    this->declare_parameter<std::string>(PARAM_STOP_BITS, DEFAULT_STOP_BITS);
+    this->declare_parameter<int>(PARAM_STOP_BITS, DEFAULT_STOP_BITS);
     this->get_parameter(PARAM_STOP_BITS, stopBitsInt);
     serial::stopbits_t stopBits;
     switch (stopBitsInt) {
@@ -124,7 +126,9 @@ void UartBridge::portInitialize() {
     port.setStopbits(stopBits);
 }
 
+
 bool UartBridge::sendData() {
+
     std::vector <uint8_t> msg;
     for (int i = 0; i < RequestMessage::length; i++)
         msg.push_back(inputMessage.data[i]);
@@ -140,7 +144,9 @@ bool UartBridge::sendData() {
     }
 }
 
+
 bool UartBridge::receiveData() {
+
     if (port.available() < ResponseMessage::length)
         return false;
     std::vector <uint8_t> answer;
@@ -149,16 +155,17 @@ bool UartBridge::receiveData() {
     for (int i = 0; i < ResponseMessage::length; i++)
         outputMessage.data.push_back(answer[i]);
     RCLCPP_DEBUG(this->get_logger(), "RECEIVE FROM STM");
-
     return true;
 }
+
 
 /** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
   *
   * @param[in]  &input String to parse.
   */
-void UartBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const {
-    RCLCPP_DEBUG(this->get_logger(), UART_BRIDGE_NODE_NAME + " message callback");
+void UartBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
+
+    RCLCPP_DEBUG_STREAM(this->get_logger(), UART_BRIDGE_NODE_NAME << " message callback");
     inputMessage.data.clear();
     for (int i = 0; i < RequestMessage::length; i++)
         inputMessage.data.push_back(msg->data[i]);
@@ -178,9 +185,23 @@ void UartBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::Sha
         return;
     }
     if (receiveData())
-        outputMessage_pub.publish(outputMessage);
+        outputMessage_pub->publish(outputMessage);
     else {
         RCLCPP_ERROR(this->get_logger(), "Unable to receive message from STM32");
         return;
     }
+}
+
+
+/*!
+ * @brief Main loop
+ * @param argc
+ * @param argv
+ * @return
+ */
+int main(int argc, char **argv) {
+
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<UartBridge>());
+    rclcpp::shutdown();
 }

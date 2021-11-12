@@ -19,7 +19,7 @@ public:
     UartBridge();
 
 private:
-    void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const;
+    void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg);
     void portInitialize();
     bool sendData();
     bool receiveData();

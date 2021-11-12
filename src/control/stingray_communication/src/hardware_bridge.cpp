@@ -6,13 +6,16 @@
 
 #include "../include/hardware_bridge.h"
 
+using std::placeholders::_1;
+using namespace std::chrono_literals;
+
 
 HardwareBridge::HardwareBridge() : Node("hardware_bridge") {
 
     // ROS publishers
     outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 1000);
-    depthPublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(DEPTH_PUBLISH_TOPIC, 1000);
-    yawPublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(YAW_PUBLISH_TOPIC, 20);
+    depthPublisher = this->create_publisher<std_msgs::msg::UInt32>(DEPTH_PUBLISH_TOPIC, 1000);
+    yawPublisher = this->create_publisher<std_msgs::msg::Int32>(YAW_PUBLISH_TOPIC, 20);
 
     // ROS subscribers
     inputMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(INPUT_PARCEL_TOPIC, 1000,
@@ -22,27 +25,32 @@ HardwareBridge::HardwareBridge() : Node("hardware_bridge") {
 
     // ROS services
     lagAndMarchService = this->create_service<stingray_communication_msgs::srv::SetLagAndMarch>(
-            SET_LAG_AND_MARCH_SERVICE, &HardwareBridge::lagAndMarchCallback);
-    depthService = this->create_service<stingray_communication_msgs::srv::SetInt32>(SET_DEPTH_SERVICE,
-                                                                                    &HardwareBridge::depthCallback);
-    yawService = this->create_service<stingray_communication_msgs::srv::SetInt32>(SET_YAW_SERVICE,
-                                                                                  &HardwareBridge::yawCallback);
-    imuService = this->create_service<std_srvs::srv::SetBool>(SET_IMU_ENABLED_SERVICE,
-                                                                                 &HardwareBridge::imuCallback);
-    stabilizationService = this->create_service<stingray_communication_msgs::srv::SetDeviceAction>(
-            SET_STABILIZATION_SERVICE,
-            &HardwareBridge::stabilizationCallback);
-    deviceActionService = this->create_service<stingray_communication_msgs::srv::SetStabilization>(SET_DEVICE_SERVICE,
-                                                                                                   &HardwareBridge::deviceActionCallback);
+            SET_LAG_AND_MARCH_SERVICE, std::bind(
+                    &HardwareBridge::lagAndMarchCallback, this, std::placeholders::_1, std::placeholders::_2));
+    depthService = this->create_service<stingray_communication_msgs::srv::SetInt32>(SET_DEPTH_SERVICE, std::bind(
+            &HardwareBridge::depthCallback, this, std::placeholders::_1, std::placeholders::_2));
+    yawService = this->create_service<stingray_communication_msgs::srv::SetInt32>(SET_YAW_SERVICE, std::bind(
+            &HardwareBridge::yawCallback, this, std::placeholders::_1, std::placeholders::_2));
+    imuService = this->create_service<std_srvs::srv::SetBool>(SET_IMU_ENABLED_SERVICE, std::bind(
+            &HardwareBridge::imuCallback, this, std::placeholders::_1, std::placeholders::_2));
+    stabilizationService = this->create_service<stingray_communication_msgs::srv::SetStabilization>(
+            SET_STABILIZATION_SERVICE, std::bind(
+                    &HardwareBridge::stabilizationCallback, this, std::placeholders::_1, std::placeholders::_2));
+    deviceActionService = this->create_service<stingray_communication_msgs::srv::SetDeviceAction>(SET_DEVICE_SERVICE,
+                                                                                                  std::bind(
+                                                                                                          &HardwareBridge::deviceActionCallback,
+                                                                                                          this,
+                                                                                                          std::placeholders::_1,
+                                                                                                          std::placeholders::_2));
 
     // Output message container
-    outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
+    outputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
     outputMessage.layout.dim[0].size = RequestMessage::length;
     outputMessage.layout.dim[0].stride = RequestMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
 
     // Initializing timer for publishing messages. Callback interval: 0.05 ms
-    timer_ = this->create_wall_timer(50ms, std::bind(&HardwareBridge::timer_callback, this));
+    publishingTimer = this->create_wall_timer(50ms, std::bind(&HardwareBridge::timer_callback, this));
 }
 
 
@@ -50,7 +58,7 @@ HardwareBridge::HardwareBridge() : Node("hardware_bridge") {
  * @brief Input message callback
  * @param msg
  */
-void HardwareBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const {
+void HardwareBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
 
     std::vector <uint8_t> received_vector;
     for (int i = 0; i < ResponseMessage::length; i++) {
@@ -73,22 +81,21 @@ void HardwareBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray:
  * @param response
  * @return
  */
-bool HardwareBridge::lagAndMarchCallback(
+void HardwareBridge::lagAndMarchCallback(
         const std::shared_ptr <stingray_communication_msgs::srv::SetLagAndMarch::Request> request,
         std::shared_ptr <stingray_communication_msgs::srv::SetLagAndMarch::Response> response) {
 
     if (lagStabilizationEnabled) {
-        request.march = static_cast<int16_t> (0.0);
-        request.lag = static_cast<int16_t> (0.0);
-        request.lag_error = static_cast<int16_t> (lagAndMarchRequest.lag);
+        request->march = static_cast<int16_t> (0.0);
+        request->lag = static_cast<int16_t> (0.0);
+        request->lag_error = static_cast<int16_t> (request->lag);
     } else {
-        request.march = static_cast<int16_t> (lagAndMarchRequest.march);
-        request.lag = static_cast<int16_t> (lagAndMarchRequest.lag);
+        request->march = static_cast<int16_t> (request->march);
+        request->lag = static_cast<int16_t> (request->lag);
     }
-
     isReady = true;
-    response.success = true;
-    return true;
+    response->success = true;
+//    return true;
 }
 
 
@@ -98,21 +105,20 @@ bool HardwareBridge::lagAndMarchCallback(
  * @param response
  * @return
  */
-bool HardwareBridge::depthCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Request> request,
+void HardwareBridge::depthCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Request> request,
                                    std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Response> response) {
 
     if (!depthStabilizationEnabled) {
-        response.success = false;
-        response.message = "Depth stabilization is not enabled";
-        return true;
+        response->success = false;
+        response->message = "Depth stabilization is not enabled";
+        return;
     }
-    RCLCPP_INFO(this->get_logger(), "Setting depth to %d", request.value);
-    requestMessage.depth = -(static_cast<int16_t> (request.value * 100)); // For low-level stabilization purposes
+    RCLCPP_INFO(this->get_logger(), "Setting depth to %d", request->value);
+    requestMessage.depth = -(static_cast<int16_t> (request->value * 100)); // For low-level stabilization purposes
     RCLCPP_INFO(this->get_logger(), "Sending to STM32 depth value: %d", requestMessage.depth);
-
     isReady = true;
-    response.success = true;
-    return true;
+    response->success = true;
+//    return true;
 }
 
 
@@ -122,21 +128,20 @@ bool HardwareBridge::depthCallback(const std::shared_ptr <stingray_communication
  * @param response
  * @return
  */
-bool HardwareBridge::yawCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Request> request,
+void HardwareBridge::yawCallback(const std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Request> request,
                                  std::shared_ptr <stingray_communication_msgs::srv::SetInt32::Response> response) {
 
     if (!yawStabilizationEnabled) {
-        response.success = false;
-        response.message = "Yaw stabilization is not enabled";
-        return true;
+        response->success = false;
+        response->message = "Yaw stabilization is not enabled";
+        return;
     }
-    RCLCPP_INFO(this->get_logger(), "Setting depth to %d", request.value);
-    requestMessage.yaw = request.value;
+    RCLCPP_INFO(this->get_logger(), "Setting depth to %d", request->value);
+    requestMessage.yaw = request->value;
     RCLCPP_INFO(this->get_logger(), "Sending to STM32 depth value: %d", requestMessage.yaw);
-
     isReady = true;
-    response.success = true;
-    return true;
+    response->success = true;
+//    return true;
 }
 
 
@@ -146,16 +151,15 @@ bool HardwareBridge::yawCallback(const std::shared_ptr <stingray_communication_m
  * @param response
  * @return
  */
-bool HardwareBridge::imuCallback(const std::shared_ptr <std_srvs::srv::SetBool::Request> request,
+void HardwareBridge::imuCallback(const std::shared_ptr <std_srvs::srv::SetBool::Request> request,
                                  std::shared_ptr <std_srvs::srv::SetBool::Response> response) {
 
-    RCLCPP_INFO(this->get_logger(), "Setting SHORE_STABILIZE_IMU_BIT to %d", request.data);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_IMU_BIT, request.data);
-
+    RCLCPP_INFO(this->get_logger(), "Setting SHORE_STABILIZE_IMU_BIT to %d", request->data);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_IMU_BIT, request->data);
     isReady = true;
-    response.success = true;
+    response->success = true;
 
-    return true;
+//    return true;
 }
 
 
@@ -165,16 +169,15 @@ bool HardwareBridge::imuCallback(const std::shared_ptr <std_srvs::srv::SetBool::
  * @param response
  * @return
  */
-bool HardwareBridge::deviceActionCallback(
+void HardwareBridge::deviceActionCallback(
         const std::shared_ptr <stingray_communication_msgs::srv::SetDeviceAction::Request> request,
         std::shared_ptr <stingray_communication_msgs::srv::SetDeviceAction::Response> response) {
 
-    RCLCPP_INFO(this->get_logger(), "Setting device [%d] action value to %d", request.device, request.value);
-    requestMessage.dev[request.device] = request.value;
-
+    RCLCPP_INFO(this->get_logger(), "Setting device [%d] action value to %d", request->device, request->value);
+    requestMessage.dev[request->device] = request->value;
     isReady = true;
-    response.success = true;
-    return true;
+    response->success = true;
+//    return true;
 }
 
 
@@ -184,29 +187,27 @@ bool HardwareBridge::deviceActionCallback(
  * @param response
  * @return
  */
-bool HardwareBridge::stabilizationCallback(
+void HardwareBridge::stabilizationCallback(
         const std::shared_ptr <stingray_communication_msgs::srv::SetStabilization::Request> request,
         std::shared_ptr <stingray_communication_msgs::srv::SetStabilization::Response> response) {
 
-    RCLCPP_INFO(this->get_logger(), "Setting depth stabilization %d", request.depthStabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, request.depthStabilization);
-    RCLCPP_INFO(this->get_logger(), "Setting yaw stabilization %d", request.yawStabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, request.yawStabilization);
-    RCLCPP_INFO(this->get_logger(), "Setting lag stabilization %d", request.lagStabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, request.lagStabilization);
-    depthStabilizationEnabled = request.depthStabilization;
-    yawStabilizationEnabled = request.yawStabilization;
-    lagStabilizationEnabled = request.lagStabilization;
-
+    RCLCPP_INFO(this->get_logger(), "Setting depth stabilization %d", request->depth_stabilization);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, request->depth_stabilization);
+    RCLCPP_INFO(this->get_logger(), "Setting yaw stabilization %d", request->yaw_stabilization);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, request->yaw_stabilization);
+    RCLCPP_INFO(this->get_logger(), "Setting lag stabilization %d", request->lag_stabilization);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, request->lag_stabilization);
+    depthStabilizationEnabled = request->depth_stabilization;
+    yawStabilizationEnabled = request->yaw_stabilization;
+    lagStabilizationEnabled = request->lag_stabilization;
     isReady = true;
-    response.success = true;
-    return true;
+    response->success = true;
 }
 
 
 /** @brief Timer callback. Make byte array to publish for protocol_node and publishes it
   */
-void HardwareBridge::timerCallback() {
+void HardwareBridge::timer_callback() {
 
     RCLCPP_INFO(this->get_logger(), "Timer callback");
     if (isReady) {
@@ -217,13 +218,14 @@ void HardwareBridge::timerCallback() {
             outputMessage.data.push_back(output_vector[i]);
         }
         // Publish messages
-        outputMessagePublisher.publish(outputMessage);
-        depthPublisher.publish(depthMessage);
-        yawPublisher.publish(yawMessage);
+        outputMessagePublisher->publish(outputMessage);
+        depthPublisher->publish(depthMessage);
+        yawPublisher->publish(yawMessage);
         RCLCPP_INFO(this->get_logger(), "Hardware bridge publishing ...");
     } else RCLCPP_INFO(this->get_logger(), "Wait for topic updating");
 
 }
+
 
 /*!
  * @brief Main loop
