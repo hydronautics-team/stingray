@@ -4,65 +4,63 @@
  * - receives byte array from hardware_bridge and send it to STM32 via UART
  */
 
-#include <pluginlib/class_list_macros.h>
 #include "../include/uart_bridge.h"
 
-static const std::string    UART_DRIVER_NODE_NAME   = "uart_driver";
-static const std::string    PARAM_DEVICE            = "device";
-static const std::string    PARAM_BAUDRATE          = "baudrate";
-static const std::string    PARAM_DATA_BYTES        = "dataBytes";
-static const std::string    PARAM_PARITY            = "parity";
-static const std::string    PARAM_STOP_BITS         = "stopBits";
-static const std::string    PARITY_NONE             = "none";
-static const std::string    PARITY_EVEN             = "even";
-static const std::string    PARITY_ODD              = "odd";
-static const std::string    DEFAULT_DEVICE          = "/dev/ttyS0";
-static const int            DEFAULT_BAUDRATE        = 57600;
-static const int            DEFAULT_DATA_BYTES      = 8;
-static const std::string    DEFAULT_PARITY          = PARITY_NONE;
-static const int            DEFAULT_STOP_BITS       = 1;
-static const int            DEFAULT_SERIAL_TIMEOUT  = 1000; // Needed for serial port library
+static const std::string UART_BRIDGE_NODE_NAME = "uart_bridge";
+static const std::string PARAM_DEVICE = "device";
+static const std::string PARAM_BAUDRATE = "baudrate";
+static const std::string PARAM_DATA_BYTES = "dataBytes";
+static const std::string PARAM_PARITY = "parity";
+static const std::string PARAM_STOP_BITS = "stopBits";
+static const std::string PARITY_NONE = "none";
+static const std::string PARITY_EVEN = "even";
+static const std::string PARITY_ODD = "odd";
+static const std::string DEFAULT_DEVICE = "/dev/ttyS0";
+static const int DEFAULT_BAUDRATE = 57600;
+static const int DEFAULT_DATA_BYTES = 8;
+static const std::string DEFAULT_PARITY = PARITY_NONE;
+static const int DEFAULT_STOP_BITS = 1;
+static const int DEFAULT_SERIAL_TIMEOUT = 1000; // Needed for serial port library
 
-void uart_driver::onInit() {
-    // Initializing nodelet and parameters
-    NODELET_INFO_STREAM("Initializing nodelet: " << UART_DRIVER_NODE_NAME);
-    ros::NodeHandle& nodeHandle = getNodeHandle();
+void UartBridge::UartBridge() : Node(UART_BRIDGE_NODE_NAME) {
     //Serial port initialization
     portInitialize(nodeHandle);
     // ROS publishers
-    NODELET_DEBUG_STREAM("Initializing publisher" << INPUT_PARCEL_TOPIC);
-    outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(INPUT_PARCEL_TOPIC,1000);
+    outputMessage_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>(INPUT_PARCEL_TOPIC, 1000);
     // ROS subscribers
-    NODELET_DEBUG_STREAM("Initializing subscriber" << OUTPUT_PARCEL_TOPIC);
-    inputMessage_sub = nodeHandle.subscribe(OUTPUT_PARCEL_TOPIC, 1000,
-            &uart_driver::inputMessage_callback, this);
+    inputMessage_sub = this->create_subscription<std_msgs::msg::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 1000,
+                                                                                 std::bind(
+                                                                                         &HardwareBridge::inputMessage_callback,
+                                                                                         this, _1));
     // Input message container
-    NODELET_DEBUG_STREAM("Initializing " << UART_DRIVER_NODE_NAME << " input message container");
     inputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
     inputMessage.layout.dim[0].size = RequestMessage::length;
     inputMessage.layout.dim[0].stride = RequestMessage::length;
     inputMessage.layout.dim[0].label = "inputMessage";
     inputMessage.data = {0};
     // Outnput message container
-    NODELET_DEBUG_STREAM("Initializing " << UART_DRIVER_NODE_NAME << " output message container");
     outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
     outputMessage.layout.dim[0].size = ResponseMessage::length;
     outputMessage.layout.dim[0].stride = ResponseMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     outputMessage.data = {0};
 }
+
 /**
  * Initialasing serial port
  * Closes port if it is closed, initialized it
  * with given parameter and DOES NOT OPEN IT.
  */
-void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
+void UartBridge::portInitialize(ros::NodeHandle &nodeHandle) {
     std::string device;
-    nodeHandle.param(PARAM_DEVICE, device, DEFAULT_DEVICE);
+    this->declare_parameter<std::string>(PARAM_DEVICE, DEFAULT_DEVICE);
+    this->get_parameter(PARAM_DEVICE, device);
     int baudrate;
-    nodeHandle.param(PARAM_BAUDRATE, baudrate, DEFAULT_BAUDRATE);
+    this->declare_parameter<std::string>(PARAM_BAUDRATE, DEFAULT_BAUDRATE);
+    this->get_parameter(PARAM_BAUDRATE, baudrate);
     int dataBytesInt;
-    nodeHandle.param(PARAM_DATA_BYTES, dataBytesInt, DEFAULT_DATA_BYTES);
+    this->declare_parameter<std::string>(PARAM_DATA_BYTES, DEFAULT_DATA_BYTES);
+    this->get_parameter(PARAM_DATA_BYTES, dataBytesInt);
     serial::bytesize_t dataBytes;
     switch (dataBytesInt) {
         case 5:
@@ -78,11 +76,12 @@ void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
             dataBytes = serial::bytesize_t::eightbits;
             break;
         default:
-            NODELET_ERROR("Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
+            RCLCPP_ERROR(this->get_logger(), "Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
             return;
     }
     std::string parityStr;
-    nodeHandle.param(PARAM_PARITY, parityStr, DEFAULT_PARITY);
+    this->declare_parameter<std::string>(PARAM_PARITY, DEFAULT_PARITY);
+    this->get_parameter(PARAM_PARITY, parityStr);
     std::transform(parityStr.begin(), parityStr.end(), parityStr.begin(), ::tolower);
     serial::parity_t parity;
     if (parityStr == PARITY_EVEN)
@@ -92,12 +91,13 @@ void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
     else if (parityStr == PARITY_NONE)
         parity = serial::parity_t::parity_none;
     else {
-        NODELET_ERROR("Unrecognised parity \"%s\", available parities: \"none\", \"odd\", \"even\"",
-                      parityStr.c_str());
+        RCLCPP_ERROR(this->get_logger(), "Unrecognised parity \"%s\", available parities: \"none\", \"odd\", \"even\"",
+                     parityStr.c_str());
         return;
     }
     int stopBitsInt;
-    nodeHandle.param(PARAM_STOP_BITS, stopBitsInt, DEFAULT_STOP_BITS);
+    this->declare_parameter<std::string>(PARAM_STOP_BITS, DEFAULT_STOP_BITS);
+    this->get_parameter(PARAM_STOP_BITS, stopBitsInt);
     serial::stopbits_t stopBits;
     switch (stopBitsInt) {
         case 1:
@@ -107,12 +107,14 @@ void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
             stopBits = serial::stopbits_t::stopbits_two;
             break;
         default:
-            NODELET_ERROR("Forbidden stop bits size %d, available sizes: 1, 2", stopBitsInt);
+            RCLCPP_ERROR(this->get_logger(), "Forbidden stop bits size %d, available sizes: 1, 2", stopBitsInt);
             return;
     }
-    NODELET_DEBUG("UART settings: Device: %s, Baudrate: %d, Data bytes: %d, Parity: %s, Stop bits: %d",
-                  device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
-    if (port.isOpen()) port.close();
+    RCLCPP_INFO(this->get_logger(),
+                "UART settings: Device: %s, Baudrate: %d, Data bytes: %d, Parity: %s, Stop bits: %d",
+                device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
+    if (port.isOpen())
+        port.close();
     port.setPort(device);
     serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(DEFAULT_SERIAL_TIMEOUT);
     port.setTimeout(serialTimeout);
@@ -122,9 +124,9 @@ void uart_driver::portInitialize(ros::NodeHandle& nodeHandle) {
     port.setStopbits(stopBits);
 }
 
-bool uart_driver::sendData() {
-    std::vector<uint8_t> msg;
-    for(int i=0; i<RequestMessage::length; i++)
+bool UartBridge::sendData() {
+    std::vector <uint8_t> msg;
+    for (int i = 0; i < RequestMessage::length; i++)
         msg.push_back(inputMessage.data[i]);
     size_t toWrite = sizeof(uint8_t) * msg.size();
     try {
@@ -132,21 +134,21 @@ bool uart_driver::sendData() {
         size_t written = port.write(msg);
         return written == toWrite;
     }
-    catch (serial::IOException &ex){
-        NODELET_ERROR("Serial exception, when trying to flush and send. Error: %s", ex.what());
+    catch (serial::IOException &ex) {
+        RCLCPP_ERROR(this->get_logger(), "Serial exception, when trying to flush and send. Error: %s", ex.what());
         return false;
     }
 }
 
-bool uart_driver::receiveData() {
-    if(port.available() < ResponseMessage::length)
+bool UartBridge::receiveData() {
+    if (port.available() < ResponseMessage::length)
         return false;
-    std::vector<uint8_t> answer;
+    std::vector <uint8_t> answer;
     port.read(answer, ResponseMessage::length);
     outputMessage.data.clear();
-    for(int i=0; i<ResponseMessage::length; i++)
+    for (int i = 0; i < ResponseMessage::length; i++)
         outputMessage.data.push_back(answer[i]);
-    NODELET_DEBUG("RECEIVE FROM STM");
+    RCLCPP_DEBUG(this->get_logger(), "RECEIVE FROM STM");
 
     return true;
 }
@@ -155,31 +157,30 @@ bool uart_driver::receiveData() {
   *
   * @param[in]  &input String to parse.
   */
-void uart_driver::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg) {
-    NODELET_DEBUG_STREAM(UART_DRIVER_NODE_NAME << " message callback");
+void UartBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const {
+    RCLCPP_DEBUG(this->get_logger(), UART_BRIDGE_NODE_NAME + " message callback");
     inputMessage.data.clear();
-    for(int i = 0; i < RequestMessage::length; i++)
+    for (int i = 0; i < RequestMessage::length; i++)
         inputMessage.data.push_back(msg->data[i]);
     try {
         if (!port.isOpen()) {
             port.open();
             if (!port.isOpen())
-                NODELET_ERROR("Unable to open UART port");
+                RCLCPP_ERROR(this->get_logger(), "Unable to open UART port");
         }
     }
-    catch (serial::IOException &ex){
-        NODELET_ERROR("Serial exception when trying to open. Error: %s", ex.what());
+    catch (serial::IOException &ex) {
+        RCLCPP_ERROR(this->get_logger(), "Serial exception when trying to open. Error: %s", ex.what());
         return;
     }
-    if(!sendData()) {
-        NODELET_ERROR("Unable to send message to STM32");
+    if (!sendData()) {
+        RCLCPP_ERROR(this->get_logger(), "Unable to send message to STM32");
         return;
     }
-    if(receiveData())
+    if (receiveData())
         outputMessage_pub.publish(outputMessage);
     else {
-        NODELET_ERROR("Unable to receive message from STM32");
+        RCLCPP_ERROR(this->get_logger(), "Unable to receive message from STM32");
         return;
     }
 }
-PLUGINLIB_EXPORT_CLASS(uart_driver, nodelet::Nodelet);

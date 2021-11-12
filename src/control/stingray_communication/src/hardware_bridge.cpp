@@ -7,7 +7,7 @@
 #include "../include/HardwareBridge.h"
 
 
-void HardwareBridge::HardwareBridge() {
+void HardwareBridge::HardwareBridge() : Node("hardware_bridge") {
 
     // ROS publishers
     outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(OUTPUT_PARCEL_TOPIC, 1000);

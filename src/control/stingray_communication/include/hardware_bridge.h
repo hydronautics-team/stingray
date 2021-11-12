@@ -1,5 +1,5 @@
-#ifndef STINGRAY_DRIVERS_HARDWARE_BRIDGE_H
-#define STINGRAY_DRIVERS_HARDWARE_BRIDGE_H
+#ifndef STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_H
+#define STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_H
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -16,7 +16,7 @@
 #include "stingray_communication_msgs/srv/SetLagAndMarch.hpp"
 #include "stingray_communication_msgs/srv/SetStabilization.hpp"
 #include "messages/messages.h"
-#include "TopicsAndServices.h"
+#include "topics_and_services.h"
 
 #include <sstream>
 #include <string>
@@ -27,7 +27,7 @@ using std::placeholders::_1;
 
 class HardwareBridge : public rclcpp::Node {
 public:
-    HardwareBridge() : Node("hardware_bridge");
+    HardwareBridge();
 
 private:
     void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) const;
@@ -75,4 +75,4 @@ private:
     bool lagStabilizationEnabled = false;
 };
 
-#endif //STINGRAY_DRIVERS_HARDWARE_BRIDGE_H
+#endif //STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_H
