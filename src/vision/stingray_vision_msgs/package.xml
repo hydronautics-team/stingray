@@ -1,29 +1,31 @@
 <?xml version="1.0"?>
-<package format="2">
-  <name>stingray_vision_msgs</name>
-  <version>0.1.0</version>
-  <description>
-  The stingray_vision_msgs package\
-  
-  This package contains messages used by stingray_vision package.
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>stingray_vision_msgs</name>
+    <version>0.1.0</version>
+    <description>
+        The stingray_vision_msgs package\
 
-  Messages:
-  - Object.msg
-  - Objects.msg
+        This package contains messages used by stingray_vision package.
 
-  </description>
+        Messages:
+        - Object.msg
+        - Objects.msg
 
-  <maintainer email="vladislav.a.plotnikov@yandex.ru">Vladislav Plotnikov</maintainer>
+    </description>
 
-  <license>MIT</license>
+    <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>rospy</depend>
-  <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>
+    <license>MIT</license>
 
-  <export></export>
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <build_depend>rosidl_default_generators</build_depend>
+    <exec_depend>rosidl_default_runtime</exec_depend>
+    <member_of_group>rosidl_interface_packages</member_of_group>
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_lint_common</test_depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
 </package>
