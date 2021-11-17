@@ -1,7 +1,0 @@
-# Request
-float64 march # March velocity
-float64 lag # Lag velocity
----
-# Response
-bool success
-string message

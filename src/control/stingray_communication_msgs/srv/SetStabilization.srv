@@ -1,0 +1,8 @@
+# Request
+bool depth_stabilization
+bool yaw_stabilization
+bool lag_stabilization
+---
+# Response
+bool success
+string message

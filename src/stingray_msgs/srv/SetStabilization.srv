@@ -1,8 +1,0 @@
-# Request
-bool depthStabilization
-bool yawStabilization
-bool lagStabilization
----
-# Response
-bool success
-string message
