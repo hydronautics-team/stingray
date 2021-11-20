@@ -1,3 +1,0 @@
-[submodule "src/control/serial"]
-	path = src/control/serial
-	url = https://github.com/RoverRobotics-forks/serial-ros2.git
