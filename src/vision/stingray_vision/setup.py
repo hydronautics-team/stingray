@@ -15,13 +15,12 @@ setup(
     zip_safe=True,
     maintainer='vladushked',
     maintainer_email='vladushked@yandex.ru',
-    description='TODO: Package description',
+    description='The stingray_vision package',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'talker = py_pubsub.publisher_member_function:main',
-            'listener = py_pubsub.subscriber_member_function:main',
+            'opencv_object_detector = stingray_vision.opencv_object_detector:main',
         ],
     },
 )
