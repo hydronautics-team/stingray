@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import rclpy
+from rclpy.node import Node
+from ament_index_python.packages import get_package_share_directory
 import cv2 as cv
 import json
 import os
@@ -9,27 +12,38 @@ import os
 from random import randint
 from itertools import groupby
 
-import rospy
-import rospkg
 from cv_bridge import CvBridge, CvBridgeError
 from stingray_vision_msgs.msg import Object
 from stingray_vision_msgs.msg import ObjectsArray
 from sensor_msgs.msg import Image
 
 
-class ObjectDetector:
-    def __init__(self, input_image_topic, confidence_threshold, enable_output_image_publishing, dnn_weights_pkg, resize_input_to):
-        # get node name
-        node_name = rospy.get_name()
-        rospy.loginfo("{} node initializing".format(node_name))
-        # get paths
-        rospack = rospkg.RosPack()
-        path = rospack.get_path(dnn_weights_pkg)
+class ObjectDetector(Node):
+    def __init__(self):
+        super().__init__('opencv_object_detector')
+
+        # params
+        self.declare_parameter('input_image_topic')
+        self.declare_parameter('dnn_confidence_threshold')
+        self.declare_parameter('enable_output_image_publishing')
+        self.declare_parameter('dnn_weights_pkg')
+        self.declare_parameter('resize_input_to')
+
+        self.get_logger().info('opencv_object_detector node initializing')
+
+        # get params
+        input_image_topic = self.get_parameter('input_image_topic')
+        self.confidence_threshold = self.get_parameter('dnn_confidence_threshold')
+        self.enable_output_image_publishing = self.get_parameter('enable_output_image_publishing')
+        dnn_weights_pkg = self.get_parameter('dnn_weights_pkg')
+        resize_input_to = self.get_parameter('resize_input_to')
+
+        # get dnn weights path
+        path = get_package_share_directory(dnn_weights_pkg)
         weights_path = os.path.sep.join(
             [path, "net", "frozen_inference_graph.pb"])
         labels_path = os.path.sep.join([path, "net", "labels.json"])
         config_path = os.path.sep.join([path, "net", "opencv_graph.pbtxt"])
-        self.confidence_threshold = confidence_threshold
         # read labels
         with open(labels_path) as json_file:
             self.labels = json.loads(json_file.read())["labels"]
@@ -42,31 +56,29 @@ class ObjectDetector:
         (x,y) = resize_input_to.split()
         self.input_size_x = int(x)
         self.input_size_y = int(y)
-        rospy.loginfo(type(self.input_size_x))
-        rospy.loginfo(self.input_size_y)
+        self.get_logger().info('opencv_object_detector node initializing')
 
         # init cv_bridge
         self.bridge = CvBridge()
         # load our NET from disk
-        rospy.loginfo("Loading neural network")
+        self.get_logger().info('Loading neural network')
         self.cvNet = cv.dnn.readNetFromTensorflow(weights_path, config_path)
 
         # ROS Topic names
-        objects_array_topic = "{}/objects".format(node_name)
-        output_image_topic = "{}/image".format(node_name)
-
-        self.enable_output_image_publishing = enable_output_image_publishing
+        objects_array_topic = "opencv_object_detector/objects"
+        output_image_topic = "opencv_object_detector/image"
 
         # publishers
-        self.objects_array_pub = rospy.Publisher(
-            objects_array_topic, ObjectsArray, queue_size=10)
+        self.objects_array_pub = self.create_publisher(ObjectsArray, objects_array_topic, 10)
         if self.enable_output_image_publishing:
-            self.image_pub = rospy.Publisher(
-                output_image_topic, Image, queue_size=1)
+            self.image_pub = self.create_publisher(Image, output_image_topic, 1)
 
         # subscribers
-        self.image_sub = rospy.Subscriber(
-            input_image_topic, Image, self.callback, queue_size=1)
+        self.image_sub = self.create_subscription(
+            Image,
+            input_image_topic,
+            self.callback,
+            1)
 
     def callback(self, data):
         try:
@@ -100,7 +112,7 @@ class ObjectDetector:
                 # publish output image
                 self.image_pub.publish(ros_image)
         except CvBridgeError as e:
-            rospy.logerr(e)
+            self.get_logger().err(e)
 
     def detector(self, img):
         # construct a blob from the input image and then perform a
@@ -188,19 +200,19 @@ class ObjectDetector:
                            cv.FONT_HERSHEY_DUPLEX, 0.5, self.colors[dnn_object["name"]], 1)
         return img
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    opencv_object_detector = ObjectDetector()
+
+    rclpy.spin(opencv_object_detector)
+
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    opencv_object_detector.destroy_node()
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
-    rospy.init_node('object_detector')
-    # parameters
-    input_image_topic = rospy.get_param('~input_image_topic')
-    confidence_threshold = rospy.get_param('~dnn_confidence_threshold')
-    enable_output_image_publishing = rospy.get_param(
-        '~enable_output_image_publishing')
-    dnn_weights_pkg = rospy.get_param('~dnn_weights_pkg')
-    resize_input_to = rospy.get_param('~resize_input_to')
-    try:
-        ot = ObjectDetector(input_image_topic, confidence_threshold,
-                            enable_output_image_publishing, dnn_weights_pkg, resize_input_to)
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        rospy.logerr("Shutting down {} node".format(rospy.get_name()))
+    main()
