@@ -21,4 +21,4 @@ uint8 number
 
 #Feedback
 
-uint8 currentNumber
+uint8 current_number

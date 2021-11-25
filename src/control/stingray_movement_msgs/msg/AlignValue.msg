@@ -1,2 +1,2 @@
-bool hasValue
+bool has_value
 float64 difference

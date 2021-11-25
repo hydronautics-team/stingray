@@ -1,7 +1,7 @@
 # Goal
 
 # Topic to obtain value for centering
-string topicName
+string topic_name
 
 # Threshold that shows if value is centered
 float64 delta
