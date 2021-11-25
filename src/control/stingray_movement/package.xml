@@ -19,11 +19,10 @@
 
 
   <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
-  <depend>actionlib</depend>
-  <depend>actionlib_msgs</depend>
-  <depend>stingray_drivers_msgs</depend>
+  <depend>rclcpp_action</depend>
+
+  <depend>stingray_communication_msgs</depend>
   <depend>stingray_movement_msgs</depend> <!-->really needed<!-->
 
   <export>
