@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import rospy
 import actionlib
-import stingray_movement_msgs.msg as msg
+import src.stingray_movement_msgs.msg as msg
 
 
 class AUV:
