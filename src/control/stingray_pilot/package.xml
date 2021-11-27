@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>stingray_pilot</name>
+  <version>0.0.1</version>
+  <description>Package with piloting script</description>
+
+  <maintainer email="davtart2000@yandex.ru">Davtyan Artyom</maintainer>
+
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>stingray_drivers_msgs</depend>
+  <depend>smach</depend>
+
+
+</package>
