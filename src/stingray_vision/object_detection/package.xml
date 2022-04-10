@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>stingray_vision</name>
+    <name>object_detection</name>
     <version>0.1.0</version>
     <description>
-        The stingray_vision package
+        The object_detection package
 
         This package contains:
         - scripts to handle with convolutional neural networks
