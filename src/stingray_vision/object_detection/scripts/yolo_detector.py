@@ -14,6 +14,7 @@ import sys
 import cv2
 import torch
 import numpy as np
+import logging
 
 # sys.path.append("./yolov5")
 sys.path.insert(1, os.path.join(rospkg.RosPack().get_path("object_detection"), "scripts/yolov5"))
@@ -45,6 +46,9 @@ class YoloDetector:
                  half=False,  # use FP16 half-precision inference
                  dnn=False,  # use OpenCV DNN for ONNX inference
                  ):
+
+        
+        
 
         self.imgsz = imgsz
         self.conf_thres = conf_thres
@@ -89,16 +93,14 @@ class YoloDetector:
 
         # init cv_bridge
         self.bridge = CvBridge()
-        rospy.loginfo("before with torch.no_grad()")
 
         with torch.no_grad():
-            rospy.loginfo("with torch.no_grad()")
-
             # Load model
             self.device = select_device(device)
             self.model = DetectMultiBackend(
                 self.weights_path, device=self.device, dnn=dnn, data=self.config_path, fp16=half)
-            self.stride, names, pt = self.model.stride, self.model.names, self.model.pt
+            self.stride, self.names, pt = self.model.stride, self.model.names, self.model.pt
+
             self.imgsz = check_img_size(
                 self.imgsz, s=self.stride)  # check image size
 
@@ -109,40 +111,46 @@ class YoloDetector:
             self.model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
             self.dt = [0.0, 0.0, 0.0]
 
+            # to check if inited
+            self.initialized = True
+
     def callback(self, data):
         try:
-            # convert ROS image to OpenCV image
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-            # detect our objects
-            objects, drawed_image = self.detector(cv_image)
-            rospy.loginfo(objects)
-            cv2.imshow("debug", drawed_image)
+            if hasattr(self, 'initialized'):
+                # convert ROS image to OpenCV image
+                cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+                # detect our objects
+                
+                objects, drawed_image = self.detector(cv_image)
 
-            # publish objects
-            # init msg
-            # self.object_msg = Object()
-            # self.objects_array_msg = ObjectsArray()
-            # for index, dnn_object in enumerate(dnn_objects):
-            #     self.object_msg.name = dnn_object["name"].encode('utf-8')
-            #     self.object_msg.confidence = dnn_object["confidence"]
-            #     top_left_x = int(dnn_object['box'][0])
-            #     self.object_msg.top_left_x = top_left_x
-            #     top_left_y = int(dnn_object['box'][1])
-            #     self.object_msg.top_left_y = top_left_y
-            #     bottom_right_x = int(dnn_object['box'][2])
-            #     self.object_msg.bottom_right_x = bottom_right_x
-            #     bottom_right_y = int(dnn_object['box'][3])
-            #     self.object_msg.bottom_right_y = bottom_right_y
-            #     self.objects_array_msg.objects.append(self.object_msg)
-            # self.objects_array_pub.publish(self.objects_array_msg)
+                cv2.imshow("debug", drawed_image)
+                cv2.waitKey(30)
 
-            # if self.enable_output_image_publishing:
-            #     # draw bounding boxes
-            #     dnn_cv_image = self.draw(cv_image, dnn_objects)
-            #     # convert cv image into ros format
-            #     ros_image = self.bridge.cv2_to_imgmsg(dnn_cv_image, "bgr8")
-            #     # publish output image
-            #     self.image_pub.publish(ros_image)
+                # publish objects
+                # init msg
+                # self.object_msg = Object()
+                # self.objects_array_msg = ObjectsArray()
+                # for index, dnn_object in enumerate(dnn_objects):
+                #     self.object_msg.name = dnn_object["name"].encode('utf-8')
+                #     self.object_msg.confidence = dnn_object["confidence"]
+                #     top_left_x = int(dnn_object['box'][0])
+                #     self.object_msg.top_left_x = top_left_x
+                #     top_left_y = int(dnn_object['box'][1])
+                #     self.object_msg.top_left_y = top_left_y
+                #     bottom_right_x = int(dnn_object['box'][2])
+                #     self.object_msg.bottom_right_x = bottom_right_x
+                #     bottom_right_y = int(dnn_object['box'][3])
+                #     self.object_msg.bottom_right_y = bottom_right_y
+                #     self.objects_array_msg.objects.append(self.object_msg)
+                # self.objects_array_pub.publish(self.objects_array_msg)
+
+                # if self.enable_output_image_publishing:
+                #     # draw bounding boxes
+                #     dnn_cv_image = self.draw(cv_image, dnn_objects)
+                #     # convert cv image into ros format
+                #     ros_image = self.bridge.cv2_to_imgmsg(dnn_cv_image, "bgr8")
+                #     # publish output image
+                #     self.image_pub.publish(ros_image)
         except CvBridgeError as e:
             rospy.logerr(e)
 
@@ -180,7 +188,7 @@ class YoloDetector:
 
             # Process predictions
             for i, det in enumerate(pred):  # per image
-                im0 = self.img.copy()
+                im0 = img.copy()
 
                 annotator = Annotator(
                     im0, line_width=self.line_thickness, example=str(self.names))
@@ -194,7 +202,6 @@ class YoloDetector:
                         n = (det[:, -1] == c).sum()  # detections per class
                     # Write results
                     for *xyxy, conf, cls in reversed(det):
-                        print(xyxy, conf, cls)
                         c = int(cls)  # integer class
                         label = f'{self.names[c]} {conf:.2f}'
                         annotator.box_label(xyxy, label, color=colors(c, True))
