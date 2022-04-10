@@ -10,17 +10,21 @@ from sensor_msgs.msg import Image
 from itertools import groupby
 import time
 import os
+import sys
+import cv2
+import torch
+import numpy as np
+
+# sys.path.append("./yolov5")
+sys.path.insert(1, os.path.join(rospkg.RosPack().get_path("object_detection"), "scripts/yolov5"))
+
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import (LOGGER, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
                                   increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from yolov5.utils.plots import Annotator, colors, save_one_box
 from yolov5.utils.torch_utils import select_device, time_sync
 from yolov5.utils.augmentations import letterbox
-import sys
-import cv2
-import torch
-import numpy as np
-sys.path.append("./yolov5")
+
 
 
 class YoloDetector:
@@ -85,12 +89,15 @@ class YoloDetector:
 
         # init cv_bridge
         self.bridge = CvBridge()
+        rospy.loginfo("before with torch.no_grad()")
 
         with torch.no_grad():
+            rospy.loginfo("with torch.no_grad()")
+
             # Load model
             self.device = select_device(device)
             self.model = DetectMultiBackend(
-                self.weights_path, device=device, dnn=dnn, data=self.config_path, fp16=half)
+                self.weights_path, device=self.device, dnn=dnn, data=self.config_path, fp16=half)
             self.stride, names, pt = self.model.stride, self.model.names, self.model.pt
             self.imgsz = check_img_size(
                 self.imgsz, s=self.stride)  # check image size
