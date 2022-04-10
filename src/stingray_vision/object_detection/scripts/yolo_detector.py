@@ -1,28 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from sensor_msgs.msg import Image
-from object_detection_msgs.msg import ObjectsArray
-from object_detection_msgs.msg import Object
-from cv_bridge import CvBridge, CvBridgeError
-import rospkg
+
 import rospy
-from yolov5.utils.augmentations import letterbox
-from yolov5.utils.torch_utils import select_device, time_sync
-from yolov5.utils.plots import Annotator, colors, save_one_box
-from yolov5.utils.general import (LOGGER, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
-                                  increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
-from yolov5.models.common import DetectMultiBackend
-import os
-import numpy as np
+import rospkg
+from cv_bridge import CvBridge, CvBridgeError
+from object_detection_msgs.msg import Object
+from object_detection_msgs.msg import ObjectsArray
+from sensor_msgs.msg import Image
+from itertools import groupby
 import time
 import os
-from itertools import groupby
-
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.general import (LOGGER, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
+                                  increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
+from yolov5.utils.plots import Annotator, colors, save_one_box
+from yolov5.utils.torch_utils import select_device, time_sync
+from yolov5.utils.augmentations import letterbox
 import sys
 import cv2
 import torch
 import numpy as np
-
 sys.path.append("./yolov5")
 
 
@@ -173,7 +170,7 @@ class YoloDetector:
             # Second-stage classifier (optional)
             # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
             # objects = self.deleteMultipleObjects(pred)
-            
+
             # Process predictions
             for i, det in enumerate(pred):  # per image
                 im0 = self.img.copy()
@@ -216,6 +213,7 @@ class YoloDetector:
             del group[1][object_count_from_json:]
             filtered_objects += group[1]
         return filtered_objects
+
 
 if __name__ == '__main__':
     rospy.init_node('yolo_detector')

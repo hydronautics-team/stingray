@@ -1,1 +1,1 @@
-stingray_vision_msgs/Object[] objects
+object_detection_msgs/Object[] objects

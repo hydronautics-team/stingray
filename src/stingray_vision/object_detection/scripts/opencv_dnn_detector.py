@@ -12,8 +12,8 @@ from itertools import groupby
 import rospy
 import rospkg
 from cv_bridge import CvBridge, CvBridgeError
-from stingray_vision_msgs.msg import Object
-from stingray_vision_msgs.msg import ObjectsArray
+from object_detection_msgs.msg import Object
+from object_detection_msgs.msg import ObjectsArray
 from sensor_msgs.msg import Image
 
 
