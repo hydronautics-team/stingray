@@ -122,9 +122,12 @@ class YoloDetector:
                 # detect our objects
                 
                 objects, drawed_image = self.detector(cv_image)
+                ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
+                # publish output image
+                self.image_pub.publish(ros_image)
 
-                cv2.imshow("debug", drawed_image)
-                cv2.waitKey(30)
+                # cv2.imshow("debug", drawed_image)
+                # cv2.waitKey(30)
 
                 # publish objects
                 # init msg

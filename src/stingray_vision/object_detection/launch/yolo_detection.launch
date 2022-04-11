@@ -47,6 +47,17 @@
             <param name="dnn_weights_pkg" value="$(arg dnn_weights_pkg)" />
             <param name="resize_input_to" value="$(arg resize_input_to)" />
         </node>
+        <node name="yolo_image" pkg="image_view" type="image_view" output="screen" respawn="true">
+            <remap from="image" to="yolo_detector/image" />
+        </node>
+        <node name="simulation_image" pkg="image_view" type="image_view">
+            <remap from="image" to="/stereo/camera/left/image_raw" />
+            <param name="autosize" value="true" />
+        </node>
+        <node name="simulation_record" pkg="image_view" type="video_recorder" respawn="true">
+            <param name="filename" value="/home/vladushked/Videos/video.mp4" />
+            <remap from="image" to="/stereo/camera/left/image_raw" />
+        </node>
     </group>
 
     <group if="$(arg file)">
