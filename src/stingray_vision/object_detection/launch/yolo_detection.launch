@@ -89,6 +89,9 @@
             <param name="dnn_weights_pkg" value="$(arg dnn_weights_pkg)" />
             <param name="resize_input_to" value="$(arg resize_input_to)" />
         </node>
+        <node name="yolo_image" pkg="image_view" type="image_view" output="screen" respawn="true">
+            <remap from="image" to="yolo_detector/image" />
+        </node>
     </group>
 
     <group if="$(arg cameras)">

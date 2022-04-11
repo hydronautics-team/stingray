@@ -120,8 +120,7 @@ class YoloDetector:
                 # convert ROS image to OpenCV image
                 cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
                 # detect our objects
-                
-                objects, drawed_image = self.detector(cv_image)
+                objects_array_msg, drawed_image = self.detector(cv_image)
                 ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                 # publish output image
                 self.image_pub.publish(ros_image)
@@ -145,7 +144,7 @@ class YoloDetector:
                 #     bottom_right_y = int(dnn_object['box'][3])
                 #     self.object_msg.bottom_right_y = bottom_right_y
                 #     self.objects_array_msg.objects.append(self.object_msg)
-                # self.objects_array_pub.publish(self.objects_array_msg)
+                self.objects_array_pub.publish(objects_array_msg)
 
                 # if self.enable_output_image_publishing:
                 #     # draw bounding boxes
@@ -190,9 +189,11 @@ class YoloDetector:
             # objects = self.deleteMultipleObjects(pred)
 
             # Process predictions
+            objects_array_msg = ObjectsArray()
+            rospy.loginfo(pred[0].shape)
+
             for i, det in enumerate(pred):  # per image
                 im0 = img.copy()
-
                 annotator = Annotator(
                     im0, line_width=self.line_thickness, example=str(self.names))
                 if len(det):
@@ -208,9 +209,22 @@ class YoloDetector:
                         c = int(cls)  # integer class
                         label = f'{self.names[c]} {conf:.2f}'
                         annotator.box_label(xyxy, label, color=colors(c, True))
+                        
+                        object_msg = Object()
+                        object_msg.name = self.names[c]
+                        object_msg.confidence = conf
+                        top_left_x = int(xyxy[0])
+                        object_msg.top_left_x = xyxy[0]
+                        top_left_y = int(xyxy[1])
+                        object_msg.top_left_y = xyxy[1]
+                        bottom_right_x = int(xyxy[2])
+                        object_msg.bottom_right_x = xyxy[2]
+                        bottom_right_y = int(xyxy[3])
+                        object_msg.bottom_right_y = xyxy[3]
+                        objects_array_msg.objects.append(object_msg)
 
             # Stream results
-            return pred, annotator.result()
+            return objects_array_msg, annotator.result()
 
     def deleteMultipleObjects(self, objects):
         """This function gets from labels.json a maximum number of objects that can be found and deletes unnecessary.
