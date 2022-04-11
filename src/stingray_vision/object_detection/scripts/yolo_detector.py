@@ -86,9 +86,9 @@ class YoloDetector:
         # get paths
         self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_path)
         self.weights_path = os.path.join(
-            self.weights_pkg_path, "net", "best.pt")
+            self.weights_pkg_path, "weights", "best.pt")
         self.config_path = os.path.join(
-            self.weights_pkg_path, "net", "config.yaml")
+            self.weights_pkg_path, "weights", "config.yaml")
         self.confidence_threshold = confidence_threshold
 
         # init cv_bridge

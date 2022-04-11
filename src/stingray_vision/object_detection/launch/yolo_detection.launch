@@ -10,13 +10,17 @@
     <!-- Defines FPS -->
     <arg name="fps" default="25" />
     <!-- Enables video streaming -->
-    <arg name="stream" default="true" />
+    <arg name="stream" default="false" />
     <!-- Enables video recording -->
     <arg name="record" default="false" />
     <!-- True to enable camera-->
     <!-- False to enable videofile -->
     <arg name="cameras" default="false" />
+    <!-- Providing video from simulation -->
+    <arg name="simulation" default="false" />
+    <arg name="front_camera_topic" default="/stereo/camera/left/image_raw" />
     <!-- Providing video from file -->
+    <arg name="file" default="false" />
     <!-- Path example /home/vladushked/Documents/hydro/dnn_gate_detector/run_detection_scripts/video/2.mp4 -->
     <arg name="videofile_path" default="path/to/your/videofile" />
     <!-- Defines device that will be used as camera -->
@@ -32,8 +36,20 @@
 
     <!-- NODES -->
 
+    <group if="$(arg simulation)">
+        <!-- Object detector node -->
+        <!-- output objects topic *node_name*/objects -->
+        <!-- output image topic *node_name*/image -->
+        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+            <param name="input_image_topic" value="$(arg front_camera_topic)" />
+            <param name="dnn_confidence_threshold" value="0.5" />
+            <param name="enable_output_image_publishing" value="true" />
+            <param name="dnn_weights_pkg" value="$(arg dnn_weights_pkg)" />
+            <param name="resize_input_to" value="$(arg resize_input_to)" />
+        </node>
+    </group>
 
-    <group unless="$(arg cameras)">
+    <group if="$(arg file)">
         <!-- launch video stream -->
         <include file="$(find video_stream_opencv)/launch/camera.launch">
             <!-- node name and ros graph name -->
