@@ -23,7 +23,7 @@ from yolov5.utils.augmentations import letterbox
 class YoloDetector:
     def __init__(self,
                  weights_pkg_name,
-                 input_image_topic,
+                 image_topic_list,
                  enable_output_image_publishing=False,
                  imgsz=(640, 640),
                  conf_thres=0.25,
@@ -37,7 +37,7 @@ class YoloDetector:
 
         Args:
             weights_pkg_name (str): name of ros package where to find weights
-            input_image_topic (str): input image ROS topic
+            image_topic_list (list): list of ROS topics with input images
             enable_output_image_publishing (bool): draw bboxes and publish image (for debugging)
             imgsz (tuple, optional): inference size (height, width). Defaults to (640, 640).
             conf_thres (float, optional): confidence threshold. Defaults to 0.25.
@@ -48,7 +48,16 @@ class YoloDetector:
             agnostic_nms (bool, optional): class-agnostic NMS. Defaults to False.
             line_thickness (int, optional): bounding box thickness (pixels). Defaults to 3.
         """
-
+         # get weights path
+        self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_name)
+        self.weights_path = os.path.join(
+            self.weights_pkg_path, "weights", "best.pt")
+        self.config_path = os.path.join(
+            self.weights_pkg_path, "weights", "config.yaml")
+        
+        self.image_topic_list = image_topic_list.split(" ")
+        self.enable_output_image_publishing = enable_output_image_publishing
+        
         self.imgsz = imgsz
         self.conf_thres = conf_thres
         self.iou_thres = iou_thres
@@ -62,29 +71,25 @@ class YoloDetector:
         node_name = rospy.get_name()
         rospy.loginfo("{} node initializing".format(node_name))
 
-        # ROS Topic names
-        objects_array_topic = "{}/objects".format(node_name)
-        output_image_topic = "{}/image".format(node_name)
+        self.objects_array_pub_dict = {}
+        self.image_pub_dict = {}
+        for input_topic in self.image_topic_list:
+            # ROS Topic names
+            objects_array_topic = "%s%s/objects" % (input_topic, node_name)
+            output_image_topic = "%s%s/image" % (input_topic, node_name)
 
-        self.enable_output_image_publishing = enable_output_image_publishing
+            # ROS subscribers
+            self.image_sub = rospy.Subscriber(input_topic, Image, self.callback, callback_args=input_topic, queue_size=1)
 
-        # ROS publishers
-        self.objects_array_pub = rospy.Publisher(
-            objects_array_topic, ObjectsArray, queue_size=10)
-        if self.enable_output_image_publishing:
-            self.image_pub = rospy.Publisher(
-                output_image_topic, Image, queue_size=1)
+            # ROS publishers
+            objects_array_pub = rospy.Publisher(objects_array_topic, ObjectsArray, queue_size=10)
+            if self.enable_output_image_publishing:
+                image_pub = rospy.Publisher(output_image_topic, Image, queue_size=1)
+            self.objects_array_pub_dict[input_topic] = objects_array_pub
+            self.image_pub_dict[input_topic] = image_pub
+            
 
-        # ROS subscribers
-        self.image_sub = rospy.Subscriber(
-            input_image_topic, Image, self.callback, queue_size=1)
-
-        # get paths
-        self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_name)
-        self.weights_path = os.path.join(
-            self.weights_pkg_path, "weights", "best.pt")
-        self.config_path = os.path.join(
-            self.weights_pkg_path, "weights", "config.yaml")
+       
 
         # init cv_bridge
         self.bridge = CvBridge()
@@ -186,7 +191,7 @@ class YoloDetector:
             # Stream results
             return objects_array_msg, annotator.result()
 
-    def callback(self, input_image):
+    def callback(self, input_image, topic):
         try:
             if hasattr(self, 'initialized'):
                 # convert ROS image to OpenCV image
@@ -199,8 +204,8 @@ class YoloDetector:
                 if self.enable_output_image_publishing:
                     ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                     # publish output image
-                    self.image_pub.publish(ros_image)
-                self.objects_array_pub.publish(objects_array_msg)
+                    self.image_pub_dict[topic].publish(ros_image)
+                self.objects_array_pub_dict[topic].publish(objects_array_msg)
 
         except CvBridgeError as e:
             rospy.logerr(e)
@@ -210,11 +215,11 @@ if __name__ == '__main__':
     rospy.init_node('yolo_detector')
     # parameters
     weights_pkg_name = rospy.get_param('~weights_pkg_name')
-    input_image_topic = rospy.get_param('~input_image_topic')
+    image_topic_list = rospy.get_param('~image_topic_list')
     enable_output_image_publishing = rospy.get_param(
         '~enable_output_image_publishing')
     try:
-        ot = YoloDetector(weights_pkg_name, input_image_topic, enable_output_image_publishing)
+        ot = YoloDetector(weights_pkg_name, image_topic_list, enable_output_image_publishing)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.logerr("Shutting down {} node".format(rospy.get_name()))
