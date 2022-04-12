@@ -1,54 +1,53 @@
 #!/usr/bin/env python3
 
-
 import rospy
 import rospkg
 from cv_bridge import CvBridge, CvBridgeError
 from object_detection_msgs.msg import Object
 from object_detection_msgs.msg import ObjectsArray
 from sensor_msgs.msg import Image
-from itertools import groupby
-import time
 import os
 import sys
-import cv2
 import torch
 import numpy as np
-import logging
 
-# sys.path.append("./yolov5")
-sys.path.insert(1, os.path.join(rospkg.RosPack().get_path("object_detection"), "scripts/yolov5"))
-
+sys.path.insert(1, os.path.join(rospkg.RosPack().get_path(
+    "object_detection"), "scripts/yolov5"))
 from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.general import (LOGGER, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
-                                  increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
-from yolov5.utils.plots import Annotator, colors, save_one_box
+from yolov5.utils.general import (
+    check_img_size, non_max_suppression, scale_coords)
+from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.torch_utils import select_device, time_sync
 from yolov5.utils.augmentations import letterbox
 
-
-
 class YoloDetector:
     def __init__(self,
-                 weights_pkg_path,
+                 weights_pkg_name,
                  input_image_topic,
-                 confidence_threshold,
-                 enable_output_image_publishing,
-                 imgsz=(640, 640),  # inference size (height, width)
-                 conf_thres=0.25,  # confidence threshold
-                 iou_thres=0.45,  # NMS IOU threshold
-                 max_det=1000,  # maximum detections per image
-                 device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-                 classes=None,  # filter by class: --class 0, or --class 0 2 3
-                 agnostic_nms=False,  # class-agnostic NMS
-                 augment=False,  # augmented inference
-                 line_thickness=3,  # bounding box thickness (pixels)
-                 half=False,  # use FP16 half-precision inference
-                 dnn=False,  # use OpenCV DNN for ONNX inference
-                 ):
+                 enable_output_image_publishing=False,
+                 imgsz=(640, 640),
+                 conf_thres=0.25,
+                 iou_thres=0.45,
+                 max_det=1000,
+                 device='',
+                 classes=None,
+                 agnostic_nms=False,
+                 line_thickness=3):
+        """ Detecting objects on image
 
-        
-        
+        Args:
+            weights_pkg_name (str): name of ros package where to find weights
+            input_image_topic (str): input image ROS topic
+            enable_output_image_publishing (bool): draw bboxes and publish image (for debugging)
+            imgsz (tuple, optional): inference size (height, width). Defaults to (640, 640).
+            conf_thres (float, optional): confidence threshold. Defaults to 0.25.
+            iou_thres (float, optional): NMS IOU threshold. Defaults to 0.45.
+            max_det (int, optional): maximum detections per image. Defaults to 1000.
+            device (str, optional): cuda device, i.e. 0 or 0,1,2,3 or cpu. Defaults to ''.
+            classes (_type_, optional): filter by class: --class 0, or --class 0 2 3. Defaults to None.
+            agnostic_nms (bool, optional): class-agnostic NMS. Defaults to False.
+            line_thickness (int, optional): bounding box thickness (pixels). Defaults to 3.
+        """
 
         self.imgsz = imgsz
         self.conf_thres = conf_thres
@@ -57,10 +56,7 @@ class YoloDetector:
         self.device = device
         self.classes = classes
         self.agnostic_nms = agnostic_nms
-        self.augment = augment
         self.line_thickness = line_thickness
-        self.half = half
-        self.dnn = dnn
 
         # get node name
         node_name = rospy.get_name()
@@ -84,12 +80,11 @@ class YoloDetector:
             input_image_topic, Image, self.callback, queue_size=1)
 
         # get paths
-        self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_path)
+        self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_name)
         self.weights_path = os.path.join(
             self.weights_pkg_path, "weights", "best.pt")
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "config.yaml")
-        self.confidence_threshold = confidence_threshold
 
         # init cv_bridge
         self.bridge = CvBridge()
@@ -98,7 +93,7 @@ class YoloDetector:
             # Load model
             self.device = select_device(device)
             self.model = DetectMultiBackend(
-                self.weights_path, device=self.device, dnn=dnn, data=self.config_path, fp16=half)
+                self.weights_path, device=self.device, data=self.config_path)
             self.stride, self.names, pt = self.model.stride, self.model.names, self.model.pt
 
             self.imgsz = check_img_size(
@@ -114,49 +109,16 @@ class YoloDetector:
             # to check if inited
             self.initialized = True
 
-    def callback(self, data):
-        try:
-            if hasattr(self, 'initialized'):
-                # convert ROS image to OpenCV image
-                cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-                # detect our objects
-                objects_array_msg, drawed_image = self.detector(cv_image)
-                ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
-                # publish output image
-                self.image_pub.publish(ros_image)
-
-                # cv2.imshow("debug", drawed_image)
-                # cv2.waitKey(30)
-
-                # publish objects
-                # init msg
-                # self.object_msg = Object()
-                # self.objects_array_msg = ObjectsArray()
-                # for index, dnn_object in enumerate(dnn_objects):
-                #     self.object_msg.name = dnn_object["name"].encode('utf-8')
-                #     self.object_msg.confidence = dnn_object["confidence"]
-                #     top_left_x = int(dnn_object['box'][0])
-                #     self.object_msg.top_left_x = top_left_x
-                #     top_left_y = int(dnn_object['box'][1])
-                #     self.object_msg.top_left_y = top_left_y
-                #     bottom_right_x = int(dnn_object['box'][2])
-                #     self.object_msg.bottom_right_x = bottom_right_x
-                #     bottom_right_y = int(dnn_object['box'][3])
-                #     self.object_msg.bottom_right_y = bottom_right_y
-                #     self.objects_array_msg.objects.append(self.object_msg)
-                self.objects_array_pub.publish(objects_array_msg)
-
-                # if self.enable_output_image_publishing:
-                #     # draw bounding boxes
-                #     dnn_cv_image = self.draw(cv_image, dnn_objects)
-                #     # convert cv image into ros format
-                #     ros_image = self.bridge.cv2_to_imgmsg(dnn_cv_image, "bgr8")
-                #     # publish output image
-                #     self.image_pub.publish(ros_image)
-        except CvBridgeError as e:
-            rospy.logerr(e)
-
     def detector(self, img):
+        """ YOLO inference
+
+        Args:
+            img (_type_): cv2 image
+
+        Returns:
+            ObjectsArray: ros msg array with bboxes
+            cv2 image: image with visualized bboxes
+        """
         with torch.no_grad():
             # Padded resize
             im = letterbox(img, new_shape=self.imgsz, stride=self.stride)[0]
@@ -175,7 +137,7 @@ class YoloDetector:
             self.dt[0] += t2 - t1
 
             # Inference
-            pred = self.model(im, augment=self.augment, visualize=False)
+            pred = self.model(im)
             t3 = time_sync()
             self.dt[1] += t3 - t2
 
@@ -190,7 +152,6 @@ class YoloDetector:
 
             # Process predictions
             objects_array_msg = ObjectsArray()
-            rospy.loginfo(pred[0].shape)
 
             for i, det in enumerate(pred):  # per image
                 im0 = img.copy()
@@ -208,56 +169,52 @@ class YoloDetector:
                     for *xyxy, conf, cls in reversed(det):
                         c = int(cls)  # integer class
                         label = f'{self.names[c]} {conf:.2f}'
-                        annotator.box_label(xyxy, label, color=colors(c, True))
-                        
+
+                        # draw bboxes if enabled
+                        if self.enable_output_image_publishing:
+                            annotator.box_label(xyxy, label, color=colors(c, True))
+
                         object_msg = Object()
                         object_msg.name = self.names[c]
                         object_msg.confidence = conf
-                        top_left_x = int(xyxy[0])
                         object_msg.top_left_x = xyxy[0]
-                        top_left_y = int(xyxy[1])
                         object_msg.top_left_y = xyxy[1]
-                        bottom_right_x = int(xyxy[2])
                         object_msg.bottom_right_x = xyxy[2]
-                        bottom_right_y = int(xyxy[3])
                         object_msg.bottom_right_y = xyxy[3]
                         objects_array_msg.objects.append(object_msg)
 
             # Stream results
             return objects_array_msg, annotator.result()
 
-    def deleteMultipleObjects(self, objects):
-        """This function gets from labels.json a maximum number of objects that can be found and deletes unnecessary.
+    def callback(self, input_image):
+        try:
+            if hasattr(self, 'initialized'):
+                # convert ROS image to OpenCV image
+                cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
+                
+                # detect our objects
+                objects_array_msg, drawed_image = self.detector(cv_image)
 
-        Groups by name and kick out ones with lower probability
-        """
+                # publish results
+                if self.enable_output_image_publishing:
+                    ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
+                    # publish output image
+                    self.image_pub.publish(ros_image)
+                self.objects_array_pub.publish(objects_array_msg)
 
-        # filter founded objects
-        # group by name and sort
-        groups = [(group_name, list(group)) for group_name, group in groupby(
-            sorted(objects, key=lambda label: label['name']), lambda label: label['name'])]
-        filtered_objects = []
-        # go through groups and pop unnecessary items
-        for group in groups:
-            object_count_from_json = list(
-                filter(lambda label: label['name'] == group[0], self.labels))[0]["count"]
-            del group[1][object_count_from_json:]
-            filtered_objects += group[1]
-        return filtered_objects
+        except CvBridgeError as e:
+            rospy.logerr(e)
 
 
 if __name__ == '__main__':
     rospy.init_node('yolo_detector')
     # parameters
+    weights_pkg_name = rospy.get_param('~weights_pkg_name')
     input_image_topic = rospy.get_param('~input_image_topic')
-    confidence_threshold = rospy.get_param('~dnn_confidence_threshold')
     enable_output_image_publishing = rospy.get_param(
         '~enable_output_image_publishing')
-    weights_pkg_path = rospy.get_param('~dnn_weights_pkg')
-    resize_input_to = rospy.get_param('~resize_input_to')
     try:
-        ot = YoloDetector(weights_pkg_path, input_image_topic, confidence_threshold,
-                          enable_output_image_publishing)
+        ot = YoloDetector(weights_pkg_name, input_image_topic, enable_output_image_publishing)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.logerr("Shutting down {} node".format(rospy.get_name()))

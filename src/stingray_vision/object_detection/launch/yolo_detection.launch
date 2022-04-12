@@ -29,7 +29,7 @@
     <arg name="device_front" default="/dev/video0" />
     <arg name="device_bottom" default="/dev/video2" />
     <!-- Package name with your dnn weights -->
-    <arg name="dnn_weights_pkg" default="object_detection" />
+    <arg name="weights_pkg_name" default="object_detection" />
     <!-- DNN input image size: X Y -->
     <arg name="resize_input_to" default="300 300" />
 
@@ -42,10 +42,8 @@
         <!-- output image topic *node_name*/image -->
         <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
             <param name="input_image_topic" value="$(arg front_camera_topic)" />
-            <param name="dnn_confidence_threshold" value="0.5" />
             <param name="enable_output_image_publishing" value="true" />
-            <param name="dnn_weights_pkg" value="$(arg dnn_weights_pkg)" />
-            <param name="resize_input_to" value="$(arg resize_input_to)" />
+            <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
         </node>
         <node name="yolo_image" pkg="image_view" type="image_view" output="screen" respawn="true">
             <remap from="image" to="yolo_detector/image" />
@@ -86,7 +84,7 @@
             <param name="input_image_topic" value="/videofile/image_raw" />
             <param name="dnn_confidence_threshold" value="0.5" />
             <param name="enable_output_image_publishing" value="true" />
-            <param name="dnn_weights_pkg" value="$(arg dnn_weights_pkg)" />
+            <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="resize_input_to" value="$(arg resize_input_to)" />
         </node>
         <node name="yolo_image" pkg="image_view" type="image_view" output="screen" respawn="true">
