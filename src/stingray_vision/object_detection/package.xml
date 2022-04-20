@@ -10,16 +10,14 @@
         - ...
 
         Scripts:
-        - opencv_dnn_detector.py
         - yolo_detector.py
 
         Supported dnn frameworks and modules:
-        - opencv.dnn module
-        - yolo
+        - pytorch
 
     </description>
 
-    <maintainer email="vladislav.a.plotnikov@yandex.ru">Vladislav Plotnikov</maintainer>
+    <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
     <license>MIT</license>
 
     <buildtool_depend>catkin</buildtool_depend>
