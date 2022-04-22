@@ -5,8 +5,8 @@
   <description>Package contains drivers and bridges for communication between real vehicle or simulator and Stingray platform.</description>
 
   <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
-  <maintainer email="vladik1209@yandex.ru">Vladislav Plotnikov</maintainer>
-
+  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
+  
   <license>MIT</license>
 
   <buildtool_depend>catkin</buildtool_depend>
