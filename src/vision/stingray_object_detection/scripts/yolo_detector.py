@@ -3,8 +3,8 @@
 import rospy
 import rospkg
 from cv_bridge import CvBridge, CvBridgeError
-from object_detection_msgs.msg import Object
-from object_detection_msgs.msg import ObjectsArray
+from stingray_object_detection_msgs.msg import Object
+from stingray_object_detection_msgs.msg import ObjectsArray
 from sensor_msgs.msg import Image
 import os
 import sys
@@ -12,7 +12,7 @@ import torch
 import numpy as np
 
 sys.path.insert(1, os.path.join(rospkg.RosPack().get_path(
-    "object_detection"), "scripts/yolov5"))
+    "stingray_object_detection"), "scripts/yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import (
     check_img_size, non_max_suppression, scale_coords)

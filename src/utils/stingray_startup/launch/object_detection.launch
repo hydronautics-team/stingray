@@ -37,7 +37,7 @@
 
     <!-- WEIGHTS -->
     <!-- Package name with your dnn weights -->
-    <arg name="weights_pkg_name" default="object_detection" />
+    <arg name="weights_pkg_name" default="stingray_object_detection" />
 
 
     <!-- NODES -->
@@ -65,7 +65,7 @@
             <param name="io_method" value="mmap" />
         </node>
         <!-- Yolo detector node -->
-        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
             <param name="image_topic_list" value="/front_camera/image_raw /bottom_camera/image_raw" />
             <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="debug" value="$(arg debug)" />
@@ -75,7 +75,7 @@
     <!-- SIMULATION CAM -->
     <group if="$(arg simulation_cam)">
         <!-- Yolo detector node -->
-        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
             <param name="image_topic_list" value="$(arg simulation_front_cam) $(arg simulation_bottom_cam)" />
             <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="debug" value="$(arg debug)" />
@@ -115,7 +115,7 @@
             <arg name="visualize" value="false" />
         </include>
         <!-- Yolo detector node -->
-        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
             <param name="image_topic_list" value="/file1/image_raw /file2/image_raw" />
             <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="debug" value="$(arg debug)" />

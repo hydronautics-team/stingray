@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(object_detection_msgs)
+project(stingray_object_detection_msgs)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp

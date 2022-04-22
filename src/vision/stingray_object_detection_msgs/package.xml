@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>object_detection_msgs</name>
+  <name>stingray_object_detection_msgs</name>
   <version>0.1.0</version>
   <description>
-  The object_detection_msgs package\
+  The stingray_object_detection_msgs package\
   
-  This package contains messages used by object_detection package.
+  This package contains messages used by stingray_object_detection package.
 
   Messages:
   - Object.msg

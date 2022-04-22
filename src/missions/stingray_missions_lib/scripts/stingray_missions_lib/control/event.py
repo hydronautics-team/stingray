@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import rospy
-from object_detection_msgs.msg import ObjectsArray
+from stingray_object_detection_msgs.msg import ObjectsArray
 
 """@package docstring
 Contains an abstract class for event base and implementations for some common events.
