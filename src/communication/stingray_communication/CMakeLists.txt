@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(stingray_drivers)
+project(stingray_communication)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   nav_msgs
   serial
-  stingray_drivers_msgs
+  stingray_communication_msgs
   nodelet
 )
 
@@ -109,10 +109,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_drivers_msgs nodelet
+  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs nodelet
 #  LIBRARIES stingray_connection
 #  INCLUDE_DIRS include
-#  LIBRARIES stingray_drivers
+#  LIBRARIES stingray_communication
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -130,7 +130,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/stingray_drivers.cpp
+#   src/${PROJECT_NAME}/stingray_communication.cpp
 # )
 
 add_library(stingray_connection
@@ -146,7 +146,7 @@ add_library(stingray_connection
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(stingray_connection stingray_drivers_msgs_generate_messages_cpp)
+add_dependencies(stingray_connection stingray_communication_msgs_generate_messages_cpp)
 if(catkin_EXPORTED_LIBRARIES)
     add_dependencies(stingray_connection ${catkin_EXPORTED_LIBRARIES})
 endif()
@@ -154,7 +154,7 @@ endif()
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/stingray_drivers_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/stingray_communication_node.cpp)
 
 add_executable(gazebo_bridge
         src/gazebo_bridge.cpp
@@ -171,7 +171,7 @@ add_executable(gazebo_bridge
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(gazebo_bridge stingray_drivers_msgs_generate_messages_cpp)
+add_dependencies(gazebo_bridge stingray_communication_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -221,7 +221,7 @@ target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_stingray_drivers.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_stingray_communication.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

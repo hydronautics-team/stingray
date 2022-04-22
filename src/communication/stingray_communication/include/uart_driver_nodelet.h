@@ -1,5 +1,5 @@
-#ifndef STINGRAY_DRIVERS_UART_DRIVER_NODELET_H
-#define STINGRAY_DRIVERS_UART_DRIVER_NODELET_H
+#ifndef STINGRAY_COMMUNICATION_UART_DRIVER_NODELET_H
+#define STINGRAY_COMMUNICATION_UART_DRIVER_NODELET_H
 
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
@@ -33,4 +33,4 @@ private:
     std_msgs::UInt8MultiArray outputMessage;// Protocol_driver -> Hardware bridge
 };
 
-#endif //STINGRAY_DRIVERS_UART_DRIVER_NODELET_H
+#endif //STINGRAY_COMMUNICATION_UART_DRIVER_NODELET_H

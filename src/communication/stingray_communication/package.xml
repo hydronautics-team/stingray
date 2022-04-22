@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_drivers</name>
+  <name>stingray_communication</name>
   <version>0.1.0</version>
   <description>Package contains drivers and bridges for communication between real vehicle or simulator and Stingray platform.</description>
 
@@ -17,7 +17,7 @@
   <depend>std_srvs</depend>
   <depend>nav_msgs</depend>
   <depend>serial</depend>
-  <depend>stingray_drivers_msgs</depend>
+  <depend>stingray_communication_msgs</depend>
   <depend>nodelet</depend>
   <depend>pluginlib</depend>
 

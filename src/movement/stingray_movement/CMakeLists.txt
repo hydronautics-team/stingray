@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   actionlib
   actionlib_msgs
-  stingray_drivers_msgs
+  stingray_communication_msgs
   stingray_movement_msgs
 )
 
@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs actionlib actionlib_msgs stingray_drivers_msgs stingray_movement_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs actionlib actionlib_msgs stingray_communication_msgs stingray_movement_msgs
 #  LIBRARIES stingray_movement
 #  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
@@ -150,7 +150,7 @@ add_executable(basic_movement
         src/basic_movement.cpp
 	)
 target_link_libraries(basic_movement ${catkin_LIBRARIES})
-add_dependencies(basic_movement ${stingray_drivers_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
+add_dependencies(basic_movement ${stingray_communication_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
 
 add_executable(movement_patterns
         include/common/AsyncTimer.h
@@ -165,7 +165,7 @@ add_executable(movement_patterns
         src/movement_patterns.cpp)
 
 target_link_libraries(movement_patterns ${catkin_LIBRARIES})
-add_dependencies(movement_patterns ${stingray_drivers_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
+add_dependencies(movement_patterns ${stingray_communication_msgs_EXPORTED_TARGETS} ${stingray_movement_msgs_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

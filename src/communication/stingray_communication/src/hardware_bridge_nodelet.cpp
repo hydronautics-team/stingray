@@ -54,8 +54,8 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
         NODELET_ERROR("Wrong checksum");
 }
 
-bool hardware_bridge::lagAndMarchCallback(stingray_drivers_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
-                                          stingray_drivers_msgs::SetLagAndMarch::Response& lagAndMarchResponse) {
+bool hardware_bridge::lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
+                                          stingray_communication_msgs::SetLagAndMarch::Response& lagAndMarchResponse) {
 
     if (lagStabilizationEnabled) {
       requestMessage.march = static_cast<int16_t> (0.0);
@@ -71,8 +71,8 @@ bool hardware_bridge::lagAndMarchCallback(stingray_drivers_msgs::SetLagAndMarch:
     return true;
 }
 
-bool hardware_bridge::depthCallback(stingray_drivers_msgs::SetInt32::Request& depthRequest,
-                                    stingray_drivers_msgs::SetInt32::Response& depthResponse) {
+bool hardware_bridge::depthCallback(stingray_communication_msgs::SetInt32::Request& depthRequest,
+                                    stingray_communication_msgs::SetInt32::Response& depthResponse) {
     if (!depthStabilizationEnabled) {
         depthResponse.success = false;
         depthResponse.message = "Depth stabilization is not enabled";
@@ -87,8 +87,8 @@ bool hardware_bridge::depthCallback(stingray_drivers_msgs::SetInt32::Request& de
     return true;
 }
 
-bool hardware_bridge::yawCallback(stingray_drivers_msgs::SetInt32::Request& yawRequest,
-                                  stingray_drivers_msgs::SetInt32::Response& yawResponse) {
+bool hardware_bridge::yawCallback(stingray_communication_msgs::SetInt32::Request& yawRequest,
+                                  stingray_communication_msgs::SetInt32::Response& yawResponse) {
     if (!yawStabilizationEnabled) {
         yawResponse.success = false;
         yawResponse.message = "Yaw stabilization is not enabled";
@@ -114,8 +114,8 @@ bool hardware_bridge::imuCallback(std_srvs::SetBool::Request& imuRequest,
     return true;
 }
 
-bool hardware_bridge::stabilizationCallback(stingray_drivers_msgs::SetStabilization::Request& stabilizationRequest,
-                                            stingray_drivers_msgs::SetStabilization::Response& stabilizationResponse) {
+bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStabilization::Request& stabilizationRequest,
+                                            stingray_communication_msgs::SetStabilization::Response& stabilizationResponse) {
     NODELET_DEBUG("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
@@ -131,8 +131,8 @@ bool hardware_bridge::stabilizationCallback(stingray_drivers_msgs::SetStabilizat
     return true;
 }
 
-bool hardware_bridge::deviceActionCallback(stingray_drivers_msgs::SetDeviceAction::Request& deviceRequest,
-                                           stingray_drivers_msgs::SetDeviceAction::Response& deviceResponse) {
+bool hardware_bridge::deviceActionCallback(stingray_communication_msgs::SetDeviceAction::Request& deviceRequest,
+                                           stingray_communication_msgs::SetDeviceAction::Response& deviceResponse) {
     ROS_INFO("Setting device [%d] action value to %d", deviceRequest.device, deviceRequest.value);
     requestMessage.dev[deviceRequest.device]  = deviceRequest.value;
 

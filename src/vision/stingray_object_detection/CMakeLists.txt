@@ -20,6 +20,6 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
-        scripts/opencv_dnn_detector.py
+        scripts/yolo_detector.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )

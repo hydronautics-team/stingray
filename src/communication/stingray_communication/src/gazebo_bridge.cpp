@@ -11,10 +11,10 @@
 #include <vector>
 #include <cmath>
 
-#include <stingray_drivers_msgs/SetInt32.h>
-#include <stingray_drivers_msgs/SetStabilization.h>
-#include <stingray_drivers_msgs/SetDeviceAction.h>
-#include <stingray_drivers_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetInt32.h>
+#include <stingray_communication_msgs/SetStabilization.h>
+#include <stingray_communication_msgs/SetDeviceAction.h>
+#include <stingray_communication_msgs/SetLagAndMarch.h>
 
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
@@ -71,8 +71,8 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState&)>& trans
  * @param response Service response
  * @return {@code true} if service call didn't fail
  */
-bool lagAndMarchCallback(stingray_drivers_msgs::SetLagAndMarch::Request &request,
-                         stingray_drivers_msgs::SetLagAndMarch::Response &response) {
+bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &request,
+                         stingray_communication_msgs::SetLagAndMarch::Response &response) {
 
   currentTwist.linear.x = request.march;
   currentTwist.linear.y = -request.lag;
@@ -87,8 +87,8 @@ bool lagAndMarchCallback(stingray_drivers_msgs::SetLagAndMarch::Request &request
  * @param response Service response
  * @return {@code true} if service call didn't fail
  */
-bool depthCallback(stingray_drivers_msgs::SetInt32::Request &request,
-                   stingray_drivers_msgs::SetInt32::Response &response) {
+bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
+                   stingray_communication_msgs::SetInt32::Response &response) {
   /*
    * Here we simulate enabled depth stabilization: we just pass desired depth
    * for Gazebo like it is low-level control system that stabilizes this depth.
@@ -122,8 +122,8 @@ bool depthCallback(stingray_drivers_msgs::SetInt32::Request &request,
  * @param response Service response
  * @return {@code true} if service call didn't fail
  */
-bool yawCallback(stingray_drivers_msgs::SetInt32::Request &request,
-                 stingray_drivers_msgs::SetInt32::Response &response) {
+bool yawCallback(stingray_communication_msgs::SetInt32::Request &request,
+                 stingray_communication_msgs::SetInt32::Response &response) {
   /*
    * Here we simulate enabled yaw stabilization: we just pass desired yaw angle
    * for Gazebo like it is low-level control system that stabilizes this angle.
@@ -156,8 +156,8 @@ bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Respons
   return true;
 }
 
-bool stabilizationCallback(stingray_drivers_msgs::SetStabilization::Request &request,
-                           stingray_drivers_msgs::SetStabilization::Response &response) {
+bool stabilizationCallback(stingray_communication_msgs::SetStabilization::Request &request,
+                           stingray_communication_msgs::SetStabilization::Response &response) {
   depthStabilizationEnabled = request.depthStabilization;
   yawStabilizationEnabled = request.yawStabilization;
 
@@ -165,8 +165,8 @@ bool stabilizationCallback(stingray_drivers_msgs::SetStabilization::Request &req
   return true;
 }
 
-bool deviceActionCallback(stingray_drivers_msgs::SetDeviceAction::Request &request,
-                          stingray_drivers_msgs::SetDeviceAction::Response &response) {
+bool deviceActionCallback(stingray_communication_msgs::SetDeviceAction::Request &request,
+                          stingray_communication_msgs::SetDeviceAction::Response &response) {
   response.success = true;
   return true;
 }
