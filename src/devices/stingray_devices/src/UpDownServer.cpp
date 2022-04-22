@@ -1,5 +1,5 @@
 #include "../include/UpDownServer.h"
-#include <devices_msgs/SetDeviceAction.h>
+#include <stingray_devices_msgs/SetDeviceAction.h>
 
 
 UpDownServer::UpDownServer(const std::string& actionName, const std::string& deviceActionService) :
@@ -9,8 +9,8 @@ UpDownServer::UpDownServer(const std::string& actionName, const std::string& dev
 }
 
 
-void UpDownServer::goalCallback(const devices_msgs::UpDownGoalConstPtr &goal) {
-    devices_msgs::SetDeviceAction SetDeviceAction;
+void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr &goal) {
+    stingray_devices_msgs::SetDeviceAction SetDeviceAction;
 
     SetDeviceAction.request.device = goal->device;
 

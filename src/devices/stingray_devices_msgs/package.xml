@@ -1,5 +1,5 @@
 <package format="3">
-  <name>devices_msgs</name>
+  <name>stingray_devices_msgs</name>
   <version>0.1.0</version>
 
   <description>Package contains message definitions for Stingray devices API</description>
