@@ -1,0 +1,163 @@
+<!--
+    This .
+-->
+<launch>
+
+
+    <!-- COMMON ARGUMENTS -->
+    <!-- Defines FPS -->
+    <arg name="fps" default="30" />
+    <!-- Enables video streaming -->
+    <arg name="stream" default="false" />
+    <!-- Enables video recording -->
+    <arg name="record" default="false" />
+    <!-- Debug mode. Enabled output images publishing after yolo prediction -->
+    <arg name="debug" default="true" />
+
+    <!-- REAL CAM -->
+    <!-- Providing video from real cameras -->
+    <arg name="real_cam" default="false" />
+    <!-- Defines device that will be used as camera -->
+    <!-- < arg name="device_front" default="/dev/v4l/by-path/platform-3530000.xhci-usb-0:1:1.0-video-index0"> -->
+    <!-- < arg name="device_bottom" default="/dev/v4l/by-path/platform-3530000.xhci-usb-0:2:1.0-video-index0"> -->
+    <arg name="front_cam" default="/dev/video0" />
+    <arg name="bottom_cam" default="/dev/video2" />
+
+    <!-- SIMULATION CAM -->
+    <!-- Providing video from simulation -->
+    <arg name="simulation_cam" default="false" />
+    <arg name="simulation_front_cam" default="/stereo/camera/left/image_raw" />
+    <arg name="simulation_bottom_cam" default="/camera/bottom/image_raw" />
+
+    <!-- FILE CAM -->
+    <!-- Providing video from file -->
+    <arg name="file" default="false" />
+    <arg name="file1_path" default="video1.mp4" />
+    <arg name="file2_path" default="video2.mp4" />
+
+    <!-- WEIGHTS -->
+    <!-- Package name with your dnn weights -->
+    <arg name="weights_pkg_name" default="object_detection" />
+
+
+    <!-- NODES -->
+
+    <!-- REAL CAM -->
+    <group if="$(arg real_cam)">
+        <!-- Front camera interface node -->
+        <node name="front_camera" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+            <param name="video_device" value="$(arg device_front)" />
+            <param name="image_width" value="640" />
+            <param name="image_height" value="480" />
+            <param name="pixel_format" value="yuyv" />
+            <param name="framerate" value="$(arg fps)" />
+            <param name="camera_name" value="front_camera" />
+            <param name="io_method" value="mmap" />
+        </node>
+        <!-- Bottom camera interface node -->
+        <node name="bottom_camera" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+            <param name="video_device" value="$(arg device_bottom)" />
+            <param name="image_width" value="640" />
+            <param name="image_height" value="480" />
+            <param name="pixel_format" value="yuyv" />
+            <param name="framerate" value="$(arg fps)" />
+            <param name="camera_name" value="bottom_camera" />
+            <param name="io_method" value="mmap" />
+        </node>
+        <!-- Yolo detector node -->
+        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+            <param name="image_topic_list" value="/front_camera/image_raw /bottom_camera/image_raw" />
+            <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
+            <param name="debug" value="$(arg debug)" />
+        </node>
+    </group>
+
+    <!-- SIMULATION CAM -->
+    <group if="$(arg simulation_cam)">
+        <!-- Yolo detector node -->
+        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+            <param name="image_topic_list" value="$(arg simulation_front_cam) $(arg simulation_bottom_cam)" />
+            <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
+            <param name="debug" value="$(arg debug)" />
+        </node>
+        <group if="$(arg debug)">
+            <!-- View simulation front image -->
+            <node name="simulation_image" pkg="image_view" type="image_view">
+                <remap from="image" to="$(arg simulation_front_cam)" />
+            </node>
+            <!-- View simulation bottom image -->
+            <node name="simulation_image" pkg="image_view" type="image_view">
+                <remap from="image" to="$(arg simulation_bottom_cam)" />
+            </node>
+        </group>
+    </group>
+
+    <!-- FILE CAM -->
+    <group if="$(arg file)">
+        <!-- launch video from file -->
+        <include file="$(find video_stream_opencv)/launch/camera.launch">
+            <arg name="camera_name" value="file1" />
+            <arg name="video_stream_provider" value="$(arg file1_path)" />
+            <arg name="set_camera_fps" value="$(arg fps)" />
+            <arg name="buffer_queue_size" value="100" />
+            <arg name="fps" value="$(arg fps)" />
+            <arg name="frame_id" value="image" />
+            <arg name="visualize" value="false" />
+        </include>
+        <!-- launch video from file -->
+        <include file="$(find video_stream_opencv)/launch/camera.launch">
+            <arg name="camera_name" value="file2" />
+            <arg name="video_stream_provider" value="$(arg file2_path)" />
+            <arg name="set_camera_fps" value="$(arg fps)" />
+            <arg name="buffer_queue_size" value="100" />
+            <arg name="fps" value="$(arg fps)" />
+            <arg name="frame_id" value="image" />
+            <arg name="visualize" value="false" />
+        </include>
+        <!-- Yolo detector node -->
+        <node name="yolo_detector" pkg="object_detection" type="yolo_detector.py" output="screen" respawn="true">
+            <param name="image_topic_list" value="/file1/image_raw /file2/image_raw" />
+            <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
+            <param name="debug" value="$(arg debug)" />
+        </node>
+        <group if="$(arg debug)">
+            <!-- View simulation front image -->
+            <node name="file1_image" pkg="image_view" type="image_view">
+                <remap from="image" to="/file1/image_raw" />
+            </node>
+            <!-- View simulation bottom image -->
+            <node name="file2_image" pkg="image_view" type="image_view">
+                <remap from="image" to="/file2/image_raw" />
+            </node>
+        </group>
+    </group>
+
+    <group if="$(arg debug)">
+        <!-- View yolo image -->
+        <node name="yolo_image" pkg="image_view" type="image_view" output="screen" respawn="true">
+            <remap from="image" to="yolo_detector/image" />
+        </node>
+        <group if="$(arg record)">
+            <!-- Video recorder node -->
+            <node name="yolo_record" pkg="video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <param name="source_topic" value="yolo_detector/image" />
+                <param name="output_width" value="640" />
+                <param name="output_height" value="480" />
+                <param name="output_fps" value="$(arg fps)" />
+                <param name="output_format" value="h264" />
+                <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+            </node>
+        </group>
+    </group>
+
+    <group if="$(arg stream)">
+        <!-- Video web server -->
+        <!-- Stream will be available at http://<hostname>:8080/stream_viewer?topic=<image topic> -->
+        <!-- For direct images from camera the topic is /<camera_name>/image_raw -->
+        <node name="video_server" pkg="web_video_server" type="web_video_server" output="screen" respawn="true">
+            <param name="server_threads" value="4" />
+            <param name="ros_threads" value="10" />
+        </node>
+    </group>
+
+</launch>

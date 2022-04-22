@@ -29,7 +29,7 @@
 
     <group if="$(arg record)">
         <!-- Video recorder node -->
-        <node name="video_recorder" pkg="stingray_utils" type="video_recorder.py" output="screen" respawn="true">
+        <node name="video_recorder" pkg="video_recorder" type="video_recorder.py" output="screen" respawn="true">
             <param name="source_topic" value="/device_camera/image_raw" />
             <param name="output_width" value="640" />
             <param name="output_height" value="480" />
