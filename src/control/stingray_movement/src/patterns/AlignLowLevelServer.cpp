@@ -1,7 +1,7 @@
 #include <patterns/AlignLowLevelServer.h>
 
-#include <stingray_drivers_msgs/SetLagAndMarch.h>
-#include <stingray_drivers_msgs/SetStabilization.h>
+#include <stingray_communication_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetStabilization.h>
 #include <stingray_movement_msgs/AlignValue.h>
 
 
@@ -12,7 +12,7 @@ AlignLowLevelServer::AlignLowLevelServer(const std::string &actionName, double v
                                  stingray_movement_msgs::AlignGoalConstPtr>(actionName, velocityCoefficient) {};
 
 void AlignLowLevelServer::goalCallback(const stingray_movement_msgs::AlignGoalConstPtr &goal) {
-  stingray_drivers_msgs::SetLagAndMarch serviceCall;
+  stingray_communication_msgs::SetLagAndMarch serviceCall;
   serviceCall.request.lag = serviceCall.request.march = 0.0;
   auto result = ros::service::call(LAG_MARCH_SERVICE, serviceCall);
   if (!result || !serviceCall.response.success) {
@@ -22,7 +22,7 @@ void AlignLowLevelServer::goalCallback(const stingray_movement_msgs::AlignGoalCo
     return;
   }
 
-  stingray_drivers_msgs::SetStabilization stabilizationCall;
+  stingray_communication_msgs::SetStabilization stabilizationCall;
   stabilizationCall.request.depthStabilization = stabilizationCall.request.yawStabilization =
       stabilizationCall.request.lagStabilization = true;
   result = ros::service::call(STABILIZATION_SERVICE, stabilizationCall);

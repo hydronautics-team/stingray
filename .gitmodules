@@ -1,6 +1,6 @@
-[submodule "src/control/serial"]
-	path = src/control/serial
-	url = https://github.com/wjwwood/serial.git
 [submodule "src/stingray_vision/object_detection/scripts/yolov5"]
 	path = src/stingray_vision/object_detection/scripts/yolov5
 	url = https://github.com/ultralytics/yolov5.git
+[submodule "src/stingray_communication/serial"]
+	path = src/stingray_communication/serial
+	url = https://github.com/wjwwood/serial.git

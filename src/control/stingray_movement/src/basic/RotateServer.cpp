@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include <stingray_drivers_msgs/SetInt32.h>
+#include <stingray_communication_msgs/SetInt32.h>
 #include <std_msgs/Int32.h>
 
 RotateServer::RotateServer(const std::string &actionName) :
@@ -11,7 +11,7 @@ RotateServer::RotateServer(const std::string &actionName) :
 
 void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr &goal) {
 
-  stingray_drivers_msgs::SetInt32 serviceCall;
+  stingray_communication_msgs::SetInt32 serviceCall;
   serviceCall.request.value = goal->yaw;
   auto result = ros::service::call(YAW_SERVICE, serviceCall);
   if (!result || !serviceCall.response.success) {

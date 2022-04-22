@@ -2,8 +2,8 @@
 
 #include "ros/ros.h"
 #include <stingray_movement_msgs/TackAction.h>
-#include <stingray_drivers_msgs/SetLagAndMarch.h>
-#include <stingray_drivers_msgs/SetInt32.h>
+#include <stingray_communication_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetInt32.h>
 #include <std_msgs/Int32.h>
 
 TackServer::TackServer(const std::string& actionName, double velocityCoefficient) :
@@ -13,9 +13,9 @@ TackServer::TackServer(const std::string& actionName, double velocityCoefficient
 
 void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& goal)
 {
-    stingray_drivers_msgs::SetLagAndMarch lagAndMarchService;
-    stingray_drivers_msgs::SetLagAndMarch stop;
-    stingray_drivers_msgs::SetInt32 rotateService;
+    stingray_communication_msgs::SetLagAndMarch lagAndMarchService;
+    stingray_communication_msgs::SetLagAndMarch stop;
+    stingray_communication_msgs::SetInt32 rotateService;
 
 	stop.request.lag = 0.0;
 	stop.request.march = 0.0;

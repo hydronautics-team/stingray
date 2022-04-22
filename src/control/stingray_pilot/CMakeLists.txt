@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   std_srvs
-  stingray_drivers_msgs
+  stingray_communication_msgs
 )
 
 ## System dependencies are found with CMake's conventions

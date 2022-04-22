@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   std_srvs
-  stingray_drivers_msgs
+  stingray_communication_msgs
   stingray_missions_lib
 )
 
@@ -107,7 +107,7 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_fsm
-  CATKIN_DEPENDS rospy std_msgs std_srvs stingray_drivers_msgs stingray_missions_lib
+  CATKIN_DEPENDS rospy std_msgs std_srvs stingray_communication_msgs stingray_missions_lib
 #  DEPENDS system_lib
 )
 

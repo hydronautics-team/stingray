@@ -1,7 +1,7 @@
 #include <basic/LinearMovementServer.h>
 
 #include "common/AsyncTimer.h"
-#include <stingray_drivers_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetLagAndMarch.h>
 
 
 LinearMovementServer::LinearMovementServer(const std::string &actionName, double velocityCoefficient) :
@@ -9,7 +9,7 @@ LinearMovementServer::LinearMovementServer(const std::string &actionName, double
                                  stingray_movement_msgs::LinearMoveGoalConstPtr>(actionName, velocityCoefficient) {};
 
 void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMoveGoalConstPtr &goal) {
-    stingray_drivers_msgs::SetLagAndMarch serviceCall;
+    stingray_communication_msgs::SetLagAndMarch serviceCall;
   if (goal->velocity < 0.0 || goal->velocity > 1.0) {
     actionServer.setAborted(stingray_movement_msgs::LinearMoveResult(),
                             "Velocity value must be between 0.0 and 1.0");

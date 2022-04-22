@@ -1,6 +1,6 @@
 #include <patterns/AlignServer.h>
 
-#include <stingray_drivers_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetLagAndMarch.h>
 #include <stingray_movement_msgs/AlignValue.h>
 
 
@@ -9,7 +9,7 @@ AlignServer::AlignServer(const std::string &actionName, double velocityCoefficie
                                  stingray_movement_msgs::AlignGoalConstPtr>(actionName, velocityCoefficient) {};
 
 void AlignServer::goalCallback(const stingray_movement_msgs::AlignGoalConstPtr &goal) {
-  stingray_drivers_msgs::SetLagAndMarch serviceCall;
+  stingray_communication_msgs::SetLagAndMarch serviceCall;
   serviceCall.request.lag = serviceCall.request.march = 0.0;
   auto result = ros::service::call(LAG_MARCH_SERVICE, serviceCall);
   if (!result || !serviceCall.response.success) {

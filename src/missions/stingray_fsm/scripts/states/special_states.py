@@ -3,7 +3,7 @@ import smach
 import smach_ros
 
 from std_srvs.srv import SetBool
-from stingray_drivers_msgs.srv import SetStabilization
+from stingray_communication_msgs.srv import SetStabilization
 
 
 class InitializationState(smach.State):
