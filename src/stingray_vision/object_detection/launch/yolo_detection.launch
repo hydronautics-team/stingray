@@ -139,7 +139,7 @@
         </node>
         <group if="$(arg record)">
             <!-- Video recorder node -->
-            <node name="yolo_record" pkg="video_recorder" type="video_recorder.py" output="screen" respawn="true">
+            <node name="yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
                 <param name="source_topic" value="yolo_detector/image" />
                 <param name="output_width" value="640" />
                 <param name="output_height" value="480" />

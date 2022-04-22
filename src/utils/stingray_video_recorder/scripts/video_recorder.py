@@ -130,7 +130,7 @@ class VideoRecorder:
 
 
 if __name__ == '__main__':
-    rospy.init_node('video_recorder', anonymous=True)
+    rospy.init_node('stingray_video_recorder', anonymous=True)
 
     # parameters
     source_topic = rospy.get_param('~source_topic')
