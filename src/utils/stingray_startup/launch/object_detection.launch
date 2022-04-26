@@ -27,9 +27,9 @@
 
     <!-- SIMULATION CAM -->
     <!-- Providing video from simulation -->
-    <arg name="simulation_cam" default="false" />
+    <arg name="simulation" default="false" />
     <arg name="simulation_front_cam" default="/stereo/camera/left/image_raw" />
-    <arg name="simulation_bottom_cam" default="/camera/bottom/image_raw" />
+    <arg name="simulation_bottom_cam" default="/rov_model_urdf/camera_bottom/image_raw" />
 
     <!-- FILE CAM -->
     <!-- Providing video from file -->
@@ -115,7 +115,7 @@
     </group>
 
     <!-- SIMULATION CAM -->
-    <group if="$(arg simulation_cam)">
+    <group if="$(arg simulation)">
         <!-- Yolo detector node -->
         <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
             <param name="image_topic_list" value="$(arg simulation_front_cam) $(arg simulation_bottom_cam)" />
