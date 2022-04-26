@@ -21,7 +21,7 @@
 
 static const std::string GAZEBO_BRIDGE_NODE_NAME = "gazebo_bridge";
 
-static const std::string MODEL_NAME = "ROV_model_URDF";
+static const std::string MODEL_NAME = "rov_model_urdf";
 
 static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = 100;
 

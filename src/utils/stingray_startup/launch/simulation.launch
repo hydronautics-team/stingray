@@ -1,81 +1,47 @@
+<!-- Basic launch file of Stingray platform -->
 <launch>
 
-    <!-- Basic launch file of Stingray platform -->
+    <!-- ARGS -->
 
+    <!-- COMMON -->
     <!-- Settings for "output" parameter of nodes -->
     <arg name="ros_output" default="screen" />
+    <!-- Debug mode. Enabled output images publishing after yolo prediction -->
+    <arg name="debug" default="true" />
 
-    <!-- For launching in simulator add a "simulation:=true" parameter in command line-->
-    <arg name="simulation" default="false" />
-
-    <!-- Enables connection with hardware platform -->
-    <arg name="hardware_connection" default="true" />
-
-    <!-- UART settings -->
-    <arg name="uart_device" default="/dev/ttyS0" />
-    <arg name="uart_baudrate" default="57600" />
-    <arg name="uart_data_bytes" default="8" />
-    <!-- Available parity values: none, even, odd -->
-    <arg name="uart_parity" default="none" />
-    <arg name="uart_stop_bits" default="1" />
-
+    <!-- MOVEMENT -->
     <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
     <arg name="velocity_coefficient" default="20000.0" />
 
-    <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
-    <arg name="delay_after_init" default="50000" />
-
+    <!-- MISSIONS -->
+    <!-- Enables missions -->
+    <arg name="missions_enabled" default="false" />
     <!-- Missions FSM module -->
     <arg name="missions_module" default="" />
     <!-- Missions FSM class -->
-    <arg name="missions_class"  default="" />
-
-    <!-- Enables missions -->
-    <arg name="missions_enabled" default="false" />
-
+    <arg name="missions_class" default="" />
+    <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
+    <arg name="delay_after_init" default="50000" />
     <!-- FSM visualization using SMACH viewer -->
     <arg name="fsm_introspection" default="false" />
 
-    <!-- Connection with real vehicle -->
-    <group unless="$(arg simulation)">
-	    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>
-        <group if="$(arg hardware_connection)">
-	        <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_communication/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
-                <param name="device" value="$(arg uart_device)" />
-                <param name="baudrate" value="$(arg uart_baudrate)" />
-                <param name="data_bytes" value="$(arg uart_data_bytes)" />
-                <param name="parity" value="$(arg uart_parity)" />
-                <param name="stop_bits" value="$(arg uart_stop_bits)" />
-            </node>
-        </group>
-        <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_communication/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
-    </group>
 
+    <!-- NODES -->
     <!-- Connection with simulator -->
-    <group if="$(arg simulation)">
-        <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
-<!--        <node pkg="stingray_pilot" name="stingray_pilot" type="gazebo_test_module.py" output="$(arg ros_output)" respawn="true" respawn_delay="120"/>-->
-    </group>
+    <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
-    <!-- Movement nodes, real vehicle -->
-    <group unless="$(arg simulation)">
-        <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
-            <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
-        </node>
-        <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
-            <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
-        </node>
-    </group>
+    <include file="$(find stingray_startup)/launch/object_detection.launch">
+        <arg name="simulation" default="true" />
+        <arg name="debug" default="$(arg debug)" />
+    </include>
 
     <!-- Movement nodes, simulator -->
-    <group if="$(arg simulation)">
-        <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
-            <param name="velocity_coefficient" value="4.3" />
-        </node>
-        <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
-            <param name="velocity_coefficient" value="4.3" />
-        </node>
-    </group>
+    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
+        <param name="velocity_coefficient" value="4.3" />
+    </node>
+    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
+        <param name="velocity_coefficient" value="4.3" />
+    </node>
 
     <group if="$(arg missions_enabled)">
         <!-- Top-level control FSM -->
