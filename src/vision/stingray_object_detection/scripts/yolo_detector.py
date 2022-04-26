@@ -13,18 +13,18 @@ import numpy as np
 
 sys.path.insert(1, os.path.join(rospkg.RosPack().get_path(
     "stingray_object_detection"), "scripts/yolov5"))
-from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.general import (
+from models.common import DetectMultiBackend
+from utils.general import (
     check_img_size, non_max_suppression, scale_coords)
-from yolov5.utils.plots import Annotator, colors
-from yolov5.utils.torch_utils import select_device, time_sync
-from yolov5.utils.augmentations import letterbox
+from utils.plots import Annotator, colors
+from utils.torch_utils import select_device, time_sync
+from utils.augmentations import letterbox
 
 class YoloDetector:
     def __init__(self,
                  weights_pkg_name,
                  image_topic_list,
-                 enable_output_image_publishing=False,
+                 debug=False,
                  imgsz=(640, 640),
                  conf_thres=0.25,
                  iou_thres=0.45,
@@ -56,7 +56,7 @@ class YoloDetector:
             self.weights_pkg_path, "weights", "config.yaml")
         
         self.image_topic_list = image_topic_list.split(" ")
-        self.enable_output_image_publishing = enable_output_image_publishing
+        self.debug = debug
         
         self.imgsz = imgsz
         self.conf_thres = conf_thres
@@ -76,14 +76,17 @@ class YoloDetector:
         for input_topic in self.image_topic_list:
             # ROS Topic names
             objects_array_topic = "%s%s/objects" % (input_topic, node_name)
+            rospy.loginfo("Node: {}, input topic: {}, output objects topic: {}".format(node_name, input_topic, objects_array_topic))
+
             output_image_topic = "%s%s/image" % (input_topic, node_name)
+            rospy.loginfo("Node: {}, input topic: {}, output image topic: {}".format(node_name, input_topic, output_image_topic))
 
             # ROS subscribers
             self.image_sub = rospy.Subscriber(input_topic, Image, self.callback, callback_args=input_topic, queue_size=1)
 
             # ROS publishers
             objects_array_pub = rospy.Publisher(objects_array_topic, ObjectsArray, queue_size=10)
-            if self.enable_output_image_publishing:
+            if self.debug:
                 image_pub = rospy.Publisher(output_image_topic, Image, queue_size=1)
             self.objects_array_pub_dict[input_topic] = objects_array_pub
             self.image_pub_dict[input_topic] = image_pub
@@ -176,7 +179,7 @@ class YoloDetector:
                         label = f'{self.names[c]} {conf:.2f}'
 
                         # draw bboxes if enabled
-                        if self.enable_output_image_publishing:
+                        if self.debug:
                             annotator.box_label(xyxy, label, color=colors(c, True))
 
                         object_msg = Object()
@@ -201,7 +204,7 @@ class YoloDetector:
                 objects_array_msg, drawed_image = self.detector(cv_image)
 
                 # publish results
-                if self.enable_output_image_publishing:
+                if self.debug:
                     ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                     # publish output image
                     self.image_pub_dict[topic].publish(ros_image)
@@ -216,10 +219,9 @@ if __name__ == '__main__':
     # parameters
     weights_pkg_name = rospy.get_param('~weights_pkg_name')
     image_topic_list = rospy.get_param('~image_topic_list')
-    enable_output_image_publishing = rospy.get_param(
-        '~enable_output_image_publishing')
+    debug = rospy.get_param('~debug')
     try:
-        ot = YoloDetector(weights_pkg_name, image_topic_list, enable_output_image_publishing)
+        ot = YoloDetector(weights_pkg_name, image_topic_list, debug)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.logerr("Shutting down {} node".format(rospy.get_name()))
