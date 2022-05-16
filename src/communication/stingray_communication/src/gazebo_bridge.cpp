@@ -74,6 +74,9 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState&)>& trans
 bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &request,
                          stingray_communication_msgs::SetLagAndMarch::Response &response) {
 
+  ROS_INFO("lagAndMarchCallback in gazebo bridge");
+
+
   currentTwist.linear.x = request.march;
   currentTwist.linear.y = -request.lag;
 

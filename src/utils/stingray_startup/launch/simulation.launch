@@ -25,14 +25,19 @@
     <!-- FSM visualization using SMACH viewer -->
     <arg name="fsm_introspection" default="false" />
 
+    <!-- WEIGHTS -->
+    <!-- Package name with your dnn weights -->
+    <arg name="weights_pkg_name" default="stingray_object_detection" />
+
 
     <!-- NODES -->
     <!-- Connection with simulator -->
     <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
     <include file="$(find stingray_startup)/launch/object_detection.launch">
-        <arg name="simulation" default="true" />
-        <arg name="debug" default="$(arg debug)" />
+        <arg name="simulation" value="true" />
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
     </include>
 
     <!-- Movement nodes, simulator -->
