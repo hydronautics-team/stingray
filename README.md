@@ -1,6 +1,8 @@
 # stingray
 Autonomous underwater vehicle platform based on ROS
 
+![Stingray logo](logo.jpg "Stingray logo")
+
 ## Building
 Install dependencies:
 ```bash
