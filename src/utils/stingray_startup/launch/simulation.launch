@@ -51,9 +51,6 @@
         <param name="velocity_coefficient" value="4.3" />
     </node>
 
-    <group if="$(arg pilot)"> <!-- while downloading torch -->
-        <node pkg="stingray_pilot" type="gazebo_test_module.py" name="stingray_pilot" output="$(arg ros_output)" respawn="true" />
-    </group>
 
     <group if="$(arg missions_enabled)">
         <!-- Top-level control FSM -->

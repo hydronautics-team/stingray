@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_pilot</name>
+  <name>stingray_tfsm</name>
   <version>0.0.1</version>
-  <description>Package with piloting script</description>
+  <description>PyTransitions FSM drive</description>
 
   <maintainer email="davtart2000@yandex.ru">Davtyan Artyom</maintainer>
 
@@ -13,11 +13,14 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rospy</depend>
+  <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>stingray_communication_msgs</depend>
-  <depend>smach</depend>
+  <depend>stingray_object_detection_msgs</depend>
+
 
 
 </package>
