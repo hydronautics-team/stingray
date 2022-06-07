@@ -3,6 +3,7 @@ from transitions.extensions import GraphMachine
 from time import sleep
 from copy import copy
 from ast import literal_eval
+import rospy
 
 
 def generic_callback(userdata: dict = None):
@@ -76,7 +77,6 @@ class FSM_Simple:
             """conditional transitions with one name should be used"""
             """in the style: if prev step is done -> proceed to next"""
 
-            print('this costyl should be replaced by conditions')
             self.next_step()
             current_state = self.state
             print('\n==== STEP IS OVER ====\n')

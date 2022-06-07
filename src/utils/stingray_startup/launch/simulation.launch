@@ -8,7 +8,6 @@
     <arg name="ros_output" default="screen" />
     <!-- Debug mode. Enabled output images publishing after yolo prediction -->
     <arg name="debug" default="true" />
-    <arg name="pilot" default="false" />
 
     <!-- MOVEMENT -->
     <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
@@ -35,7 +34,7 @@
     <!-- Connection with simulator -->
     <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
-    <group if="false"> <!-- while downloading torch -->
+    <group if="false"> <!-- until fixed -->
         <include file="$(find stingray_startup)/launch/object_detection.launch">
             <arg name="simulation" value="true" />
             <arg name="debug" value="$(arg debug)" />
@@ -51,6 +50,7 @@
         <param name="velocity_coefficient" value="4.3" />
     </node>
 
+    <node pkg="stingray_tfsm" type="gate.py" name="control_fsm" output="$(arg ros_output)" respawn="false"/>
 
     <group if="$(arg missions_enabled)">
         <!-- Top-level control FSM -->

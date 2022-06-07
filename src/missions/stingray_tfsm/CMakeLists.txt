@@ -14,14 +14,17 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   stingray_communication_msgs
   stingray_object_detection_msgs
+  stingray_movement_msgs
 )
 
 catkin_package(
- INCLUDE_DIRS scripts
+ INCLUDE_DIRS
+ scripts/stingray_tfsm
+ scripts
 )
 
 include_directories(
-# include
+include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -29,4 +32,5 @@ catkin_install_python(PROGRAMS
         scripts/gate.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )
+catkin_python_setup()
 
