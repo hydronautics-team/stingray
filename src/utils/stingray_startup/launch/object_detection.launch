@@ -28,7 +28,7 @@
     <!-- SIMULATION CAM -->
     <!-- Providing video from simulation -->
     <arg name="simulation" default="false" />
-    <arg name="simulation_front_cam" default="/stereo/camera/left/image_raw" />
+    <arg name="simulation_front_cam" default="/rov_model_urdf/camera_front/image_raw" />
     <arg name="simulation_bottom_cam" default="/rov_model_urdf/camera_bottom/image_raw" />
 
     <!-- FILE CAM -->
