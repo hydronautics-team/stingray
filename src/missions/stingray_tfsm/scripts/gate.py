@@ -3,18 +3,20 @@ import rospy
 from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
 
-LAG_DIRECTION = 4  # = 'LEFT'
-FIRST_MARCH_TIME = 5500  # int(rospy.get_param('~firstMarchTime', '5500'))
+LAG_DIRECTION = 3  # 4 in real = 'LEFT'
+FIRST_MARCH_TIME = 50  # int(rospy.get_param('~firstMarchTime', '5500'))
 FIRST_LAG_TIME = 4500  # int(rospy.get_param('~firstMarchTime', '4500'))
-SECOND_MARCH_TIME = 12000  # int(rospy.get_param('~secondMarchTime', '12000'))
+SECOND_MARCH_TIME = 6800  # int(rospy.get_param('~secondMarchTime', '12000'))
+SECOND_LAG_TIME = 3000
 
-STATES = ('init', 'march_1', 'lag_1', 'march_2', 'aborted', 'done')
-TRANSITIONS = [
+STATES = ('init', 'march_1', 'lag_1', 'march_2', 'stop' 'aborted', 'done')
+TRANSITIONS = [     # Timings
     {'trigger': 'start', 'source': 'init', 'dest': 'march_1', 'prepare': 'callback_wrapper'},
     {'trigger': 'step1', 'source': 'march_1', 'dest': 'lag_1', 'prepare': 'callback_wrapper'},
     {'trigger': 'step2', 'source': 'lag_1', 'dest': 'march_2', 'prepare': 'callback_wrapper'},
-    {'trigger': 'finish', 'source': 'march_2', 'dest': 'done'},
-    {'trigger': 'abort', 'source': ['march_1', 'lag_1', 'march_2'], 'dest': 'aborted'},
+    {'trigger': 'step3', 'source': 'march_2', 'dest': 'stop', 'prepare': 'callback_wrapper'},
+    {'trigger': 'finish', 'source': 'stop', 'dest': 'done', 'prepare': 'callback_wrapper'},
+    {'trigger': 'abort', 'source': ['march_1', 'lag_1', 'march_2', 'stop'], 'dest': 'aborted'},
     {'trigger': 'restart', 'source': ['done', 'aborted'], 'dest': 'init'},
 ]
 
@@ -38,19 +40,31 @@ class GateMission(FSM_Simple):
 
     def execute_move_goal(self, userdata):
         if 'LAG' not in userdata:
-            userdata['LAG'] = 1
+            userdata['LAG'] = 1  # in real 1 in simulation 2
+        if 'TIME' not in userdata:
+            userdata['TIME'] = 50
         goal = msg.LinearMoveGoal(userdata['LAG'], 0.4, userdata['TIME'])
         self.move_client.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                    active_cb=callback_active)
         rospy.loginfo('goal sent')
-        self.move_client.wait_for_result(timeout=rospy.Duration(secs=SECOND_MARCH_TIME // 1000 + 1))
+        self.move_client.wait_for_result(timeout=rospy.Duration(secs=userdata['TIME'] // 1000 + 1))
         rospy.loginfo('result got')
+
+    def blank_action(self):  # awful costyl made to avoid loss of first action
+        goal = msg.LinearMoveGoal(0, 0, 0)
+        self.move_client.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                   active_cb=callback_active)
+        self.move_client.wait_for_result(timeout=rospy.Duration(nsecs=10000))
+        rospy.loginfo('blank action done')
 
     def next_step(self):
         if self.state == 'init':
             userdata = {
                 'TIME': FIRST_MARCH_TIME
             }
+            self.blank_action()
+            self.blank_action()
+
         elif self.state == 'march_1':
             userdata = {
                 'LAG': LAG_DIRECTION,
@@ -62,14 +76,20 @@ class GateMission(FSM_Simple):
             }
         elif self.state == 'march_2':
             userdata = {
-                'STOP': True
+                'LAG': LAG_DIRECTION,
+                'TIME': SECOND_LAG_TIME
+            }
+        elif self.state == 'stop':
+            userdata = {
+                'STOP': True,
+                'LAG': 0
             }
         else:
             userdata = None
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      userdata, external_cb=self.goal_switch)
 
-    def goal_switch(self, userdata: dict):
+    def goal_switch(self, userdata: dict):  # TODO this is redundant?
         print("here we're switchin'")
         self.move_client.wait_for_server(rospy.Duration(nsecs=1000))
         if 'LAG' in userdata:
