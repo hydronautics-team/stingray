@@ -4,3 +4,7 @@
 [submodule "src/vision/stingray_object_detection/scripts/yolov5"]
 	path = src/vision/stingray_object_detection/scripts/yolov5
 	url = https://github.com/ultralytics/yolov5.git
+[submodule "src/utils/stingray_qr_reader/zbar_ros"]
+	path = src/utils/stingray_qr_reader/zbar_ros
+	url = https://github.com/ros-drivers/zbar_ros
+	branch = melodic-devel
