@@ -4,39 +4,39 @@ Stingray is a framework for remote operated (ROV) and autonomous (AUV) underwate
 
 ![Stingray logo](logo.jpg "Stingray logo")
 
----
 
-## Building
+# Installation
 
+Initialize and update git submodules used in project:
+```bash
+git submodule update --init --recursive
+```
+
+## Pre-build steps
 ### Object detection steps
 
-- Install [requirements.txt](src/vision/stingray_object_detection/scripts/yolov5/requirements.txt) from yolov5 submodule 
+- Install **requirements** from [yolov5](https://github.com/ultralytics/yolov5)
+
+If you want to run your own trained yolov5:
 - Edit [config.yaml](src/vision/stingray_object_detection/weights/config.yaml) to add your labels
 - Put best checkpoint of yolov5 as **best.pt** in [weights folder](src/vision/stingray_object_detection/weights)
 
 ### Common steps
 
-- Install dependencies:
-```bash
-$ROS_DISTRO=noetic
-```
+Install dependencies:
 
 ```bash
+$ROS_DISTRO=noetic
 sudo apt-get install ros-$ROS_DISTRO-usb-cam ros-$ROS_DISTRO-rosbridge-server ros-$ROS_DISTRO-image-view ros-$ROS_DISTRO-actionlib ros-$ROS_DISTRO-smach ros-$ROS_DISTRO-smach-viewer
 ```
-- Initialize and update git submodules used in project:
-```bash
-git submodule update --init --recursive
-```
-- Build:
+
+## Build
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 catkin_make
 ```
 
----
-
-## Runnung
+# Run
 
 Setup workspace before you start to work:
 
@@ -44,7 +44,7 @@ Setup workspace before you start to work:
 source devel/setup.bash
 ```
 
-### Object detection
+### Run object detection
 - Run detection on real cameras:
 ```bash
 roslaunch stingray_startup object_detection.launch real_cam:=true 
