@@ -16,37 +16,39 @@ def callback_feedback(feedback):
     rospy.loginfo("Feedback:%s" % str(feedback))
 
 
+TRANSITIONS = [     # Timings
+    {'start', 'init', 'march_1'}
+    ]
+
+
 class AUVStateMachine(FSM_Simple):
-    def __init__(self, topics_to_sub: dict, states: tuple, transitions: dict, path=None):
+    def __init__(self, states: tuple, transitions: list, scene: dict, path=None):
         super().__init__(states, transitions, path)
         self.LinearMoveClient = SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
+        self.scene = scene
 
         self.absolute_angle=0
         self.RotateClient = SimpleActionClient('stingray_action_rotate', msg.RotateAction)
         self.DiveClient = SimpleActionClient('stingray_action_dive', msg.DiveAction)
-        self.topics_to_sub = dict()
 
-        for topic in topics_to_sub:
-            self.topics_to_sub[topic] = topics_to_sub[topic]
-
-    def execute_move_goal(self, userdata):
-        goal = msg.LinearMoveGoal(userdata['direction'], userdata['velocity'], userdata['duration'])
+    def execute_move_goal(self, scene):
+        goal = msg.LinearMoveGoal(scene['direction'], scene['velocity'], scene['duration'])
         self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
         rospy.loginfo('Goal sent')
-        self.LinearMoveClient.wait_for_result(timeout=rospy.Duration(secs=userdata['duration'] // 1000 + 1))
+        self.LinearMoveClient.wait_for_result(timeout=rospy.Duration(secs=scene['duration'] // 1000 + 1))
         rospy.loginfo('Result got')
 
-    def execute_dive_goal(self, userdata):
-        goal = msg.DiveClientGoal(userdata['depth'])
+    def execute_dive_goal(self, scene):
+        goal = msg.DiveClientGoal(scene['depth'])
         self.DiveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                     active_cb=callback_active)
         rospy.loginfo('Goal sent')
         self.DiveClient.wait_for_result(timeout=rospy.Duration(secs=5))
         rospy.loginfo('Result got')
 
-    def execute_rotate_goal(self, userdata):
-        angle = userdata['angle']
+    def execute_rotate_goal(self, scene):
+        angle = scene['angle']
         self.absolute_angle += angle
 
         if self.absolute_angle > 360:
@@ -66,5 +68,38 @@ class AUVStateMachine(FSM_Simple):
         else:
             rospy.loginfo('Rotating is not required to achieve this angle')
 
-    def monitor_state
+    # def condition(self, args):
+    #     """this is most probably a stub"""
+    #     if str(1).isalpha():
+    #         return 1
+    #     else:
+    #         return 0
+
+    def next_step(self):
+        state_keyword = self.state.split('_')[0]
+        scene = self.scene[self.state]
+
+        if state_keyword == 'init':
+            rospy.sleep(scene['time'])
+
+        elif state_keyword == 'move':
+            self.execute_move_goal(scene)
+
+        elif state_keyword == 'rotate':
+            self.execute_rotate_goal(scene)
+
+        elif state_keyword == 'dive':
+            self.execute_dive_goal(scene)
+
+        elif state_keyword == 'condition':
+            decision = scene['condition'](scene['args'])
+            if decision:
+                self.trigger('condition_s')
+            else:
+                self.trigger('condition_f')
+            exit()
+        elif state_keyword == 'done':
+            exit()
+        self.trigger(self.fsm.get_triggers(self.state)[0])
+
 

@@ -52,6 +52,6 @@
     </node>
 
     <group if="$(arg tfsm)">
-        <node pkg="stingray_tfsm" type="gate.py" name="control_fsm" output="$(arg ros_output)" respawn="false"/>
+        <node pkg="stingray_tfsm" type="gate_vision.py" name="control_fsm" output="$(arg ros_output)" respawn="false"/>
     </group>
 </launch>

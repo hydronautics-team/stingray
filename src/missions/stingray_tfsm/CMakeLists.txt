@@ -29,7 +29,7 @@ include
 )
 
 catkin_install_python(PROGRAMS
-        scripts/gate.py
+        scripts/gate_vision.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )
 catkin_python_setup()
