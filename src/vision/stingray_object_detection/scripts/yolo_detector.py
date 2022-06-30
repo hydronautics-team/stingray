@@ -182,13 +182,18 @@ class YoloDetector:
                         if self.debug:
                             annotator.box_label(xyxy, label, color=colors(c, True))
 
+                        # rospy.loginfo("conf type: {0}".format(type(float(conf.cpu().detach().numpy()))))
+                        # rospy.loginfo("conf: {0}".format(conf.cpu().detach().numpy()))
+                        # rospy.loginfo("xyxy[0] type: {0}".format(type(xyxy[0].cpu().detach().numpy())))
+                        # rospy.loginfo("xyxy[0]: {0}".format(xyxy[0].cpu().detach().numpy()))
+
                         object_msg = Object()
                         object_msg.name = self.names[c]
-                        object_msg.confidence = conf
-                        object_msg.top_left_x = xyxy[0]
-                        object_msg.top_left_y = xyxy[1]
-                        object_msg.bottom_right_x = xyxy[2]
-                        object_msg.bottom_right_y = xyxy[3]
+                        object_msg.confidence = float(conf.cpu().detach().numpy())
+                        object_msg.top_left_x = int(xyxy[0].cpu().detach().numpy())
+                        object_msg.top_left_y = int(xyxy[1].cpu().detach().numpy())
+                        object_msg.bottom_right_x = int(xyxy[2].cpu().detach().numpy())
+                        object_msg.bottom_right_y = int(xyxy[3].cpu().detach().numpy())
                         objects_array_msg.objects.append(object_msg)
 
             # Stream results
