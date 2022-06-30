@@ -8,6 +8,7 @@
     <arg name="ros_output" default="screen" />
     <!-- Debug mode. Enabled output images publishing after yolo prediction -->
     <arg name="debug" default="true" />
+    <arg name="tfsm" default="true" />
 
     <!-- MOVEMENT -->
     <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
@@ -34,13 +35,13 @@
     <!-- Connection with simulator -->
     <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
-    <group if="false"> <!-- until fixed -->
-        <include file="$(find stingray_startup)/launch/object_detection.launch">
-            <arg name="simulation" value="true" />
-            <arg name="debug" value="$(arg debug)" />
-            <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
-        </include>
-    </group>
+
+    <include file="$(find stingray_startup)/launch/object_detection.launch">
+        <arg name="simulation" value="true" />
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
+    </include>
+
 
     <!-- Movement nodes, simulator -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
@@ -50,16 +51,7 @@
         <param name="velocity_coefficient" value="4.3" />
     </node>
 
-    <node pkg="stingray_tfsm" type="gate.py" name="control_fsm" output="$(arg ros_output)" respawn="false"/>
-
-    <group if="$(arg missions_enabled)">
-        <!-- Top-level control FSM -->
-        <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">
-            <param name="missions_module" value="$(arg missions_module)" />
-            <param name="missions_class" value="$(arg missions_class)" />
-            <param name="delay_after_init" value="$(arg delay_after_init)" />
-            <param name="introspection" value="$(arg fsm_introspection)" />
-        </node>
+    <group if="$(arg tfsm)">
+        <node pkg="stingray_tfsm" type="gate.py" name="control_fsm" output="$(arg ros_output)" respawn="false"/>
     </group>
-
 </launch>

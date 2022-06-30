@@ -1,4 +1,4 @@
-from stingray_tfsm.fsm_transitions import FSM_Simple
+from stingray_tfsm.pure_transitions import FSM_Simple
 import rospy
 from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
@@ -6,7 +6,7 @@ import stingray_movement_msgs.msg as msg
 LAG_DIRECTION = 3  # 4 in real = 'LEFT'
 FIRST_MARCH_TIME = 50  # int(rospy.get_param('~firstMarchTime', '5500'))
 FIRST_LAG_TIME = 4500  # int(rospy.get_param('~firstMarchTime', '4500'))
-SECOND_MARCH_TIME = 6800  # int(rospy.get_param('~secondMarchTime', '12000'))
+SECOND_MARCH_TIME = 6250  # int(rospy.get_param('~secondMarchTime', '12000'))
 SECOND_LAG_TIME = 3000
 
 STATES = ('init', 'march_1', 'lag_1', 'march_2', 'stop' 'aborted', 'done')
@@ -34,8 +34,8 @@ def callback_feedback(feedback):
 
 
 class GateMission(FSM_Simple):
-    def __init__(self, name, path=None):
-        super().__init__(name, path, states=STATES, transitions=TRANSITIONS)
+    def __init__(self):
+        super().__init__(states=STATES, transitions=TRANSITIONS, path=None)
         self.move_client = SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
 
     def execute_move_goal(self, userdata):
@@ -50,20 +50,11 @@ class GateMission(FSM_Simple):
         self.move_client.wait_for_result(timeout=rospy.Duration(secs=userdata['TIME'] // 1000 + 1))
         rospy.loginfo('result got')
 
-    def blank_action(self):  # awful costyl made to avoid loss of first action
-        goal = msg.LinearMoveGoal(0, 0, 0)
-        self.move_client.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                   active_cb=callback_active)
-        self.move_client.wait_for_result(timeout=rospy.Duration(nsecs=10000))
-        rospy.loginfo('blank action done')
-
     def next_step(self):
         if self.state == 'init':
             userdata = {
                 'TIME': FIRST_MARCH_TIME
             }
-            self.blank_action()
-            self.blank_action()
 
         elif self.state == 'march_1':
             userdata = {
@@ -92,13 +83,7 @@ class GateMission(FSM_Simple):
     def goal_switch(self, userdata: dict):  # TODO this is redundant?
         print("here we're switchin'")
         self.move_client.wait_for_server(rospy.Duration(nsecs=1000))
-        if 'LAG' in userdata:
-            self.execute_move_goal(userdata)
-
-        elif 'TIME' in userdata:
-            self.execute_move_goal(userdata)
-
-        elif 'STOP' in userdata:
+        if 'LAG' in userdata or 'TIME' in userdata or 'STOP' in userdata:  # basically all userdata
             self.execute_move_goal(userdata)
         else:
             raise rospy.ERROR("Invalid data sent to fsm goal callback wrapper")
@@ -106,5 +91,5 @@ class GateMission(FSM_Simple):
 
 if __name__ == '__main__':
     rospy.init_node("control_fsm")
-    generic_mission = GateMission('timings')
+    generic_mission = GateMission()
     generic_mission.run()
