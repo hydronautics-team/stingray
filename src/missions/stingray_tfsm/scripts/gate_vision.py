@@ -14,7 +14,7 @@ class GateRighterEvent(ObjectDetectionEvent):
     pass
 
 
-STATES = ('init', 'condition_gate_lefter', 'condition_gate_righter',
+STATES = ('init', 'condition_gate',
           'rotate_clockwise', 'rotate_anticlockwise', 'move_march', 'done', 'aborted')
 TRANSITIONS = [     # Vision exhaustion loop
     ['start', ['init', 'rotate_clockwise', 'move_march'], 'condition_gate'],
