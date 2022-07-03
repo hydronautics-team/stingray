@@ -1,4 +1,4 @@
-from pure_transitions import FSM_Simple
+from stingray_tfsm.pure_transitions import FSM_Simple
 from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
 import rospy
@@ -97,7 +97,7 @@ class AUVStateMachine(FSM_Simple):
                 self.trigger('condition_s')
             else:
                 self.trigger('condition_f')
-            exit()
+            return
         elif state_keyword == 'done':
             exit()
         self.trigger(self.fsm.get_triggers(self.state)[0])

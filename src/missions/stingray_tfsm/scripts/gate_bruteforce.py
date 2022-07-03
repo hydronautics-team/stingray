@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 from stingray_tfsm.pure_transitions import FSM_Simple
 import rospy
 from actionlib import SimpleActionClient
