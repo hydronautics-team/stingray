@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>stingray_tfsm</name>
-  <version>0.0.1</version>
+  <version>0.0.3</version>
   <description>PyTransitions FSM drive</description>
 
   <maintainer email="davtart2000@yandex.ru">Davtyan Artyom</maintainer>

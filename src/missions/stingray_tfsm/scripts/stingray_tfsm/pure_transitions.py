@@ -13,6 +13,9 @@ class FSM_Simple:
 
     def next_step(self, *args, **kwargs):
         """default variant of next step. Should be overridden to do complex callbacks"""
+        print(self.state)
+        print(self.fsm.get_triggers(self.state))
+
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      {'state_name': self.state})
 
@@ -29,7 +32,7 @@ class FSM_Simple:
                     tr_list.append(literal_eval(line))
         return states, tr_list
 
-    def __init__(self, states: tuple, transitions: list, path=None):
+    def __init__(self, states: tuple = (), transitions: list = (), path=None):
         self.gsm = copy(self)
         if path is not None:
             states, transitions = self.read_rulebook(path)
@@ -39,7 +42,7 @@ class FSM_Simple:
     def describe(self):
         self.gsm.get_graph().draw("state_diagram.png")
 
-    def run(self):
+    def run(self, *args, **kwargs):
         current_state = self.state
         while current_state != 'done' and current_state != 'aborted':
             """conditional transitions are handled in next_step"""
@@ -52,6 +55,12 @@ class FSM_Simple:
             return 0
         elif current_state == 'aborted':
             return 1
+
+    def add_state(self, states, **kwargs):
+        self.fsm.add_states(states, **kwargs)
+
+    def add_transitions(self, transitions):
+        self.fsm.add_transitions(transitions)
 
 
 

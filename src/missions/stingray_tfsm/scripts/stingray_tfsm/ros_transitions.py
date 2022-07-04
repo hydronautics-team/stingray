@@ -22,12 +22,12 @@ TRANSITIONS = [     # Timings
 
 
 class AUVStateMachine(FSM_Simple):
-    def __init__(self, states: tuple, transitions: list, scene: dict, path=None):
+    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None):
         super().__init__(states, transitions, path)
         self.LinearMoveClient = SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
         self.scene = scene
 
-        self.absolute_angle=0
+        self.absolute_angle = 0
         self.RotateClient = SimpleActionClient('stingray_action_rotate', msg.RotateAction)
         self.DiveClient = SimpleActionClient('stingray_action_dive', msg.DiveAction)
 
