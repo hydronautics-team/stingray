@@ -13,8 +13,8 @@ class FSM_Simple:
 
     def next_step(self, *args, **kwargs):
         """default variant of next step. Should be overridden to do complex callbacks"""
-        print(self.state)
-        print(self.fsm.get_triggers(self.state))
+        # print(self.state)
+        # print(self.fsm.get_triggers(self.state))
 
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      {'state_name': self.state})
