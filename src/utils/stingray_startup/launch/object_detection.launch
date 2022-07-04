@@ -50,7 +50,7 @@
     <group if="$(arg real_cam)">
         <!-- Front camera interface node -->
         <node name="$(arg front_camera_node_name)" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
-            <param name="video_device" value="$(arg device_front)" />
+            <param name="video_device" value="$(arg front_cam)" />
             <param name="image_width" value="640" />
             <param name="image_height" value="480" />
             <param name="pixel_format" value="yuyv" />
@@ -60,7 +60,7 @@
         </node>
         <!-- Bottom camera interface node -->
         <node name="$(arg bottom_camera_node_name)" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
-            <param name="video_device" value="$(arg device_bottom)" />
+            <param name="video_device" value="$(arg bottom_cam)" />
             <param name="image_width" value="640" />
             <param name="image_height" value="480" />
             <param name="pixel_format" value="yuyv" />
@@ -81,7 +81,7 @@
             </node>
             <!-- View simulation bottom image -->
             <node name="$(arg bottom_camera_node_name)_image" pkg="image_view" type="image_view">
-                <remap from="image" to="/$(arg bottom_camera)/image_raw" />
+                <remap from="image" to="/$(arg bottom_camera_node_name)/image_raw" />
             </node>
             <!-- View yolo image -->
             <node name="$(arg front_camera_node_name)_yolo_image" pkg="image_view" type="image_view">
@@ -89,7 +89,7 @@
             </node>
             <!-- View yolo image -->
             <node name="$(arg bottom_camera_node_name)_yolo_image" pkg="image_view" type="image_view">
-                <remap from="image" to="/$(arg bottom_camera)/image_raw/yolo_detector/image" />
+                <remap from="image" to="/$(arg bottom_camera_node_name)/image_raw/yolo_detector/image" />
             </node>
             <group if="$(arg record)">
                 <!-- Video recorder node -->
@@ -103,7 +103,7 @@
                 </node>
                 <!-- Video recorder node -->
                 <node name="$(arg bottom_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
-                    <param name="source_topic" value="/$(arg bottom_camera)/image_raw/yolo_detector/image" />
+                    <param name="source_topic" value="/$(arg bottom_camera_node_name)/image_raw/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
