@@ -27,11 +27,11 @@
     <!-- Connection with simulator -->
     <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
-    <include file="$(find stingray_startup)/launch/object_detection.launch">
-        <arg name="simulation" value="true" />
-        <arg name="debug" value="$(arg debug)" />
-        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
-    </include>
+<!--    <include file="$(find stingray_startup)/launch/object_detection.launch">-->
+<!--        <arg name="simulation" value="true" />-->
+<!--        <arg name="debug" value="$(arg debug)" />-->
+<!--        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />-->
+<!--    </include>-->
 
     <!-- Movement nodes, simulator -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">

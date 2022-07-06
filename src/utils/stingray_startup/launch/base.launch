@@ -69,18 +69,18 @@
     </node>
 
     <!-- Top-level control FSM -->
-    <group if="$(arg missions_enabled)">
-        <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">
-            <param name="missions_module" value="$(arg missions_module)" />
-            <param name="missions_class" value="$(arg missions_class)" />
-            <param name="delay_after_init" value="$(arg delay_after_init)" />
-            <param name="introspection" value="$(arg fsm_introspection)" />
-        </node>
-    </group>
+<!--    <group if="$(arg missions_enabled)">-->
+<!--        <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">-->
+<!--            <param name="missions_module" value="$(arg missions_module)" />-->
+<!--            <param name="missions_class" value="$(arg missions_class)" />-->
+<!--            <param name="delay_after_init" value="$(arg delay_after_init)" />-->
+<!--            <param name="introspection" value="$(arg fsm_introspection)" />-->
+<!--        </node>-->
+<!--    </group>-->
 
-<!--    QR reader-->
+    <!-- QR reader -->
     <node pkg="zbar_ros" type="barcode_reader_node" name="barcode_reader" output="screen">
-        <remap from="image" to="/rov_model_urdf/camera_front/image_raw" />
+        <remap from="image" to="/dev/video0" />
     </node>
 
     <node pkg="auv_startup" type="qr_trigger.py" name="qr_trigger" output="screen" />

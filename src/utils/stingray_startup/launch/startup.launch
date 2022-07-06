@@ -24,7 +24,7 @@
         <param name="io_method" value="mmap"/>
     </node>
 
-    
+
 
     <node pkg="zbar_ros" type="barcode_reader_node" name="barcode_reader" output="screen">
         <remap from="image" to="/cam_front_1/image_raw" />
