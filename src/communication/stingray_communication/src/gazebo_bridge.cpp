@@ -25,10 +25,10 @@ static const std::string MODEL_NAME = "rov_model_urdf";
 
 static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = 100;
 
-static const double INITIAL_YAW = 1.570806;
-static const double INITIAL_ROLL = 1.570796;
-static const double INITIAL_PITCH = -0.000136;
-static const double INITIAL_DEPTH = 2.9;
+static const double INITIAL_YAW = 1.570806*2;
+static const double INITIAL_ROLL = 0;
+static const double INITIAL_PITCH = 0;
+static const double INITIAL_DEPTH = 2.2;
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
@@ -36,8 +36,8 @@ std_msgs::Int32 yawMessage;
 geometry_msgs::Twist currentTwist;
 
 
-bool depthStabilizationEnabled = false;
-bool yawStabilizationEnabled = false;
+bool depthStabilizationEnabled = true;
+bool yawStabilizationEnabled = true;
 
 /**
  * Obtains model state from Gazebo, transforms and updates it.
