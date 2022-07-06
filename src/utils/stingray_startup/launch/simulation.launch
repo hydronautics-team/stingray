@@ -34,11 +34,11 @@
     <!-- Connection with simulator -->
     <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
-    <include file="$(find stingray_startup)/launch/object_detection.launch">
-        <arg name="simulation" value="true" />
-        <arg name="debug" value="$(arg debug)" />
-        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
-    </include>
+<!--    <include file="$(find stingray_startup)/launch/object_detection.launch">-->
+<!--        <arg name="simulation" value="true" />-->
+<!--        <arg name="debug" value="$(arg debug)" />-->
+<!--        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />-->
+<!--    </include>-->
 
     <!-- Movement nodes, simulator -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
@@ -57,5 +57,12 @@
             <param name="introspection" value="$(arg fsm_introspection)" />
         </node>
     </group>
+
+    <!--    QR reader-->
+    <node pkg="zbar_ros" type="barcode_reader_node" name="barcode_reader" output="screen">
+        <remap from="image" to="/usb_cam/image_raw" />
+    </node>
+
+    <node pkg="stingray_startup" type="qr_trigger.py" name="qr_trigger" output="screen" />
 
 </launch>
