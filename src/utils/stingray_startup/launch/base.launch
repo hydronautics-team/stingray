@@ -41,11 +41,11 @@
 
     <!-- NODES -->
     <!-- object_detection launch file-->
-    <include file="$(find stingray_startup)/launch/object_detection.launch">
-        <arg name="real_cam" value="true" />
-        <arg name="debug" value="$(arg debug)" />
-        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
-    </include>
+<!--    <include file="$(find stingray_startup)/launch/object_detection.launch"> КАЖЕТСЯ ЭТО НУЖНО УДАЛИТЬ, ТК ОНО ДОЛЖНО ЗАПУСКАТЬСЯ ИЗ (sauvc_vision)/launch/object_detector.launch-->
+<!--        <arg name="real_cam" value="true" />-->
+<!--        <arg name="debug" value="$(arg debug)" />-->
+<!--        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />-->
+<!--    </include>-->
 
     <!-- Connection with real vehicle -->
     <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>

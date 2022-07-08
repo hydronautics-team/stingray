@@ -25,9 +25,9 @@
 
     <!-- NODES -->
     <!-- Connection with simulator -->
-    <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
+<!--    <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />-->
 
-<!--    <include file="$(find stingray_startup)/launch/object_detection.launch">-->
+<!--    <include file="$(find stingray_startup)/launch/object_detection.launch"> КАЖЕТСЯ ЭТО НУЖНО УДАЛИТЬ, ТК ОНО ДОЛЖНО ЗАПУСКАТЬСЯ ИЗ (sauvc_vision)/launch/object_detector.launch-->
 <!--        <arg name="simulation" value="true" />-->
 <!--        <arg name="debug" value="$(arg debug)" />-->
 <!--        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />-->
