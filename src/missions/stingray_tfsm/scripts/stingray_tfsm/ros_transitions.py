@@ -23,7 +23,7 @@ TRANSITIONS = [     # Timings
 
 class AUVStateMachine(FSM_Simple):
     def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None):
-        super().__init__(states, transitions, path)
+        super().__init__(states, transitions, path, verbose)
         self.LinearMoveClient = SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
         self.scene = scene
 
@@ -78,6 +78,8 @@ class AUVStateMachine(FSM_Simple):
     def next_step(self):
         state_keyword = self.state.split('_')[0]
         scene = self.scene[self.state]
+        if self.verbose:
+            rospy.loginfo("Current state of ros machine is ", self.state)
 
         if state_keyword == 'init':
             rospy.sleep(scene['time'])
@@ -94,8 +96,12 @@ class AUVStateMachine(FSM_Simple):
         elif state_keyword == 'condition':
             decision = scene['condition'](scene['args'])
             if decision:
+                if self._verbose:
+                    rospy.loginfo("Current condition results True")
                 self.trigger('condition_s')
             else:
+                if self._verbose:
+                    rospy.loginfo("Current condition results False")
                 self.trigger('condition_f')
             return
         elif state_keyword == 'done':

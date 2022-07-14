@@ -13,8 +13,9 @@ class FSM_Simple:
 
     def next_step(self, *args, **kwargs):
         """default variant of next step. Should be overridden to do complex callbacks"""
-        # print(self.state)
-        # print(self.fsm.get_triggers(self.state))
+        if self.verbose:
+            print("current state of abstract machine is ", self.state)
+            print("doing the transition", self.fsm.get_triggers(self.state)[0])
 
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      {'state_name': self.state})
@@ -32,12 +33,19 @@ class FSM_Simple:
                     tr_list.append(literal_eval(line))
         return states, tr_list
 
-    def __init__(self, states: tuple = (), transitions: list = (), path=None):
+    def __init__(self, states: tuple = (), transitions: list = (), path=None, *args, **kwargs):
         self.gsm = copy(self)
         if path is not None:
             states, transitions = self.read_rulebook(path)
         self.g_fsm = GraphMachine(model=self.gsm, states=states, transitions=transitions, initial='init')
         self.fsm = Machine(model=self, states=states, transitions=transitions, initial='init', auto_transitions=False)
+        self.verbose = True
+
+    def set_verbose(self, verbose):
+        if verbose:
+            self.verbose = True
+        else:
+            self.verbose = False
 
     def describe(self):
         self.gsm.get_graph().draw("state_diagram.png")
