@@ -96,7 +96,7 @@ class ObjectDetectionEvent(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size: int = 10):
+                 n_triggers: int = 1, queue_size=None):
         """The constructor.
 
         :param topic_name: Object detection topic name.

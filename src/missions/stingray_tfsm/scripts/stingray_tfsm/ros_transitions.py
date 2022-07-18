@@ -16,13 +16,8 @@ def callback_feedback(feedback):
     rospy.loginfo("Feedback:%s" % str(feedback))
 
 
-TRANSITIONS = [     # Timings
-    {'start', 'init', 'march_1'}
-    ]
-
-
 class AUVStateMachine(FSM_Simple):
-    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None):
+    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=True):
         super().__init__(states, transitions, path, verbose)
         self.LinearMoveClient = SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
         self.scene = scene
@@ -68,20 +63,16 @@ class AUVStateMachine(FSM_Simple):
         else:
             rospy.loginfo('Rotating is not required to achieve this angle')
 
-    # def condition(self, args):
-    #     """this is most probably a stub"""
-    #     if str(1).isalpha():
-    #         return 1
-    #     else:
-    #         return 0
-
     def next_step(self):
         state_keyword = self.state.split('_')[0]
         scene = self.scene[self.state]
-        if self.verbose:
-            rospy.loginfo("Current state of ros machine is ", self.state)
 
-        if state_keyword == 'init':
+        if self.verbose:
+            rospy.loginfo(f"DEBUG: Current state of ros machine is {self.state}")
+
+        if rospy.is_shutdown():
+            self.set_state('aborted')
+        elif state_keyword == 'init':
             rospy.sleep(scene['time'])
 
         elif state_keyword == 'move':
@@ -96,12 +87,12 @@ class AUVStateMachine(FSM_Simple):
         elif state_keyword == 'condition':
             decision = scene['condition'](scene['args'])
             if decision:
-                if self._verbose:
-                    rospy.loginfo("Current condition results True")
+                if self.verbose:
+                    rospy.loginfo("DEBUG: Current condition results True")
                 self.trigger('condition_s')
             else:
-                if self._verbose:
-                    rospy.loginfo("Current condition results False")
+                if self.verbose:
+                    rospy.loginfo("DEBUG: Current condition results False")
                 self.trigger('condition_f')
             return
         elif state_keyword == 'done':

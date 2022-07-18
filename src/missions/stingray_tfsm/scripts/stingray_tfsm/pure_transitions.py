@@ -14,8 +14,8 @@ class FSM_Simple:
     def next_step(self, *args, **kwargs):
         """default variant of next step. Should be overridden to do complex callbacks"""
         if self.verbose:
-            print("current state of abstract machine is ", self.state)
-            print("doing the transition", self.fsm.get_triggers(self.state)[0])
+            print(f"DEBUG: current state of abstract machine is {self.state}")
+            print(f"DEBUG: doing the transition {self.fsm.get_triggers(self.state)[0]}")
 
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      {'state_name': self.state})
@@ -49,6 +49,9 @@ class FSM_Simple:
 
     def describe(self):
         self.gsm.get_graph().draw("state_diagram.png")
+
+    def set_state(self, state):
+        self.fsm.set_state(state)
 
     def run(self, *args, **kwargs):
         current_state = self.state
