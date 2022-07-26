@@ -63,9 +63,9 @@ class FSM_Simple:
             # print('\n==== STEP IS OVER ====\n')
 
         if current_state == 'done':
-            return 0
-        elif current_state == 'aborted':
             return 1
+        elif current_state == 'aborted':
+            return 0
 
     def add_state(self, states, **kwargs):
         self.fsm.add_states(states, **kwargs)
