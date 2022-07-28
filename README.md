@@ -28,6 +28,8 @@ Install dependencies:
 ```bash
 $ROS_DISTRO=noetic
 sudo apt-get install ros-$ROS_DISTRO-usb-cam ros-$ROS_DISTRO-rosbridge-server ros-$ROS_DISTRO-image-view ros-$ROS_DISTRO-actionlib ros-$ROS_DISTRO-smach ros-$ROS_DISTRO-smach-viewer
+sudo apt install graphviz-dev
+pip3 install pygraphviz transitions
 ```
 
 ## Build

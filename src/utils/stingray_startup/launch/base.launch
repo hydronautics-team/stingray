@@ -48,8 +48,8 @@
     </include>
 
     <!-- Connection with real vehicle -->
-    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="$(arg ros_output)" respawn="true"/>
     <group if="$(arg hardware_connection)">
+        <node pkg="nodelet" type="nodelet" name="standalone_nodelet" args="manager" output="$(arg ros_output)" respawn="true" />
         <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_communication/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
             <param name="device" value="$(arg uart_device)" />
             <param name="baudrate" value="$(arg uart_baudrate)" />
@@ -57,8 +57,8 @@
             <param name="parity" value="$(arg uart_parity)" />
             <param name="stop_bits" value="$(arg uart_stop_bits)" />
         </node>
+        <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_communication/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true" />
     </group>
-    <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_communication/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true"/>
 
     <!-- Movement nodes, real vehicle -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
@@ -67,15 +67,4 @@
     <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
         <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
     </node>
-
-    <!-- Top-level control FSM -->
-    <group if="$(arg missions_enabled)">
-        <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">
-            <param name="missions_module" value="$(arg missions_module)" />
-            <param name="missions_class" value="$(arg missions_class)" />
-            <param name="delay_after_init" value="$(arg delay_after_init)" />
-            <param name="introspection" value="$(arg fsm_introspection)" />
-        </node>
-    </group>
-
 </launch>

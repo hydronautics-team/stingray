@@ -8,18 +8,11 @@
     <arg name="ros_output" default="screen" />
     <!-- Debug mode. Enabled output images publishing after yolo prediction -->
     <arg name="debug" default="true" />
-
     <!-- MOVEMENT -->
     <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
     <arg name="velocity_coefficient" default="20000.0" />
 
     <!-- MISSIONS -->
-    <!-- Enables missions -->
-    <arg name="missions_enabled" default="false" />
-    <!-- Missions FSM module -->
-    <arg name="missions_module" default="" />
-    <!-- Missions FSM class -->
-    <arg name="missions_class" default="" />
     <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
     <arg name="delay_after_init" default="50000" />
     <!-- FSM visualization using SMACH viewer -->
@@ -34,11 +27,13 @@
     <!-- Connection with simulator -->
     <node pkg="stingray_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
 
+
     <include file="$(find stingray_startup)/launch/object_detection.launch">
         <arg name="simulation" value="true" />
         <arg name="debug" value="$(arg debug)" />
         <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
     </include>
+
 
     <!-- Movement nodes, simulator -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
@@ -47,15 +42,4 @@
     <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
         <param name="velocity_coefficient" value="4.3" />
     </node>
-
-    <group if="$(arg missions_enabled)">
-        <!-- Top-level control FSM -->
-        <node pkg="stingray_fsm" type="control_fsm_node.py" name="control_fsm" output="$(arg ros_output)" respawn="true">
-            <param name="missions_module" value="$(arg missions_module)" />
-            <param name="missions_class" value="$(arg missions_class)" />
-            <param name="delay_after_init" value="$(arg delay_after_init)" />
-            <param name="introspection" value="$(arg fsm_introspection)" />
-        </node>
-    </group>
-
 </launch>
