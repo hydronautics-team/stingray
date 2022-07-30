@@ -9,7 +9,7 @@ Install dependencies:
 ```bash
 sudo apt install graphviz-dev
 pip3 install pygraphviz transitions
-sudo apt-get install ros-noetic-zbar-ros
+sudo apt install ros-noetic-zbar-ros
 ```
 
 ```bash
