@@ -20,7 +20,7 @@ def callback_feedback(feedback):
 
 
 class AUVStateMachine(FSM_Simple):
-    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=True):
+    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
         """
         The __init__ function is called when an instance of the class is created.
         :param self: Reference the object itself
@@ -80,9 +80,11 @@ class AUVStateMachine(FSM_Simple):
         goal = msg.LinearMoveGoal(scene['direction'], scene['velocity'], scene['duration'])
         self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
-        rospy.loginfo('Goal sent')
+        if self.verbose:
+            rospy.loginfo('Goal sent')
         self.LinearMoveClient.wait_for_result(timeout=rospy.Duration(secs=scene['duration'] // 1000 + 1))
-        rospy.loginfo('Result got')
+        if self.verbose:
+            rospy.loginfo('Result got')
 
     def execute_dive_goal(self, scene):
         """
@@ -99,9 +101,11 @@ class AUVStateMachine(FSM_Simple):
         goal = msg.DiveClientGoal(scene['depth'])
         self.DiveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                     active_cb=callback_active)
-        rospy.loginfo('Goal sent')
+        if self.verbose:
+            rospy.loginfo('Goal sent')
         self.DiveClient.wait_for_result(timeout=rospy.Duration(secs=5))
-        rospy.loginfo('Result got')
+        if self.verbose:
+            rospy.loginfo('Result got')
 
     def _get_yaw(self):
         """
@@ -133,18 +137,20 @@ class AUVStateMachine(FSM_Simple):
             self.absolute_angle -= 360
         elif self.absolute_angle < -360:
             self.absolute_angle += 360
-
-        rospy.loginfo("Absolute angle is {} now".format(self.absolute_angle))
+        if self.verbose:
+            rospy.loginfo("Absolute angle is {} now".format(self.absolute_angle))
 
         if angle != 0:
             goal = msg.RotateGoal(yaw=self.absolute_angle)
             self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
+
+            rospy.sleep(0.1)
             if self.verbose:
-                rospy.sleep(0.1)
-            rospy.loginfo('Goal sent')
+                rospy.loginfo('Goal sent')
             self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))
-            rospy.loginfo('Result got')
+            if self.verbose:
+                rospy.loginfo('Result got')
         else:
             rospy.loginfo('Rotating is not required to achieve this angle')
 
@@ -161,8 +167,7 @@ class AUVStateMachine(FSM_Simple):
         state_keyword = self.state.split('_')[0]
         scene = self.scene[self.state]
 
-        if self.verbose:
-            rospy.loginfo(f"DEBUG: Current state of ros machine is {self.state}")
+        rospy.loginfo(f"Current state of ros machine is {self.state}")
 
         if rospy.is_shutdown():
             self.set_state('aborted')
