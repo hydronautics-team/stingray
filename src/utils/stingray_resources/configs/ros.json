@@ -1,0 +1,21 @@
+{
+    "topics": {
+        "OUTPUT_PARCEL_TOPIC": "/stingray/topics/hardware_bridge/parcels",
+        "INPUT_PARCEL_TOPIC": "/stingray/topics/drivers/parcels",
+        "DEPTH_PUBLISH_TOPIC": "/stingray/topics/position/depth",
+        "YAW_PUBLISH_TOPIC": "/stingray/topics/position/yaw",
+        "GAZEBO_VELOCITY_TOPIC": "/cmd_vel",
+        "GAZEBO_ODOMETRY_PUBLISH_TOPIC": "/odom"
+    },
+    "services": {
+        "SET_LAG_AND_MARCH_SERVICE": "/stingray/services/control/set_lag_and_march",
+        "SET_DEPTH_SERVICE": "/stingray/services/control/set_depth",
+        "SET_YAW_SERVICE": "/stingray/services/control/set_yaw",
+        "SET_IMU_ENABLED_SERVICE": "/stingray/services/control/set_imu_enabled",
+        "SET_STABILIZATION_SERVICE": "/stingray/services/control/set_stabilization",
+        "SET_DEVICE_SERVICE": "/stingray/services/control/set_device",
+        "GAZEBO_GET_STATE_SERVICE": "/gazebo/get_model_state",
+        "GAZEBO_SET_STATE_SERVICE": "/gazebo/set_model_state",
+        "set_enable_object_detection_service": "/stingray/services/vision/set_enable_object_detection"
+    }
+}
