@@ -1,4 +1,4 @@
-<library path="lib/libstingray_connection">
+<library path="lib/libstingray_communication">
   <class name="stingray_communication/uart_driver" type="uart_driver" base_class_type="nodelet::Nodelet">
     <description>
       Uart_driver nodelet.

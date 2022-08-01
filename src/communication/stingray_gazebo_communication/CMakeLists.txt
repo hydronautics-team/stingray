@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(stingray_gazebo_communication)
+
+add_compile_options(-std=c++11)
+
+find_package(
+  catkin REQUIRED
+  COMPONENTS roscpp
+             std_msgs
+             geometry_msgs
+             sensor_msgs
+             std_srvs
+             nav_msgs
+             stingray_communication_msgs)
+
+catkin_package(
+  DEPENDS
+  roscpp
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  std_srvs
+  nav_msgs
+  serial
+  stingray_communication_msgs)
+
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_executable(gazebo_bridge src/gazebo_bridge.cpp include/TopicsAndServices.h)
+
+add_dependencies(gazebo_bridge
+                 stingray_communication_msgs_generate_messages_cpp)
+
+target_link_libraries(gazebo_bridge ${catkin_LIBRARIES})
