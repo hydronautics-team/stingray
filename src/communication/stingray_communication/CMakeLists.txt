@@ -110,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs nodelet
-#  LIBRARIES stingray_connection
+#  LIBRARIES stingray_communication
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_communication
 #  CATKIN_DEPENDS other_catkin_pkg
@@ -133,7 +133,7 @@ include_directories(
 #   src/${PROJECT_NAME}/stingray_communication.cpp
 # )
 
-add_library(stingray_connection
+add_library(stingray_communication
         src/uart_driver_nodelet.cpp
         src/hardware_bridge_nodelet.cpp
         src/messages/messages.cpp
@@ -146,9 +146,9 @@ add_library(stingray_connection
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(stingray_connection stingray_communication_msgs_generate_messages_cpp)
+add_dependencies(stingray_communication stingray_communication_msgs_generate_messages_cpp)
 if(catkin_EXPORTED_LIBRARIES)
-    add_dependencies(stingray_connection ${catkin_EXPORTED_LIBRARIES})
+    add_dependencies(stingray_communication ${catkin_EXPORTED_LIBRARIES})
 endif()
 
 ## Declare a C++ executable
@@ -172,7 +172,7 @@ endif()
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(stingray_connection ${catkin_LIBRARIES})
+target_link_libraries(stingray_communication ${catkin_LIBRARIES})
 
 #############
 ## Install ##
