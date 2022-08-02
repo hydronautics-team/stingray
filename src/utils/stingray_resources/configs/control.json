@@ -5,12 +5,5 @@
         "velocity_coefficient": 20000.0
     },
     "missions": {
-        "events": {
-            "vision": {
-                "range": 800,
-                "tolerance": 0.15,
-                "confidence": 0.65
-            }
-        }
     }
 }

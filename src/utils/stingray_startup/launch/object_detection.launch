@@ -13,6 +13,8 @@
     <arg name="record" default="false" />
     <!-- Debug mode. Enabled output images publishing after yolo prediction -->
     <arg name="debug" default="true" />
+    <!-- Directory where to save videos -->
+    <arg name="record_dir" default="$(env HOME)/stingray_video_records/" />
 
     <!-- REAL CAM -->
     <!-- Providing video from real cameras -->
@@ -99,7 +101,7 @@
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
                 <!-- Video recorder node -->
                 <node name="$(arg bottom_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
@@ -108,7 +110,7 @@
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
             </group>
         </group>
@@ -147,7 +149,7 @@
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
                 <!-- Video recorder node -->
                 <node name="bottom_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
@@ -156,7 +158,7 @@
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
             </group>
         </group>
@@ -215,7 +217,7 @@
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
                 <!-- Video recorder node -->
                 <node name="$(arg file2_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
@@ -224,7 +226,7 @@
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
             </group>
         </group>
