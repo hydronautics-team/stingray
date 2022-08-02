@@ -5,9 +5,24 @@
  */
 
 #include <pluginlib/class_list_macros.h>
-#include "../include/hardware_bridge_nodelet.h"
+#include "hardware_bridge_nodelet.h"
+#include <fstream>
+// #include <boost/filesystem.hpp>
+
+using json = nlohmann::json;
+// namespace fs = boost::filesystem;
+
 
 void hardware_bridge::onInit() {
+    // fs::path stingray_resources_dir();
+    // fs::path ros_config_file ();
+    // fs::path full_path = stingray_resources_dir / ros_config_file;
+    // std::string ros_config_file_path = ros::package::getPath("stingray_resources") + "/configs/ros.json";
+    
+    // std::ifstream f(ros_config_file_path);
+    // json ros_config = json::parse(f);
+    // NODELET_INFO(ros_config["topics"]["OUTPUT_PARCEL_TOPIC"]);
+    
     // Initializing nodelet and parameters
     NODELET_INFO("Initializing nodelet: hardware_brige");
     ros::NodeHandle& nodeHandle = getNodeHandle();

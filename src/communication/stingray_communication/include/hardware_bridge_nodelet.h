@@ -2,6 +2,7 @@
 #define STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <nodelet/nodelet.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/UInt32.h>
