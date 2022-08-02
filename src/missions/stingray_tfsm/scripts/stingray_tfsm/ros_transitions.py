@@ -32,15 +32,12 @@ class AUVStateMachine(FSM_Simple):
         :doc-author: Trelent
         """
         super().__init__(states, transitions, path, verbose)
-        self.LinearMoveClient = SimpleActionClient(
-            'stingray_action_linear_movement', msg.LinearMoveAction)
+        self.LinearMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["linear"], msg.LinearMoveAction)
         self.scene = scene
         self.absolute_angle = 0
         self._get_yaw()
-        self.RotateClient = SimpleActionClient(
-            'stingray_action_rotate', msg.RotateAction)
-        self.DiveClient = SimpleActionClient(
-            'stingray_action_dive', msg.DiveAction)
+        self.RotateClient = SimpleActionClient(self.ros_config["actions"]["movement"]["rotate"], msg.RotateAction)
+        self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"], msg.DiveAction)
 
     def yaw_topic_callback(self, msg):
         """

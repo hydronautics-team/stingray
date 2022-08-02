@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
 import rospy
-import json
-import rospkg
-import os
 
 """@package docstring
 Contains an abstract class for event base and implementations for some common events.
@@ -16,14 +13,6 @@ class EventBase(ABC):
     Child classes should implement event logic. When the event is happening, child class must set
     field _is_happened to True. It's up to child class whether to make event reusable or not.
     """
-    def __init__(self) -> None:
-        super().__init__()
-        # configs
-        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
-        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
-            self.ros_config = json.load(f)
-        with open(os.path.join(stingray_resources_path, "configs/control.json")) as f:
-            self.control_config = json.load(f)
 
     @abstractmethod
     def start_listening(self):

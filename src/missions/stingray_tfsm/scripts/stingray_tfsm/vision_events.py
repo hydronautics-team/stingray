@@ -2,6 +2,11 @@ from stingray_tfsm.event import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 
 
+DEFAULT_RANGE = 800
+DEFAULT_TOLERANCE = 0.15
+DEFAULT_CONFIDENCE = 0.65
+
+
 def calculate_proximity(tlx, brx, tly, bry, mrange):
     proximity = abs(tlx - brx)
     proximity += abs(tly - bry)
@@ -33,9 +38,8 @@ class ObjectDetectionEvent(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None):
+                 n_triggers: int = 1, queue_size=None, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -50,7 +54,7 @@ class ObjectDetectionEvent(TopicEvent):
                          trigger_reset=True,
                          queue_size=queue_size)
         self._object_name = object_name
-        self._confidence = self.control_config["missions"]["events"]["vision"]["confidence"]
+        self._confidence = confidence
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
@@ -66,9 +70,9 @@ class ObjectOnRight(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None):
+                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
+                 tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -83,14 +87,13 @@ class ObjectOnRight(TopicEvent):
                          trigger_reset=True,
                          queue_size=queue_size)
         self._object_name = object_name
-        self._range = self.control_config["missions"]["events"]["vision"]["range"]
-        self.center = self._range / 2
-        self._tolerance = self.control_config["missions"]["events"]["vision"]["tolerance"]
-        self._confidence = self.control_config["missions"]["events"]["vision"]["confidence"]
+        self._range = _range
+        self.center = _range / 2
+        self._tolerance = tolerance
+        self._confidence = confidence
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(
-            msg.objects, self._object_name, self._confidence)
+        _obj = get_best_object(msg.objects, self._object_name, self._confidence)
         if not _obj:
             return 0
 
@@ -113,9 +116,9 @@ class ObjectOnLeft(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None):
+                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
+                 tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -130,14 +133,13 @@ class ObjectOnLeft(TopicEvent):
                          trigger_reset=True,
                          queue_size=queue_size)
         self._object_name = object_name
-        self._range = self.control_config["missions"]["events"]["vision"]["range"]
-        self.center = self._range / 2
-        self._tolerance = self.control_config["missions"]["events"]["vision"]["tolerance"]
-        self._confidence = self.control_config["missions"]["events"]["vision"]["confidence"]
+        self._range = _range
+        self.center = _range / 2
+        self._tolerance = tolerance
+        self._confidence = confidence
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(
-            msg.objects, self._object_name, self._confidence)
+        _obj = get_best_object(msg.objects, self._object_name, self._confidence)
         if not _obj:
             return 0
         proximity_allowance = calculate_proximity(
@@ -160,9 +162,9 @@ class ObjectOrtho(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None):
+                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
+                 tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -177,9 +179,9 @@ class ObjectOrtho(TopicEvent):
                          trigger_reset=True,
                          queue_size=queue_size)
         self._object_name = object_name
-        self._range = self.control_config["missions"]["events"]["vision"]["range"]
-        self._tolerance = self.control_config["missions"]["events"]["vision"]["tolerance"]
-        self._confidence = self.control_config["missions"]["events"]["vision"]["confidence"]
+        self._range = _range
+        self._tolerance = tolerance
+        self._confidence = confidence
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
