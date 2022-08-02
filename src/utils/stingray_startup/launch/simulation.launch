@@ -8,9 +8,6 @@
     <arg name="ros_output" default="screen" />
     <!-- Debug mode. Enabled output images publishing after yolo prediction -->
     <arg name="debug" default="true" />
-    <!-- MOVEMENT -->
-    <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
-    <arg name="velocity_coefficient" default="20000.0" />
 
     <!-- MISSIONS -->
     <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
@@ -36,10 +33,6 @@
 
 
     <!-- Movement nodes, simulator -->
-    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
-        <param name="velocity_coefficient" value="4.3" />
-    </node>
-    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
-        <param name="velocity_coefficient" value="4.3" />
-    </node>
+    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true" />
+    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true" />
 </launch>

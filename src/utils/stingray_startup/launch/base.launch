@@ -11,18 +11,6 @@
     <!-- Enables connection with hardware platform -->
     <arg name="hardware_connection" default="true" />
 
-    <!-- UART SETTINGS -->
-    <arg name="uart_device" default="/dev/ttyS0" />
-    <arg name="uart_baudrate" default="57600" />
-    <arg name="uart_data_bytes" default="8" />
-    <!-- Available parity values: none, even, odd -->
-    <arg name="uart_parity" default="none" />
-    <arg name="uart_stop_bits" default="1" />
-
-    <!-- MOVEMENT -->
-    <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
-    <arg name="velocity_coefficient" default="20000.0" />
-
     <!-- MISSIONS -->
     <!-- Enables missions -->
     <arg name="missions_enabled" default="false" />
@@ -55,10 +43,6 @@
     </group>
 
     <!-- Movement nodes, real vehicle -->
-    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
-        <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
-    </node>
-    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
-        <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
-    </node>
+    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true"/>
+    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true"/>
 </launch>

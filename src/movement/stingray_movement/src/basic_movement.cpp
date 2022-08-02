@@ -13,14 +13,7 @@ int main(int argc, char **argv)
     json ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
     json control_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/control.json"));
 
-    double velocityCoefficient = 0.0;
-
-    bool hasParameter = nodeHandle.param(control_config["movement"]["PARAM_VELOCITY_COEFFICIENT"], velocityCoefficient, control_config["movement"]["DEFAULT_VELOCITY_COEFFICIENT"].get<double>());
-    if (!hasParameter)
-    {
-        ROS_ERROR("Parameter %s is not specified!", control_config["movement"]["PARAM_VELOCITY_COEFFICIENT"].get<std::string>().c_str());
-        return 0;
-    }
+    double velocityCoefficient = control_config["movement"]["velocity_coefficient"];
 
     if (velocityCoefficient < 1.0)
     {
