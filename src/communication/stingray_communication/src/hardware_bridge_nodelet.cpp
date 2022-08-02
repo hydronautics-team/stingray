@@ -19,21 +19,21 @@ void hardware_bridge::onInit()
     NODELET_INFO("Initializing nodelet: hardware_bridge");
     ros::NodeHandle &nodeHandle = getNodeHandle();
     // ROS publishers
-    outputMessagePublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(ros_config["topics"]["OUTPUT_PARCEL_TOPIC"].get<std::string>(), 1000);
-    depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["DEPTH_PUBLISH_TOPIC"].get<std::string>(), 1000);
-    yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["YAW_PUBLISH_TOPIC"].get<std::string>(), 20);
+    outputMessagePublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(ros_config["topics"]["OUTPUT_PARCEL_TOPIC"], 1000);
+    depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["DEPTH_PUBLISH_TOPIC"], 1000);
+    yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["YAW_PUBLISH_TOPIC"], 20);
     // ROS subscribers
-    inputMessageSubscriber = nodeHandle.subscribe(ros_config["topics"]["INPUT_PARCEL_TOPIC"].get<std::string>(), 1000,
+    inputMessageSubscriber = nodeHandle.subscribe(ros_config["topics"]["INPUT_PARCEL_TOPIC"], 1000,
                                                   &hardware_bridge::inputMessage_callback, this);
     // ROS services
-    lagAndMarchService = nodeHandle.advertiseService(ros_config["services"]["SET_LAG_AND_MARCH_SERVICE"].get<std::string>(),
+    lagAndMarchService = nodeHandle.advertiseService(ros_config["services"]["SET_LAG_AND_MARCH_SERVICE"],
                                                      &hardware_bridge::lagAndMarchCallback, this);
-    depthService = nodeHandle.advertiseService(ros_config["services"]["SET_DEPTH_SERVICE"].get<std::string>(), &hardware_bridge::depthCallback, this);
-    yawService = nodeHandle.advertiseService(ros_config["services"]["SET_YAW_SERVICE"].get<std::string>(), &hardware_bridge::yawCallback, this);
-    imuService = nodeHandle.advertiseService(ros_config["services"]["SET_IMU_ENABLED_SERVICE"].get<std::string>(), &hardware_bridge::imuCallback, this);
-    stabilizationService = nodeHandle.advertiseService(ros_config["services"]["SET_STABILIZATION_SERVICE"].get<std::string>(),
+    depthService = nodeHandle.advertiseService(ros_config["services"]["SET_DEPTH_SERVICE"], &hardware_bridge::depthCallback, this);
+    yawService = nodeHandle.advertiseService(ros_config["services"]["SET_YAW_SERVICE"], &hardware_bridge::yawCallback, this);
+    imuService = nodeHandle.advertiseService(ros_config["services"]["SET_IMU_ENABLED_SERVICE"], &hardware_bridge::imuCallback, this);
+    stabilizationService = nodeHandle.advertiseService(ros_config["services"]["SET_STABILIZATION_SERVICE"],
                                                        &hardware_bridge::stabilizationCallback, this);
-    deviceActionService = nodeHandle.advertiseService(ros_config["services"]["SET_DEVICE_SERVICE"].get<std::string>(),
+    deviceActionService = nodeHandle.advertiseService(ros_config["services"]["SET_DEVICE_SERVICE"],
                                                       &hardware_bridge::deviceActionCallback, this);
     // Output message container
     outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());

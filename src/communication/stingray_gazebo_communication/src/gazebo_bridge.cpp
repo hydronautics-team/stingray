@@ -21,17 +21,9 @@
 
 using json = nlohmann::json;
 
-// get json config
+// get json configs
 static const json ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
-static const json common_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/common.json"));
-
-// get constants from config
-static const std::string MODEL_NAME = common_config["simulation"]["model_name"].get<std::string>();
-static const uint32_t COMMUNICATION_DELAY_MILLISECONDS = common_config["simulation"]["communication_delay"].get<uint32_t>();
-static const double INITIAL_YAW = common_config["simulation"]["initial_yaw"].get<double>();
-static const double INITIAL_ROLL = common_config["simulation"]["initial_roll"].get<double>();
-static const double INITIAL_PITCH = common_config["simulation"]["initial_pitch"].get<double>();
-static const double INITIAL_DEPTH = common_config["simulation"]["initial_depth"].get<double>();
+static const json simulation_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/simulation.json"));
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
@@ -47,8 +39,8 @@ bool yawStabilizationEnabled = true;
 void updateModelState(const std::function<void(gazebo_msgs::ModelState &)> &transform)
 {
     gazebo_msgs::GetModelState modelState;
-    modelState.request.model_name = MODEL_NAME;
-    bool result = ros::service::call(ros_config["services"]["GAZEBO_GET_STATE_SERVICE"].get<std::string>(), modelState);
+    modelState.request.model_name = simulation_config["model_name"];
+    bool result = ros::service::call(ros_config["services"]["GAZEBO_GET_STATE_SERVICE"], modelState);
     if (!result || !modelState.response.success)
     {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
@@ -57,11 +49,11 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState &)> &tran
     gazebo_msgs::SetModelState newModelState;
     newModelState.request.model_state.pose = modelState.response.pose;
     newModelState.request.model_state.twist = modelState.response.twist;
-    newModelState.request.model_state.model_name = MODEL_NAME;
+    newModelState.request.model_state.model_name = simulation_config["model_name"];
 
     transform(newModelState.request.model_state);
 
-    result = ros::service::call(ros_config["services"]["GAZEBO_SET_STATE_SERVICE"].get<std::string>(), newModelState);
+    result = ros::service::call(ros_config["services"]["GAZEBO_SET_STATE_SERVICE"], newModelState);
     if (!result || !newModelState.response.success)
     {
         throw std::runtime_error("Failed to update state in Gazebo: " + modelState.response.status_message);
@@ -114,7 +106,7 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
                          {
       /* In our simulator scale is 1.0 = 1 metre, and target depth is passed in centimetres.
        * Bias is needed due to simulator implementation details. */
-      modelState.pose.position.z = INITIAL_DEPTH - request.value / 100.0; });
+      modelState.pose.position.z = simulation_config["initial_depth"].get<double>() - request.value / 100.0; });
     }
     catch (std::runtime_error &e)
     {
@@ -153,8 +145,8 @@ bool yawCallback(stingray_communication_msgs::SetInt32::Request &request,
         updateModelState([request](gazebo_msgs::ModelState &modelState)
                          {
       double desiredYaw = request.value % 360;
-      double newYaw = INITIAL_YAW + desiredYaw * M_PI / 180.0;
-      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(INITIAL_ROLL, INITIAL_PITCH, newYaw); });
+      double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
+      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
     }
     catch (std::runtime_error &e)
     {
@@ -195,21 +187,21 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "gazebo_bridge");
     ros::NodeHandle nodeHandle;
 
-    ros::Rate communicationDelay(1000.0 / COMMUNICATION_DELAY_MILLISECONDS);
+    ros::Rate communicationDelay(1000.0 / simulation_config["communication_delay"].get<uint32_t>());
 
-    ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["DEPTH_PUBLISH_TOPIC"].get<std::string>(), 20);
-    ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["YAW_PUBLISH_TOPIC"].get<std::string>(), 20);
-    ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["GAZEBO_VELOCITY_TOPIC"].get<std::string>(), 20);
+    ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["DEPTH_PUBLISH_TOPIC"], 20);
+    ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["YAW_PUBLISH_TOPIC"], 20);
+    ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["GAZEBO_VELOCITY_TOPIC"], 20);
 
-    ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["SET_LAG_AND_MARCH_SERVICE"].get<std::string>(), lagAndMarchCallback);
-    ros::ServiceServer depthService = nodeHandle.advertiseService(ros_config["services"]["SET_DEPTH_SERVICE"].get<std::string>(), depthCallback);
-    ros::ServiceServer yawService = nodeHandle.advertiseService(ros_config["services"]["SET_YAW_SERVICE"].get<std::string>(), yawCallback);
-    ros::ServiceServer imuService = nodeHandle.advertiseService(ros_config["services"]["SET_IMU_ENABLED_SERVICE"].get<std::string>(), imuCallback);
-    ros::ServiceServer stabilizationService = nodeHandle.advertiseService(ros_config["services"]["SET_STABILIZATION_SERVICE"].get<std::string>(), stabilizationCallback);
-    ros::ServiceServer deviceService = nodeHandle.advertiseService(ros_config["services"]["SET_DEVICE_SERVICE"].get<std::string>(), deviceActionCallback);
+    ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["SET_LAG_AND_MARCH_SERVICE"], lagAndMarchCallback);
+    ros::ServiceServer depthService = nodeHandle.advertiseService(ros_config["services"]["SET_DEPTH_SERVICE"], depthCallback);
+    ros::ServiceServer yawService = nodeHandle.advertiseService(ros_config["services"]["SET_YAW_SERVICE"], yawCallback);
+    ros::ServiceServer imuService = nodeHandle.advertiseService(ros_config["services"]["SET_IMU_ENABLED_SERVICE"], imuCallback);
+    ros::ServiceServer stabilizationService = nodeHandle.advertiseService(ros_config["services"]["SET_STABILIZATION_SERVICE"], stabilizationCallback);
+    ros::ServiceServer deviceService = nodeHandle.advertiseService(ros_config["services"]["SET_DEVICE_SERVICE"], deviceActionCallback);
 
     gazebo_msgs::GetModelState modelState;
-    modelState.request.model_name = MODEL_NAME;
+    modelState.request.model_name = simulation_config["model_name"];
 
     currentTwist.linear.x = currentTwist.linear.y = currentTwist.linear.z =
         currentTwist.angular.x = currentTwist.angular.y = currentTwist.angular.z = 0;
@@ -217,7 +209,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
 
-        bool result = ros::service::call(ros_config["services"]["GAZEBO_GET_STATE_SERVICE"].get<std::string>(), modelState);
+        bool result = ros::service::call(ros_config["services"]["GAZEBO_GET_STATE_SERVICE"], modelState);
         if (!result || !modelState.response.success)
         {
             ROS_ERROR("Failed to obtain current model state from Gazebo!");
@@ -225,8 +217,8 @@ int main(int argc, char **argv)
         else
         {
             // Convert back to initial values
-            depthMessage.data = -(modelState.response.pose.position.z - INITIAL_DEPTH) * 100;
-            yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - INITIAL_YAW) * 180.0 / M_PI;
+            depthMessage.data = -(modelState.response.pose.position.z - simulation_config["initial_depth"].get<double>()) * 100;
+            yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
         }
 
         depthPublisher.publish(depthMessage);
