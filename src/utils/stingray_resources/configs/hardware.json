@@ -1,19 +1,11 @@
 {
     "uart": {
-        "PARAM_DEVICE": "device",
-        "PARAM_BAUDRATE": "baudrate",
-        "PARAM_DATA_BYTES": "dataBytes",
-        "PARAM_PARITY": "parity",
-        "PARAM_STOP_BITS": "stopBits",
-        "PARITY_NONE": "none",
-        "PARITY_EVEN": "even",
-        "PARITY_ODD": "odd",
-        "DEFAULT_DEVICE": "/dev/ttyS0",
-        "DEFAULT_BAUDRATE": 57600,
-        "DEFAULT_DATA_BYTES": 8,
-        "DEFAULT_PARITY": "none",
-        "DEFAULT_STOP_BITS": 1,
-        "DEFAULT_SERIAL_TIMEOUT": 1000
+        "device": "/dev/ttyS0",
+        "baudrate": 57600,
+        "data_bytes": 8,
+        "parity": "none",
+        "stop_bits": 1,
+        "serial_timeout": 1000
     },
     "devices": {
     }

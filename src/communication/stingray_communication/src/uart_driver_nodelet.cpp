@@ -46,12 +46,9 @@ void uart_driver::onInit()
  */
 void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
 {
-    std::string device;
-    nodeHandle.param(hardware_config["uart"]["PARAM_DEVICE"], device, hardware_config["uart"]["DEFAULT_DEVICE"].get<std::string>());
-    int baudrate;
-    nodeHandle.param(hardware_config["uart"]["PARAM_BAUDRATE"], baudrate, hardware_config["uart"]["DEFAULT_BAUDRATE"].get<int>());
-    int dataBytesInt;
-    nodeHandle.param(hardware_config["uart"]["PARAM_DATA_BYTES"], dataBytesInt, hardware_config["uart"]["DEFAULT_DATA_BYTES"].get<int>());
+    std::string device = hardware_config["uart"]["device"];
+    int baudrate = hardware_config["uart"]["baudrate"];
+    int dataBytesInt = hardware_config["uart"]["data_bytes"];
     serial::bytesize_t dataBytes;
     switch (dataBytesInt)
     {
@@ -71,8 +68,7 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
         NODELET_ERROR("Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
         return;
     }
-    std::string parityStr;
-    nodeHandle.param(hardware_config["uart"]["PARAM_PARITY"], parityStr, hardware_config["uart"]["DEFAULT_PARITY"].get<std::string>());
+    std::string parityStr = hardware_config["uart"]["parity"];
     std::transform(parityStr.begin(), parityStr.end(), parityStr.begin(), ::tolower);
     serial::parity_t parity;
     if (parityStr == hardware_config["uart"]["PARITY_EVEN"])
@@ -87,8 +83,7 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
                       parityStr.c_str());
         return;
     }
-    int stopBitsInt;
-    nodeHandle.param(hardware_config["uart"]["PARAM_STOP_BITS"], stopBitsInt, hardware_config["uart"]["DEFAULT_STOP_BITS"].get<int>());
+    int stopBitsInt = hardware_config["uart"]["stop_bits"];
     serial::stopbits_t stopBits;
     switch (stopBitsInt)
     {
@@ -107,7 +102,7 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
     if (port.isOpen())
         port.close();
     port.setPort(device);
-    serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(hardware_config["uart"]["DEFAULT_SERIAL_TIMEOUT"]);
+    serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(hardware_config["uart"]["serial_timeout"]);
     port.setTimeout(serialTimeout);
     port.setBaudrate(baudrate);
     port.setBytesize(dataBytes);
