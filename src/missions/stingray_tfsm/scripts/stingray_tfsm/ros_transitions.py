@@ -4,15 +4,14 @@ import stingray_movement_msgs.msg as msg
 from std_msgs.msg import Int32
 import rospy
 
-YAW_TOPIC = "/stingray/topics/position/yaw"
-
 
 def callback_active():
     rospy.loginfo("Action server is processing the goal")
 
 
 def callback_done(state, result):
-    rospy.loginfo("Action server is done. State: %s, result: %s" % (str(state), str(result)))
+    rospy.loginfo("Action server is done. State: %s, result: %s" %
+                  (str(state), str(result)))
 
 
 def callback_feedback(feedback):
@@ -33,12 +32,15 @@ class AUVStateMachine(FSM_Simple):
         :doc-author: Trelent
         """
         super().__init__(states, transitions, path, verbose)
-        self.LinearMoveClient = SimpleActionClient('stingray_action_linear_movement', msg.LinearMoveAction)
+        self.LinearMoveClient = SimpleActionClient(
+            'stingray_action_linear_movement', msg.LinearMoveAction)
         self.scene = scene
         self.absolute_angle = 0
         self._get_yaw()
-        self.RotateClient = SimpleActionClient('stingray_action_rotate', msg.RotateAction)
-        self.DiveClient = SimpleActionClient('stingray_action_dive', msg.DiveAction)
+        self.RotateClient = SimpleActionClient(
+            'stingray_action_rotate', msg.RotateAction)
+        self.DiveClient = SimpleActionClient(
+            'stingray_action_dive', msg.DiveAction)
 
     def yaw_topic_callback(self, msg):
         """
@@ -53,7 +55,8 @@ class AUVStateMachine(FSM_Simple):
         """
         self.absolute_angle = msg.data
         if self.verbose:
-            rospy.loginfo(f"Absolute angle got from machine is {msg.data}; It is set on higher level")
+            rospy.loginfo(
+                f"Absolute angle got from machine is {msg.data}; It is set on higher level")
 
     def dummy(self, scene):
         """
@@ -77,11 +80,13 @@ class AUVStateMachine(FSM_Simple):
         :return: :
         :doc-author: Trelent
         """
-        goal = msg.LinearMoveGoal(scene['direction'], scene['velocity'], scene['duration'])
+        goal = msg.LinearMoveGoal(
+            scene['direction'], scene['velocity'], scene['duration'])
         self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
         rospy.loginfo('Goal sent')
-        self.LinearMoveClient.wait_for_result(timeout=rospy.Duration(secs=scene['duration'] // 1000 + 1))
+        self.LinearMoveClient.wait_for_result(
+            timeout=rospy.Duration(secs=scene['duration'] // 1000 + 1))
         rospy.loginfo('Result got')
 
     def execute_dive_goal(self, scene):
@@ -98,7 +103,7 @@ class AUVStateMachine(FSM_Simple):
         """
         goal = msg.DiveClientGoal(scene['depth'])
         self.DiveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                    active_cb=callback_active)
+                                  active_cb=callback_active)
         rospy.loginfo('Goal sent')
         self.DiveClient.wait_for_result(timeout=rospy.Duration(secs=5))
         rospy.loginfo('Result got')
@@ -111,7 +116,7 @@ class AUVStateMachine(FSM_Simple):
         :return: None
         :doc-author: Trelent
         """
-        self._topic_sub = rospy.Subscriber(YAW_TOPIC,
+        self._topic_sub = rospy.Subscriber(self.ros_config["topics"]["yaw"],
                                            Int32,
                                            callback=self.yaw_topic_callback,
                                            queue_size=10)
@@ -162,7 +167,8 @@ class AUVStateMachine(FSM_Simple):
         scene = self.scene[self.state]
 
         if self.verbose:
-            rospy.loginfo(f"DEBUG: Current state of ros machine is {self.state}")
+            rospy.loginfo(
+                f"DEBUG: Current state of ros machine is {self.state}")
 
         if rospy.is_shutdown():
             self.set_state('aborted')
@@ -203,5 +209,3 @@ class AUVStateMachine(FSM_Simple):
         elif state_keyword == 'done':
             exit()
         self.trigger(self.fsm.get_triggers(self.state)[0])
-
-

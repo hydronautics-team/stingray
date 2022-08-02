@@ -2,6 +2,9 @@ from transitions import Machine
 from transitions.extensions import GraphMachine
 from copy import copy
 from ast import literal_eval
+import json
+import rospkg
+import os
 
 
 class FSM_Simple:
@@ -21,7 +24,8 @@ class FSM_Simple:
         :doc-author: Trelent
         """
         if not callable(external_cb):
-            raise TypeError("Callable function should be passed to callback_wrapper")
+            raise TypeError(
+                "Callable function should be passed to callback_wrapper")
         external_cb(userdata)
 
     def next_step(self, *args, **kwargs):
@@ -36,7 +40,8 @@ class FSM_Simple:
         """
         if self.verbose:
             print(f"DEBUG: current state of abstract machine is {self.state}")
-            print(f"DEBUG: doing the transition {self.fsm.get_triggers(self.state)[0]}")
+            print(
+                f"DEBUG: doing the transition {self.fsm.get_triggers(self.state)[0]}")
 
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      {'state_name': self.state})
@@ -78,9 +83,17 @@ class FSM_Simple:
         self.gsm = copy(self)
         if path is not None:
             states, transitions = self.read_rulebook(path)
-        self.g_fsm = GraphMachine(model=self.gsm, states=states, transitions=transitions, initial='init')
-        self.fsm = Machine(model=self, states=states, transitions=transitions, initial='init', auto_transitions=False)
+        self.g_fsm = GraphMachine(
+            model=self.gsm, states=states, transitions=transitions, initial='init')
+        self.fsm = Machine(model=self, states=states, transitions=transitions,
+                           initial='init', auto_transitions=False)
         self.verbose = True
+        # configs
+        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
+        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
+            self.ros_config = json.load(f)
+        with open(os.path.join(stingray_resources_path, "configs/control.json")) as f:
+            self.control_config = json.load(f)
 
     def set_verbose(self, verbose):
         """
@@ -156,11 +169,3 @@ class FSM_Simple:
 
     def add_transitions(self, transitions):
         self.fsm.add_transitions(transitions)
-
-
-
-
-
-
-
-
