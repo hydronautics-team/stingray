@@ -20,6 +20,7 @@
   <depend>stingray_communication_msgs</depend>
   <depend>nodelet</depend>
   <depend>pluginlib</depend>
+  <depend>stingray_utils</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelets_init.xml"/>

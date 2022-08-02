@@ -21,6 +21,7 @@
 #include <stingray_communication_msgs/SetStabilization.h>
 #include "messages/messages.h"
 #include "TopicsAndServices.h"
+#include "stingray_utils/json.hpp"
 
 class hardware_bridge : public nodelet::Nodelet {
 public:
