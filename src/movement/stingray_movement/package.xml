@@ -12,6 +12,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
+  <depend>roslib</depend>
   <depend>rospy</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
@@ -20,5 +21,6 @@
   <depend>actionlib_msgs</depend>
   <depend>stingray_communication_msgs</depend>
   <depend>stingray_movement_msgs</depend>
+  <depend>stingray_utils</depend>
 
 </package>

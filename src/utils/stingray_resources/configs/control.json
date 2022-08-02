@@ -1,0 +1,8 @@
+{
+    "movement": {
+        "depth_error_range": 7,
+        "yaw_error_range": 4,
+        "PARAM_VELOCITY_COEFFICIENT": "velocity_coefficient", 
+        "DEFAULT_VELOCITY_COEFFICIENT": 0.0
+    }
+}

@@ -8,7 +8,7 @@
         "gazebo_odometry": "/odom"
     },
     "services": {
-        "set_lag_march": "/stingray/services/control/set_lag_and_march",
+        "set_lag_march": "/stingray/services/control/set_lag_march",
         "set_depth": "/stingray/services/control/set_depth",
         "set_yaw": "/stingray/services/control/set_yaw",
         "set_imu_enabled": "/stingray/services/control/set_imu_enabled",
@@ -20,6 +20,14 @@
         "updown": "/stingray/services/devices/updown"
     },
     "actions": {
+        "movement": {
+            "linear": "/stingray/actions/movement/linear",
+            "rotate": "/stingray/actions/movement/rotate",
+            "dive": "/stingray/actions/movement/dive",
+            "align": "/stingray/actions/movement/align",
+            "align_low_level": "/stingray/actions/movement/align_low_level",
+            "tack": "/stingray/actions/movement/tack"
+        },
         "updown": "/stingray/actions/devices/updown"
     }
 }

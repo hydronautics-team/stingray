@@ -3,8 +3,13 @@
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
+#include <ros/package.h>
+#include <fstream>
 
 #include <stingray_movement_msgs/LinearMoveAction.h>
+#include <stingray_utils/json.hpp>
+
+using json = nlohmann::json;
 
 /**
  * Abstract base for implementing action servers
@@ -14,63 +19,38 @@
  * @tparam TGoalPtr Action goal const pointer type
  */
 template <class TAction, class TGoalPtr>
-class AbstractMovementActionServer {
+class AbstractMovementActionServer
+{
 
- protected:
+protected:
+    json ros_config;
+    json control_config;
 
-  static const std::string LAG_MARCH_SERVICE;
-  static const std::string DEPTH_SERVICE;
-  static const std::string YAW_SERVICE;
+    ros::NodeHandle nodeHandle;
+    actionlib::SimpleActionServer<TAction> actionServer;
 
-  static const std::string DEPTH_TOPIC;
-  static const std::string YAW_TOPIC;
+    double velocityCoefficient;
 
-  ros::NodeHandle nodeHandle;
-  actionlib::SimpleActionServer<TAction> actionServer;
+    /** Implement your goal processing logic */
+    virtual void goalCallback(const TGoalPtr &goal) = 0;
 
-  double velocityCoefficient;
-
-  /** Implement your goal processing logic */
-  virtual void goalCallback(const TGoalPtr& goal) = 0;
-
- public:
-
-  AbstractMovementActionServer(const std::string& actionName, double velocityCoefficient);
-  ~AbstractMovementActionServer() = default;
-
+public:
+    AbstractMovementActionServer(const std::string &actionName, double velocityCoefficient);
+    ~AbstractMovementActionServer() = default;
 };
-
-
-template <class TAction, class TGoalPtr>
-const std::string AbstractMovementActionServer<TAction, TGoalPtr>::LAG_MARCH_SERVICE =
-    "/stingray/services/control/set_lag_and_march";
-
-template <class TAction, class TGoalPtr>
-const std::string AbstractMovementActionServer<TAction, TGoalPtr>::DEPTH_SERVICE =
-    "/stingray/services/control/set_depth";
-
-template <class TAction, class TGoalPtr>
-const std::string AbstractMovementActionServer<TAction, TGoalPtr>::YAW_SERVICE =
-    "/stingray/services/control/set_yaw";
-
-template <class TAction, class TGoalPtr>
-const std::string AbstractMovementActionServer<TAction, TGoalPtr>::DEPTH_TOPIC =
-    "/stingray/topics/position/depth";
-
-template <class TAction, class TGoalPtr>
-const std::string AbstractMovementActionServer<TAction, TGoalPtr>::YAW_TOPIC =
-    "/stingray/topics/position/yaw";
 
 template <class TAction, class TGoalPtr>
 AbstractMovementActionServer<TAction, TGoalPtr>::AbstractMovementActionServer(const std::string &actionName,
-                                                                              double velocityCoefficient): actionServer(
-    nodeHandle,
-    actionName,
-    boost::bind(&AbstractMovementActionServer<TAction, TGoalPtr>::goalCallback,
-                this, _1),
-    false), velocityCoefficient(velocityCoefficient) {
-      actionServer.start();
-    }
+                                                                              double velocityCoefficient) : actionServer(nodeHandle,
+                                                                                                                         actionName,
+                                                                                                                         boost::bind(&AbstractMovementActionServer<TAction, TGoalPtr>::goalCallback,
+                                                                                                                                     this, _1),
+                                                                                                                         false),
+                                                                                                            velocityCoefficient(velocityCoefficient)
+{
+    actionServer.start();
+    ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
+    control_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/control.json"));
+}
 
-
-#endif //STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTMOVEMENTACTIONSERVER_H_
+#endif // STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTMOVEMENTACTIONSERVER_H_
