@@ -78,7 +78,7 @@ class YoloDetector:
         rospy.loginfo("{} node initializing".format(node_name))
 
         set_enable_object_detection_service = rospy.Service(
-            self.ros_config['services']['set_enable_object_detection_service'], SetEnableObjectDetection, self.set_enable_object_detection)
+            self.ros_config['services']['set_enable_object_detection'], SetEnableObjectDetection, self.set_enable_object_detection)
 
         self.detection_enabled = {}
         self.objects_array_publishers = {}

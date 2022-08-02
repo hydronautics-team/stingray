@@ -40,7 +40,7 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState &)> &tran
 {
     gazebo_msgs::GetModelState modelState;
     modelState.request.model_name = simulation_config["model_name"];
-    bool result = ros::service::call(ros_config["services"]["GAZEBO_GET_STATE_SERVICE"], modelState);
+    bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
     if (!result || !modelState.response.success)
     {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
@@ -53,7 +53,7 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState &)> &tran
 
     transform(newModelState.request.model_state);
 
-    result = ros::service::call(ros_config["services"]["GAZEBO_SET_STATE_SERVICE"], newModelState);
+    result = ros::service::call(ros_config["services"]["gazebo_set_state"], newModelState);
     if (!result || !newModelState.response.success)
     {
         throw std::runtime_error("Failed to update state in Gazebo: " + modelState.response.status_message);
@@ -189,16 +189,16 @@ int main(int argc, char **argv)
 
     ros::Rate communicationDelay(1000.0 / simulation_config["communication_delay"].get<uint32_t>());
 
-    ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["DEPTH_PUBLISH_TOPIC"], 20);
-    ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["YAW_PUBLISH_TOPIC"], 20);
-    ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["GAZEBO_VELOCITY_TOPIC"], 20);
+    ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 20);
+    ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
+    ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["gazebo_velocity"], 20);
 
-    ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["SET_LAG_AND_MARCH_SERVICE"], lagAndMarchCallback);
-    ros::ServiceServer depthService = nodeHandle.advertiseService(ros_config["services"]["SET_DEPTH_SERVICE"], depthCallback);
-    ros::ServiceServer yawService = nodeHandle.advertiseService(ros_config["services"]["SET_YAW_SERVICE"], yawCallback);
-    ros::ServiceServer imuService = nodeHandle.advertiseService(ros_config["services"]["SET_IMU_ENABLED_SERVICE"], imuCallback);
-    ros::ServiceServer stabilizationService = nodeHandle.advertiseService(ros_config["services"]["SET_STABILIZATION_SERVICE"], stabilizationCallback);
-    ros::ServiceServer deviceService = nodeHandle.advertiseService(ros_config["services"]["SET_DEVICE_SERVICE"], deviceActionCallback);
+    ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["set_lag_march"], lagAndMarchCallback);
+    ros::ServiceServer depthService = nodeHandle.advertiseService(ros_config["services"]["set_depth"], depthCallback);
+    ros::ServiceServer yawService = nodeHandle.advertiseService(ros_config["services"]["set_yaw"], yawCallback);
+    ros::ServiceServer imuService = nodeHandle.advertiseService(ros_config["services"]["set_imu_enabled"], imuCallback);
+    ros::ServiceServer stabilizationService = nodeHandle.advertiseService(ros_config["services"]["set_stabilization_enabled"], stabilizationCallback);
+    ros::ServiceServer deviceService = nodeHandle.advertiseService(ros_config["services"]["set_device"], deviceActionCallback);
 
     gazebo_msgs::GetModelState modelState;
     modelState.request.model_name = simulation_config["model_name"];
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
 
-        bool result = ros::service::call(ros_config["services"]["GAZEBO_GET_STATE_SERVICE"], modelState);
+        bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
         if (!result || !modelState.response.success)
         {
             ROS_ERROR("Failed to obtain current model state from Gazebo!");

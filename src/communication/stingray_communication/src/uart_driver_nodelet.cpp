@@ -22,9 +22,9 @@ void uart_driver::onInit()
     // Serial port initialization
     portInitialize(nodeHandle);
     // ROS publishers
-    outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(ros_config["topics"]["INPUT_PARCEL_TOPIC"], 1000);
+    outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(ros_config["topics"]["input_parcel"], 1000);
     // ROS subscribers
-    inputMessage_sub = nodeHandle.subscribe(ros_config["topics"]["OUTPUT_PARCEL_TOPIC"], 1000,
+    inputMessage_sub = nodeHandle.subscribe(ros_config["topics"]["output_parcel"], 1000,
                                             &uart_driver::inputMessage_callback, this);
     // Input message container
     inputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());

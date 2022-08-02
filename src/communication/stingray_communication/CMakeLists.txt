@@ -9,6 +9,7 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  roslib
   std_msgs
   geometry_msgs
   sensor_msgs
@@ -110,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  DEPENDS roscpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs nodelet stingray_utils
+  DEPENDS roscpp roslib std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs nodelet stingray_utils
 #  LIBRARIES stingray_communication
 #  INCLUDE_DIRS include
 #  LIBRARIES stingray_communication
