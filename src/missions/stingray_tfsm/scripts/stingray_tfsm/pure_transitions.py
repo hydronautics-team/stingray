@@ -94,7 +94,7 @@ class FSM_Simple:
         detailed output is printed by that module.
 
         :param self: Refer to the object itself
-        :param verbose: Determine whether or not the function will print out a message
+        :param verbose: Determine whether the function will print out a message
         :return: The value of the verbose parameter
         :doc-author: Trelent
         """
@@ -155,6 +155,8 @@ class FSM_Simple:
             return 1
         elif current_state == 'aborted':
             return 0
+        else:
+            raise TypeError('Machine final state is not "done" or "aborted"')
 
     def add_state(self, states, **kwargs):
         self.fsm.add_states(states, **kwargs)
