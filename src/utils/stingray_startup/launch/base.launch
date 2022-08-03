@@ -9,7 +9,7 @@
     <!-- Debug mode. Enabled output images publishing after object detection -->
     <arg name="debug" default="true" />
     <!-- Record cameras -->
-    <arg name="record" value="false" />
+    <arg name="record" default="false" />
     <!-- Directory where to save videos -->
     <arg name="record_dir" default="$(env HOME)/stingray_video_records/" />
     <!-- Enables video streaming -->
@@ -26,7 +26,7 @@
         <!-- Connection with simulator -->
         <node pkg="stingray_gazebo_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
         <!-- Vision-->
-        <include file="$(find stingray_startup)/launch/object_detection.launch">
+        <include file="$(find stingray_startup)/launch/vision.launch">
             <arg name="ros_output" value="$(arg ros_output)" />
             <arg name="simulation" value="true" />
             <arg name="debug" value="$(arg debug)" />
@@ -44,7 +44,7 @@
         <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_communication/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true" />
         <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_communication/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true" />
         <!-- Vision-->
-        <include file="$(find stingray_startup)/launch/object_detection.launch">
+        <include file="$(find stingray_startup)/launch/vision.launch">
             <arg name="ros_output" value="$(arg ros_output)" />
             <arg name="real_cam" value="true" />
             <arg name="debug" value="$(arg debug)" />

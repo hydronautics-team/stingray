@@ -49,13 +49,13 @@ source devel/setup.bash
 ### Run object detection
 - Run detection on real cameras:
 ```bash
-roslaunch stingray_startup object_detection.launch real_cam:=true 
+roslaunch stingray_startup vision.launch real_cam:=true 
 ```
 - Run detection on simulation cameras:
 ```bash
-roslaunch stingray_startup object_detection.launch simulation:=true
+roslaunch stingray_startup vision.launch simulation:=true
 ```
 - Run detection on video from files:
 ```bash
-roslaunch stingray_startup object_detection.launch file:=true file1_path:=PATH_TO_VIDEO_1 file2_path:=PATH_TO_VIDEO_2
+roslaunch stingray_startup vision.launch file:=true file1_path:=PATH_TO_VIDEO_1 file2_path:=PATH_TO_VIDEO_2
 ```
