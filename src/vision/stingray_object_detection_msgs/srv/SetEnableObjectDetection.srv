@@ -1,0 +1,7 @@
+# Request
+uint8 camera_id
+bool enabled
+---
+# Response
+bool success
+string message

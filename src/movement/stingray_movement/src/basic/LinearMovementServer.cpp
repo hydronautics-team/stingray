@@ -55,7 +55,7 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
         ;
     }
 
-    auto result = ros::service::call(LAG_MARCH_SERVICE, serviceCall);
+    auto result = ros::service::call(ros_config["services"]["set_lag_march"], serviceCall);
     ROS_INFO("LAG_MARCH_SERVICE called");
 
     if (!result || !serviceCall.response.success)
@@ -81,7 +81,7 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
 
     serviceCall.request.march = 0.0;
     serviceCall.request.lag = 0.0;
-    result = ros::service::call(LAG_MARCH_SERVICE, serviceCall);
+    result = ros::service::call(ros_config["services"]["set_lag_march"], serviceCall);
     if (!result || !serviceCall.response.success)
     {
         ROS_ERROR("Unable to set march and lag: %s", serviceCall.response.message.c_str());

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import rospy
-from stingray_object_detection_msgs.msg import ObjectsArray
 
 """@package docstring
 Contains an abstract class for event base and implementations for some common events.
@@ -89,5 +88,3 @@ class TopicEvent(EventBase):
 
     def is_triggered(self):
         return self._is_triggered
-
-

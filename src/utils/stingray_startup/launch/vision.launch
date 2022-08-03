@@ -5,6 +5,8 @@
 
 
     <!-- COMMON ARGUMENTS -->
+    <!-- Settings for "output" parameter of nodes -->
+    <arg name="ros_output" default="screen" />
     <!-- Defines FPS -->
     <arg name="fps" default="30" />
     <!-- Enables video streaming -->
@@ -13,6 +15,8 @@
     <arg name="record" default="false" />
     <!-- Debug mode. Enabled output images publishing after yolo prediction -->
     <arg name="debug" default="true" />
+    <!-- Directory where to save videos -->
+    <arg name="record_dir" default="$(env HOME)/stingray_video_records/" />
 
     <!-- REAL CAM -->
     <!-- Providing video from real cameras -->
@@ -49,7 +53,7 @@
     <!-- REAL CAM -->
     <group if="$(arg real_cam)">
         <!-- Front camera interface node -->
-        <node name="$(arg front_camera_node_name)" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+        <node name="$(arg front_camera_node_name)" pkg="usb_cam" type="usb_cam_node" output="$(arg ros_output)" respawn="true">
             <param name="video_device" value="$(arg front_cam)" />
             <param name="image_width" value="640" />
             <param name="image_height" value="480" />
@@ -59,7 +63,7 @@
             <param name="io_method" value="mmap" />
         </node>
         <!-- Bottom camera interface node -->
-        <node name="$(arg bottom_camera_node_name)" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+        <node name="$(arg bottom_camera_node_name)" pkg="usb_cam" type="usb_cam_node" output="$(arg ros_output)" respawn="true">
             <param name="video_device" value="$(arg bottom_cam)" />
             <param name="image_width" value="640" />
             <param name="image_height" value="480" />
@@ -69,7 +73,7 @@
             <param name="io_method" value="mmap" />
         </node>
         <!-- Yolo detector node -->
-        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
+        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="$(arg ros_output)" respawn="true">
             <param name="image_topic_list" value="/$(arg front_camera_node_name)/image_raw /$(arg bottom_camera_node_name)/image_raw" />
             <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="debug" value="$(arg debug)" />
@@ -93,22 +97,22 @@
             </node>
             <group if="$(arg record)">
                 <!-- Video recorder node -->
-                <node name="$(arg front_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <node name="$(arg front_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
                     <param name="source_topic" value="/$(arg front_camera_node_name)/image_raw/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
                 <!-- Video recorder node -->
-                <node name="$(arg bottom_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <node name="$(arg bottom_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
                     <param name="source_topic" value="/$(arg bottom_camera_node_name)/image_raw/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
             </group>
         </group>
@@ -117,7 +121,7 @@
     <!-- SIMULATION CAM -->
     <group if="$(arg simulation)">
         <!-- Yolo detector node -->
-        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
+        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="$(arg ros_output)" respawn="true">
             <param name="image_topic_list" value="$(arg simulation_front_cam) $(arg simulation_bottom_cam)" />
             <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="debug" value="$(arg debug)" />
@@ -141,22 +145,22 @@
             </node>
             <group if="$(arg record)">
                 <!-- Video recorder node -->
-                <node name="front_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <node name="front_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
                     <param name="source_topic" value="$(arg simulation_front_cam)/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
                 <!-- Video recorder node -->
-                <node name="bottom_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <node name="bottom_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
                     <param name="source_topic" value="$(arg simulation_bottom_cam)/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
             </group>
         </group>
@@ -185,7 +189,7 @@
             <arg name="visualize" value="false" />
         </include>
         <!-- Yolo detector node -->
-        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="screen" respawn="true">
+        <node name="yolo_detector" pkg="stingray_object_detection" type="yolo_detector.py" output="$(arg ros_output)" respawn="true">
             <param name="image_topic_list" value="/$(arg file1_node_name)/image_raw /$(arg file2_node_name)/image_raw" />
             <param name="weights_pkg_name" value="$(arg weights_pkg_name)" />
             <param name="debug" value="$(arg debug)" />
@@ -209,22 +213,22 @@
             </node>
             <group if="$(arg record)">
                 <!-- Video recorder node -->
-                <node name="$(arg file1_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <node name="$(arg file1_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
                     <param name="source_topic" value="/$(arg file1_node_name)/image_raw/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
                 <!-- Video recorder node -->
-                <node name="$(arg file2_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="screen" respawn="true">
+                <node name="$(arg file2_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
                     <param name="source_topic" value="/$(arg file2_node_name)/image_raw/yolo_detector/image" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
                     <param name="output_format" value="h264" />
-                    <param name="record_dir" value="$(env HOME)/stingray_video_records/" />
+                    <param name="record_dir" value="$(arg record_dir)" />
                 </node>
             </group>
         </group>
@@ -234,7 +238,7 @@
         <!-- Video web server -->
         <!-- Stream will be available at http://<hostname>:8080/stream_viewer?topic=<image topic> -->
         <!-- For direct images from camera the topic is /<camera_name>/image_raw -->
-        <node name="video_server" pkg="web_video_server" type="web_video_server" output="screen" respawn="true">
+        <node name="video_server" pkg="web_video_server" type="web_video_server" output="$(arg ros_output)" respawn="true">
             <param name="server_threads" value="4" />
             <param name="ros_threads" value="10" />
         </node>

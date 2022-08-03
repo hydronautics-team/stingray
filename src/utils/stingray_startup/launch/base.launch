@@ -6,65 +6,56 @@
     <!-- COMMON -->
     <!-- Settings for "output" parameter of nodes -->
     <arg name="ros_output" default="screen" />
-    <!-- Debug mode. Enabled output images publishing after yolo prediction -->
+    <!-- Debug mode. Enabled output images publishing after object detection -->
     <arg name="debug" default="true" />
-    <!-- Enables connection with hardware platform -->
-    <arg name="hardware_connection" default="true" />
-
-    <!-- UART SETTINGS -->
-    <arg name="uart_device" default="/dev/ttyS0" />
-    <arg name="uart_baudrate" default="57600" />
-    <arg name="uart_data_bytes" default="8" />
-    <!-- Available parity values: none, even, odd -->
-    <arg name="uart_parity" default="none" />
-    <arg name="uart_stop_bits" default="1" />
-
-    <!-- MOVEMENT -->
-    <!-- Coefficient for transforming velocity value from range 0.0 to 1.0 to real vehicle range -->
-    <arg name="velocity_coefficient" default="20000.0" />
-
-    <!-- MISSIONS -->
-    <!-- Enables missions -->
-    <arg name="missions_enabled" default="false" />
-    <!-- Missions FSM module -->
-    <arg name="missions_module" default="" />
-    <!-- Missions FSM class -->
-    <arg name="missions_class" default="" />
-    <!-- Delay after initialization that is used to put vehicle into the pool, in milliseconds -->
-    <arg name="delay_after_init" default="50000" />
-    <!-- FSM visualization using SMACH viewer -->
-    <arg name="fsm_introspection" default="false" />
+    <!-- Record cameras -->
+    <arg name="record" default="false" />
+    <!-- Directory where to save videos -->
+    <arg name="record_dir" default="$(env HOME)/stingray_video_records/" />
+    <!-- Enables video streaming -->
+    <arg name="stream" default="false" />
+    <!-- Enables connection with simulator -->
+    <arg name="simulation" default="false" />
 
     <!-- WEIGHTS -->
     <!-- Package name with your dnn weights -->
     <arg name="weights_pkg_name" default="stingray_object_detection" />
 
-    <!-- NODES -->
-    <!-- object_detection launch file-->
-    <include file="$(find stingray_startup)/launch/object_detection.launch">
-        <arg name="real_cam" value="true" />
-        <arg name="debug" value="$(arg debug)" />
-        <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
-    </include>
+    <!-- SIMULATION MODE -->
+    <group if="$(arg simulation)">
+        <!-- Connection with simulator -->
+        <node pkg="stingray_gazebo_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ros_output)" respawn="true" />
+        <!-- Vision-->
+        <include file="$(find stingray_startup)/launch/vision.launch">
+            <arg name="ros_output" value="$(arg ros_output)" />
+            <arg name="simulation" value="true" />
+            <arg name="debug" value="$(arg debug)" />
+            <arg name="record" value="$(arg record)" />
+            <arg name="record_dir" value="$(arg record_dir)" />
+            <arg name="stream" value="$(arg stream)" />
+            <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
+        </include>
+    </group>
 
-    <!-- Connection with real vehicle -->
-    <group if="$(arg hardware_connection)">
+    <!-- REAL VEHICLE MODE -->
+    <group unless="$(arg simulation)">
+        <!-- Connection with real vehicle -->
         <node pkg="nodelet" type="nodelet" name="standalone_nodelet" args="manager" output="$(arg ros_output)" respawn="true" />
-        <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_communication/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true">
-            <param name="device" value="$(arg uart_device)" />
-            <param name="baudrate" value="$(arg uart_baudrate)" />
-            <param name="data_bytes" value="$(arg uart_data_bytes)" />
-            <param name="parity" value="$(arg uart_parity)" />
-            <param name="stop_bits" value="$(arg uart_stop_bits)" />
-        </node>
+        <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_communication/uart_driver standalone_nodelet" output="$(arg ros_output)" respawn="true" />
         <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_communication/hardware_bridge standalone_nodelet" output="$(arg ros_output)" respawn="true" />
+        <!-- Vision-->
+        <include file="$(find stingray_startup)/launch/vision.launch">
+            <arg name="ros_output" value="$(arg ros_output)" />
+            <arg name="real_cam" value="true" />
+            <arg name="debug" value="$(arg debug)" />
+            <arg name="record" value="$(arg record)" />
+            <arg name="record_dir" value="$(arg record_dir)" />
+            <arg name="stream" value="$(arg stream)" />
+            <arg name="weights_pkg_name" value="$(arg weights_pkg_name)" />
+        </include>
     </group>
 
     <!-- Movement nodes, real vehicle -->
-    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true">
-        <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
-    </node>
-    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true">
-        <param name="velocity_coefficient" value="$(arg velocity_coefficient)" />
-    </node>
+    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true" />
+    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true" />
 </launch>

@@ -21,7 +21,8 @@ class FSM_Simple:
         :doc-author: Trelent
         """
         if not callable(external_cb):
-            raise TypeError("Callable function should be passed to callback_wrapper")
+            raise TypeError(
+                "Callable function should be passed to callback_wrapper")
         external_cb(userdata)
 
     def next_step(self, *args, **kwargs):
@@ -36,7 +37,8 @@ class FSM_Simple:
         """
         if self.verbose:
             print(f"DEBUG: current state of abstract machine is {self.state}")
-            print(f"DEBUG: doing the transition {self.fsm.get_triggers(self.state)[0]}")
+            print(
+                f"DEBUG: doing the transition {self.fsm.get_triggers(self.state)[0]}")
 
         self.trigger(self.fsm.get_triggers(self.state)[0],
                      {'state_name': self.state})
@@ -78,9 +80,12 @@ class FSM_Simple:
         self.gsm = copy(self)
         if path is not None:
             states, transitions = self.read_rulebook(path)
-        self.g_fsm = GraphMachine(model=self.gsm, states=states, transitions=transitions, initial='init')
-        self.fsm = Machine(model=self, states=states, transitions=transitions, initial='init', auto_transitions=False)
+        self.g_fsm = GraphMachine(
+            model=self.gsm, states=states, transitions=transitions, initial='init')
+        self.fsm = Machine(model=self, states=states, transitions=transitions,
+                           initial='init', auto_transitions=False)
         self.verbose = True
+        
 
     def set_verbose(self, verbose):
         """
@@ -89,7 +94,7 @@ class FSM_Simple:
         detailed output is printed by that module.
 
         :param self: Refer to the object itself
-        :param verbose: Determine whether or not the function will print out a message
+        :param verbose: Determine whether the function will print out a message
         :return: The value of the verbose parameter
         :doc-author: Trelent
         """
@@ -150,17 +155,11 @@ class FSM_Simple:
             return 1
         elif current_state == 'aborted':
             return 0
+        else:
+            raise TypeError('Machine final state is not "done" or "aborted"')
 
     def add_state(self, states, **kwargs):
         self.fsm.add_states(states, **kwargs)
 
     def add_transitions(self, transitions):
         self.fsm.add_transitions(transitions)
-
-
-
-
-
-
-
-

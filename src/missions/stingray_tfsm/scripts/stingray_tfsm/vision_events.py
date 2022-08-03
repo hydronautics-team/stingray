@@ -11,7 +11,7 @@ def calculate_proximity(tlx, brx, tly, bry, mrange):
     proximity = abs(tlx - brx)
     proximity += abs(tly - bry)
     proximity = 1 - mrange / proximity * 0.43
-    print("Ya sotvoril dich: ", proximity)
+    # print("Ya sotvoril dich: ", proximity)
 
     return proximity
 
@@ -40,7 +40,6 @@ class ObjectDetectionEvent(TopicEvent):
     def __init__(self, topic_name: str, object_name: str,
                  n_triggers: int = 1, queue_size=None, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -74,7 +73,6 @@ class ObjectOnRight(TopicEvent):
                  n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
                  tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -106,7 +104,6 @@ class ObjectOnRight(TopicEvent):
         )
         center = (_obj.top_left_x + _obj.bottom_right_x) // 2
         proximity_allowance = max(proximity_allowance, self._tolerance)
-        print("Itogovaya dich: ", proximity_allowance)
         if self._range // 2 - center >= 0 and \
                 abs(1 - center / self.center) >= proximity_allowance:
             return 1
@@ -121,7 +118,6 @@ class ObjectOnLeft(TopicEvent):
                  n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
                  tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
@@ -152,7 +148,6 @@ class ObjectOnLeft(TopicEvent):
         )
         center = (_obj.top_left_x + _obj.bottom_right_x) // 2
         proximity_allowance = max(proximity_allowance, self._tolerance)
-        print("Itogovaya dich: ", proximity_allowance)
         if self._range // 2 - center <= 0 and \
                 abs(1 - center / self.center) >= proximity_allowance:
             return 1
@@ -168,7 +163,6 @@ class ObjectOrtho(TopicEvent):
                  n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
                  tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
-
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
         :param n_triggers: Number of sequential detections to define object as detected. Used to cope with

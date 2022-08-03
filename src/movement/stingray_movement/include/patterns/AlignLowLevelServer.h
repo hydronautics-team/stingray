@@ -10,20 +10,16 @@
  * vehicle according to value obtained from topic
  * using low-level CS stabilization
  */
-class AlignLowLevelServer: AbstractMovementActionServer<stingray_movement_msgs::AlignAction,
-                                                        stingray_movement_msgs::AlignGoalConstPtr> {
- private:
-  static const std::string STABILIZATION_SERVICE;
+class AlignLowLevelServer : AbstractMovementActionServer<stingray_movement_msgs::AlignAction,
+                                                         stingray_movement_msgs::AlignGoalConstPtr>
+{
 
- protected:
+protected:
+    void goalCallback(const stingray_movement_msgs::AlignGoalConstPtr &goal) override;
 
-  void goalCallback(const stingray_movement_msgs::AlignGoalConstPtr& goal) override;
-
- public:
-
-  AlignLowLevelServer(const std::string& actionName, double velocityCoefficient);
-  ~AlignLowLevelServer() = default;
-
+public:
+    AlignLowLevelServer(const std::string &actionName, double velocityCoefficient);
+    ~AlignLowLevelServer() = default;
 };
 
-#endif //STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_PATTERNS_ALIGNLOWLEVELSERVER_H_
+#endif // STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_PATTERNS_ALIGNLOWLEVELSERVER_H_

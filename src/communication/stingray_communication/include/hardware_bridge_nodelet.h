@@ -2,6 +2,7 @@
 #define STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <nodelet/nodelet.h>
 #include <std_msgs/UInt16.h>
 #include <std_msgs/UInt32.h>
@@ -20,27 +21,27 @@
 #include <stingray_communication_msgs/SetDeviceAction.h>
 #include <stingray_communication_msgs/SetStabilization.h>
 #include "messages/messages.h"
-#include "TopicsAndServices.h"
 
-class hardware_bridge : public nodelet::Nodelet {
+class hardware_bridge : public nodelet::Nodelet
+{
 public:
     virtual void onInit();
 
 private:
     void inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg);
-    bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request& lagAndMarchRequest,
-                             stingray_communication_msgs::SetLagAndMarch::Response& lagAndMarchResponse);
-    bool depthCallback(stingray_communication_msgs::SetInt32::Request& depthRequest,
-                       stingray_communication_msgs::SetInt32::Response& depthResponse);
-    bool yawCallback(stingray_communication_msgs::SetInt32::Request& yawRequest,
-                     stingray_communication_msgs::SetInt32::Response& yawResponse);
-    bool imuCallback(std_srvs::SetBool::Request& imuRequest,
-                     std_srvs::SetBool::Response& imuResponse);
-    bool deviceActionCallback(stingray_communication_msgs::SetDeviceAction::Request& deviceRequest,
-                              stingray_communication_msgs::SetDeviceAction::Response& deviceResponse);
-    bool stabilizationCallback(stingray_communication_msgs::SetStabilization::Request& stabilizationRequest,
-                               stingray_communication_msgs::SetStabilization::Response& stabilizationResponse);
-    void timerCallback(const ros::TimerEvent& event);
+    bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &lagAndMarchRequest,
+                             stingray_communication_msgs::SetLagAndMarch::Response &lagAndMarchResponse);
+    bool depthCallback(stingray_communication_msgs::SetInt32::Request &depthRequest,
+                       stingray_communication_msgs::SetInt32::Response &depthResponse);
+    bool yawCallback(stingray_communication_msgs::SetInt32::Request &yawRequest,
+                     stingray_communication_msgs::SetInt32::Response &yawResponse);
+    bool imuCallback(std_srvs::SetBool::Request &imuRequest,
+                     std_srvs::SetBool::Response &imuResponse);
+    bool deviceActionCallback(stingray_communication_msgs::SetDeviceAction::Request &deviceRequest,
+                              stingray_communication_msgs::SetDeviceAction::Response &deviceResponse);
+    bool stabilizationCallback(stingray_communication_msgs::SetStabilization::Request &stabilizationRequest,
+                               stingray_communication_msgs::SetStabilization::Response &stabilizationResponse);
+    void timerCallback(const ros::TimerEvent &event);
 
     // ROS publishers
     ros::Publisher outputMessagePublisher;
@@ -70,4 +71,4 @@ private:
     bool lagStabilizationEnabled = false;
 };
 
-#endif //STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
+#endif // STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H

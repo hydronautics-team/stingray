@@ -2,7 +2,7 @@
 <package format="2">
   <name>stingray_gazebo_communication</name>
   <version>0.1.0</version>
-  <description>Package contains drivers and bridges for communication between real vehicle or simulator and Stingray platform.</description>
+  <description>Package contains gazebo bridge for communication between simulator and Stingray platform.</description>
 
   <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
   <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
@@ -11,12 +11,13 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
+  <depend>roslib</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
   <depend>nav_msgs</depend>
   <depend>stingray_communication_msgs</depend>
-  <depend>pluginlib</depend>
+  <depend>stingray_utils</depend>
 
 </package>
