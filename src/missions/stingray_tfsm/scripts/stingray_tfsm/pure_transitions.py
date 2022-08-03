@@ -2,9 +2,6 @@ from transitions import Machine
 from transitions.extensions import GraphMachine
 from copy import copy
 from ast import literal_eval
-import json
-import rospkg
-import os
 
 
 class FSM_Simple:
@@ -88,12 +85,7 @@ class FSM_Simple:
         self.fsm = Machine(model=self, states=states, transitions=transitions,
                            initial='init', auto_transitions=False)
         self.verbose = True
-        # configs
-        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
-        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
-            self.ros_config = json.load(f)
-        with open(os.path.join(stingray_resources_path, "configs/control.json")) as f:
-            self.control_config = json.load(f)
+        
 
     def set_verbose(self, verbose):
         """

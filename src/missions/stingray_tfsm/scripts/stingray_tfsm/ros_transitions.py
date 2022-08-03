@@ -3,7 +3,9 @@ from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
 from std_msgs.msg import Int32
 import rospy
-
+import json
+import rospkg
+import os
 
 def callback_active():
     rospy.loginfo("Action server is processing the goal")
@@ -32,10 +34,18 @@ class AUVStateMachine(FSM_Simple):
         :doc-author: Trelent
         """
         super().__init__(states, transitions, path, verbose)
-        self.LinearMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["linear"], msg.LinearMoveAction)
+        
         self.scene = scene
         self.absolute_angle = 0
+        # configs
+        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
+        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
+            self.ros_config = json.load(f)
+        with open(os.path.join(stingray_resources_path, "configs/control.json")) as f:
+            self.control_config = json.load(f)
+        
         self._get_yaw()
+        self.LinearMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["linear"], msg.LinearMoveAction)
         self.RotateClient = SimpleActionClient(self.ros_config["actions"]["movement"]["rotate"], msg.RotateAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"], msg.DiveAction)
 
