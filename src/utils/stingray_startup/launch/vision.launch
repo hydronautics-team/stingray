@@ -98,7 +98,7 @@
             <group if="$(arg record)">
                 <!-- Video recorder node -->
                 <node name="$(arg front_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
-                    <param name="source_topic" value="/$(arg front_camera_node_name)/image_raw/yolo_detector/image" />
+                    <param name="source_topic" value="/$(arg front_camera_node_name)/image_raw" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
@@ -107,7 +107,7 @@
                 </node>
                 <!-- Video recorder node -->
                 <node name="$(arg bottom_camera_node_name)_yolo_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">
-                    <param name="source_topic" value="/$(arg bottom_camera_node_name)/image_raw/yolo_detector/image" />
+                    <param name="source_topic" value="/$(arg bottom_camera_node_name)/image_raw" />
                     <param name="output_width" value="640" />
                     <param name="output_height" value="480" />
                     <param name="output_fps" value="$(arg fps)" />
