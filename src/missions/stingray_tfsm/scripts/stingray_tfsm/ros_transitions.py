@@ -1,11 +1,9 @@
 from stingray_tfsm.pure_transitions import FSM_Simple
 from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
+from stingray_tfsm.load_config import load_config
 from std_msgs.msg import Int32
 import rospy
-import json
-import rospkg
-import os
 
 def callback_active():
     rospy.loginfo("Action server is processing the goal")
@@ -38,16 +36,16 @@ class AUVStateMachine(FSM_Simple):
         self.scene = scene
         self.absolute_angle = 0
         # configs
-        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
-        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
-            self.ros_config = json.load(f)
-        with open(os.path.join(stingray_resources_path, "configs/control.json")) as f:
-            self.control_config = json.load(f)
+        self.ros_config = load_config("ros.json")
+        self.control_config = load_config("control.json")
         
         self._get_yaw()
-        self.LinearMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["linear"], msg.LinearMoveAction)
-        self.RotateClient = SimpleActionClient(self.ros_config["actions"]["movement"]["rotate"], msg.RotateAction)
-        self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"], msg.DiveAction)
+        self.LinearMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["linear"],
+                                                   msg.LinearMoveAction)
+        self.RotateClient = SimpleActionClient(self.ros_config["actions"]["movement"]["rotate"],
+                                               msg.RotateAction)
+        self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
+                                             msg.DiveAction)
 
     def yaw_topic_callback(self, msg):
         """
@@ -183,8 +181,21 @@ class AUVStateMachine(FSM_Simple):
         if rospy.is_shutdown():
             self.set_state('aborted')
 
+        elif state_keyword == 'custom':
+            if 'subFSM' in scene:
+                if scene['subFSM']:
+                    scene['custom'].set_state('init')
+                    scene['custom'].run(scene['args'])
+                else:
+                    scene['custom'](scene['args'])
+            else:
+                scene['custom'](scene['args'])
+
         elif state_keyword == 'init':
-            rospy.sleep(scene['time'])
+            if 'time' in scene:
+                rospy.sleep(scene['time'])
+            elif 'preps' in scene:
+                scene['preps'](scene['args'])
 
         elif state_keyword == 'dummy':
             self.dummy(scene)
