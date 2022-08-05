@@ -19,6 +19,8 @@
     <arg name="debug" default="true" />
     <!-- Directory where to save videos -->
     <arg name="record_dir" default="$(env HOME)/stingray_video_records/" />
+    <!-- Enable launch with qr codes -->
+    <arg name="qr_launch" default="false" />
 
     <!-- REAL CAM -->
     <!-- Providing video from real cameras -->
@@ -74,6 +76,11 @@
             <param name="camera_name" value="$(arg bottom_camera_node_name)" />
             <param name="io_method" value="mmap" />
         </node>
+        <group if="$(arg qr_launch)">
+            <node pkg="zbar_ros" type="barcode_reader_node" name="barcode_reader" output="screen">
+                <remap from="image" to="/$(arg front_camera_node_name)/image_raw" />
+            </node>
+        </group>
         <group if="$(arg record_raw)">
             <!-- Video recorder node -->
             <node name="$(arg front_camera_node_name)_record" pkg="stingray_video_recorder" type="video_recorder.py" output="$(arg ros_output)" respawn="true">

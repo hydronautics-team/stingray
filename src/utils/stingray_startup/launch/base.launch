@@ -60,4 +60,8 @@
     <!-- Movement nodes, real vehicle -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ros_output)" respawn="true" />
     <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ros_output)" respawn="true" />
+
+    <!-- Qr code launcher -->
+    <node pkg="stingray_startup" type="qr_trigger.py" name="qr_trigger" output="screen" />
+
 </launch>
