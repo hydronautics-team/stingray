@@ -22,7 +22,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 	auto velocity = goal->velocity * velocityCoefficient;
 	lagAndMarchService.request.march = velocity;
 
-	std_msgs::Int32 yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(YAW_TOPIC, nodeHandle);
+	std_msgs::Int32 yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
 	int currentYaw = yawMessage.data;
 	int rotation;
 
@@ -46,7 +46,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 	int i;
 	for (i = 0; i < goal->number; i++)
 	{
-		auto result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
+		auto result = ros::service::call(ros_config["services"]["set_lag_march"], lagAndMarchService);
 
 		if (!result || !lagAndMarchService.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", lagAndMarchService.response.message.c_str());
@@ -55,7 +55,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 		ros::Duration(goal->lenght).sleep();
-		result = ros::service::call(LAG_MARCH_SERVICE, stop);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], stop);
 		if (!result || !stop.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", stop.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -63,7 +63,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 
-		result = ros::service::call(YAW_SERVICE, rotateService);
+		result = ros::service::call(ros_config["services"]["set_yaw"], rotateService);
 
 		if (!result || !rotateService.response.success) {
 			ROS_ERROR("Unable to set yaw: %s", rotateService.response.message.c_str());
@@ -73,7 +73,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 		}
 		rotateService.request.value += rotation;
 
-		result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], lagAndMarchService);
 		if (!result || !lagAndMarchService.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", lagAndMarchService.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -81,7 +81,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 		ros::Duration(goal->width).sleep();
-		result = ros::service::call(LAG_MARCH_SERVICE, stop);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], stop);
 		if (!result || !stop.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", stop.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -89,7 +89,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 
-		result = ros::service::call(YAW_SERVICE, rotateService);
+		result = ros::service::call(ros_config["services"]["set_yaw"], rotateService);
 
 		if (!result || !rotateService.response.success) {
 			ROS_ERROR("Unable to set yaw: %s", rotateService.response.message.c_str());
@@ -99,7 +99,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 		}
 		rotateService.request.value -= rotation;
 
-		result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], lagAndMarchService);
 		if (!result || !lagAndMarchService.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", lagAndMarchService.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -107,7 +107,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 		ros::Duration(goal->lenght).sleep();
-		result = ros::service::call(LAG_MARCH_SERVICE, stop);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], stop);
 		if (!result || !stop.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", stop.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -115,7 +115,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 
-		result = ros::service::call(YAW_SERVICE, rotateService);
+		result = ros::service::call(ros_config["services"]["set_yaw"], rotateService);
 
 		if (!result || !rotateService.response.success) {
 			ROS_ERROR("Unable to set yaw: %s", rotateService.response.message.c_str());
@@ -124,7 +124,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 		rotateService.request.value -= rotation;
-		result = ros::service::call(LAG_MARCH_SERVICE, lagAndMarchService);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], lagAndMarchService);
 		if (!result || !lagAndMarchService.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", lagAndMarchService.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -132,7 +132,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 		ros::Duration(goal->width).sleep();
-		result = ros::service::call(LAG_MARCH_SERVICE, stop);
+		result = ros::service::call(ros_config["services"]["set_lag_march"], stop);
 		if (!result || !stop.response.success) {
 			ROS_ERROR("Unable to set march and lag: %s", stop.response.message.c_str());
 			actionServer.setAborted(stingray_movement_msgs::TackResult(),
@@ -140,7 +140,7 @@ void TackServer::goalCallback(const stingray_movement_msgs::TackGoalConstPtr& go
 			return;
 		}
 
-		result = ros::service::call(YAW_SERVICE, rotateService);
+		result = ros::service::call(ros_config["services"]["set_yaw"], rotateService);
 
 		if (!result || !rotateService.response.success) {
 			ROS_ERROR("Unable to set yaw: %s", rotateService.response.message.c_str());

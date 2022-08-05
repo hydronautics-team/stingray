@@ -5,35 +5,28 @@
 
 static const std::string NODE_NAME = "movement_patterns";
 
-static const std::string PARAM_VELOCITY_COEFFICIENT = "velocity_coefficient";
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, NODE_NAME);
+    ros::NodeHandle nodeHandle(NODE_NAME);
 
-static const std::string ACTION_ALIGN = "stingray_action_align";
+    // get json configs
+    json ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
+    json control_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/control.json"));
 
-static const std::string ACTION_ALIGN_LOW_LEVEL = "stingray_action_align_low_level";
+    double velocityCoefficient = control_config["movement"]["velocity_coefficient"];
 
+    if (velocityCoefficient < 1.0)
+    {
+        ROS_ERROR("Velocity coefficient must be larger than 1.0");
+        return 0;
+    }
 
-int main(int argc, char **argv) {
-  ros::init(argc, argv, NODE_NAME);
-  ros::NodeHandle nodeHandle(NODE_NAME);
+    AlignServer alignServer(ros_config["actions"]["movement"]["align"], velocityCoefficient);
+    AlignLowLevelServer alignLowLevelServer(ros_config["actions"]["movement"]["align_low_level"], velocityCoefficient);
+    TackServer tackServer(ros_config["actions"]["movement"]["tack"], 1.0);
 
-  double velocityCoefficient = 0.0;
+    ros::spin();
 
-  bool hasParameter = nodeHandle.param(PARAM_VELOCITY_COEFFICIENT, velocityCoefficient, 0.0);
-  if (!hasParameter) {
-    ROS_ERROR("Parameter %s is not specified!", PARAM_VELOCITY_COEFFICIENT.c_str());
     return 0;
-  }
-
-  if (velocityCoefficient < 1.0) {
-    ROS_ERROR("Velocity coefficient must be larger than 1.0");
-    return 0;
-  }
-
-  AlignServer alignServer(ACTION_ALIGN, velocityCoefficient);
-  AlignLowLevelServer alignLowLevelServer(ACTION_ALIGN_LOW_LEVEL, velocityCoefficient);
-  TackServer server("stingray_action_tack", 1.0);
-
-  ros::spin();
-
-  return 0;
 }

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_communication</name>
+  <name>stingray_gazebo_communication</name>
   <version>0.1.0</version>
-  <description>Package contains drivers and bridges for communication between real vehicle or simulator and Stingray platform.</description>
+  <description>Package contains gazebo bridge for communication between simulator and Stingray platform.</description>
 
   <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
   <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
@@ -17,13 +17,7 @@
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
   <depend>nav_msgs</depend>
-  <depend>serial</depend>
   <depend>stingray_communication_msgs</depend>
-  <depend>nodelet</depend>
-  <depend>pluginlib</depend>
   <depend>stingray_utils</depend>
 
-  <export>
-    <nodelet plugin="${prefix}/nodelets_init.xml"/>
-  </export>
 </package>

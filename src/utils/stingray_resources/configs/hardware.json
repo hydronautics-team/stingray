@@ -1,0 +1,12 @@
+{
+    "uart": {
+        "device": "/dev/ttyS0",
+        "baudrate": 57600,
+        "data_bytes": 8,
+        "parity": "none",
+        "stop_bits": 1,
+        "serial_timeout": 1000
+    },
+    "devices": {
+    }
+}

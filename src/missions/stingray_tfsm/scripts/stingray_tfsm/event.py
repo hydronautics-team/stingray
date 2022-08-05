@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import rospy
-from stingray_object_detection_msgs.msg import ObjectsArray
 
 """@package docstring
 Contains an abstract class for event base and implementations for some common events.
@@ -89,30 +88,3 @@ class TopicEvent(EventBase):
 
     def is_triggered(self):
         return self._is_triggered
-
-
-class ObjectDetectionEvent(TopicEvent):
-    """An event that is triggered when specific object is detected in object detection topic.
-    """
-
-    def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size: int = 10):
-        """The constructor.
-
-        :param topic_name: Object detection topic name.
-        :param object_name: Name of the object class of interest.
-        :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
-        false-positive detections. Counter is zeroed after each non-detections.
-        :param queue_size: Queue size for topic (as queue_size parameter in rospy.Subscriber).
-        """
-
-        super().__init__(topic_name=topic_name,
-                         topic_type=ObjectsArray,
-                         trigger_fn=self._trigger_fn,
-                         n_triggers=n_triggers,
-                         trigger_reset=True,
-                         queue_size=queue_size)
-        self._object_name = object_name
-
-    def _trigger_fn(self, msg: ObjectsArray):
-        return self._object_name in [obj.name for obj in msg.objects]

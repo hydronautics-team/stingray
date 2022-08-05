@@ -5,26 +5,19 @@
 
 #include "common/AbstractMovementActionServer.h"
 
-
 /**
  * Action server that is responsible for diving the vehicle.
  */
 class DiveServer : AbstractMovementActionServer<stingray_movement_msgs::DiveAction,
-                                                stingray_movement_msgs::DiveGoalConstPtr> {
+                                                stingray_movement_msgs::DiveGoalConstPtr>
+{
 
- private:
+protected:
+    void goalCallback(const stingray_movement_msgs::DiveGoalConstPtr &goal) override;
 
-  static const int DEPTH_ERROR_RANGE = 7;
-
- protected:
-
-  void goalCallback(const stingray_movement_msgs::DiveGoalConstPtr& goal) override;
-
- public:
-
-  DiveServer(const std::string& actionName);
-  ~DiveServer() = default;
-
+public:
+    DiveServer(const std::string &actionName);
+    ~DiveServer() = default;
 };
 
-#endif //STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_DIVESERVER_H_
+#endif // STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_DIVESERVER_H_
