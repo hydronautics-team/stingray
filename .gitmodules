@@ -4,3 +4,4 @@
 [submodule "src/vision/stingray_object_detection/scripts/yolov5"]
 	path = src/vision/stingray_object_detection/scripts/yolov5
 	url = https://github.com/ultralytics/yolov5.git
+	
