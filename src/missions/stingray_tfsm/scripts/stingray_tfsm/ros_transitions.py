@@ -192,7 +192,10 @@ class AUVStateMachine(FSM_Simple):
                 scene['custom'](scene['args'])
 
         elif state_keyword == 'init':
-            rospy.sleep(scene['time'])
+            if 'time' in scene:
+                rospy.sleep(scene['time'])
+            elif 'preps' in scene:
+                scene['preps'](scene['args'])
 
         elif state_keyword == 'dummy':
             self.dummy(scene)
