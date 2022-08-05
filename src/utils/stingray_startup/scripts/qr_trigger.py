@@ -34,6 +34,7 @@ class QrTrigger:
         self.is_launched = False
         self.launched_file = None
         self.launched_name = None
+        self.detected_but_not_launched = False
 
     def get_launch_names(self, path: str, pattern: str) -> List[str]:
         matched_files = glob(os.path.join(path, pattern) + "*.launch")
@@ -45,10 +46,13 @@ class QrTrigger:
 
     def barcode_callback(self, msg: String):
         self.detected_qr = msg.data.lower()
-        rospy.sleep(0.5)
+        self.detected_but_not_launched = True
+        rospy.loginfo('Detected {}'.format(self.detected_qr))
 
     def launch_detected(self):
         if self.detected_qr is None:
+            return
+        if not self.detected_but_not_launched:
             return
         if self.is_launched:
             if self.detected_qr == "stop":
@@ -80,7 +84,8 @@ class QrTrigger:
                         launchfile_name, self.launch_dir_path))
             else:
                 rospy.logerr('Unknown qr code {}'.format(self.detected_qr))
-
+        
+        self.detected_but_not_launched = False
 
 if __name__ == '__main__':
     rospy.init_node('qr_trigger')
