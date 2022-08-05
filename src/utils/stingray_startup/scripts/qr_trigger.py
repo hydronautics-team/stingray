@@ -1,103 +1,100 @@
 #! /usr/bin/env python3
 
+from typing import List
 import rospkg
 import rospy
-import roslaunch
-import std_msgs.msg
+from std_msgs.msg import String
+import os
+import json
+from roslaunch import rlutil, parent, configure_logging
+from glob import glob
+
 
 class QrTrigger:
-    def __init__(self):
-        self.launched = False
-        self.callbackRequested = False
-        self.requestedMode = None
-        self.launch = None
-        rospy.loginfo('__init__ QrTrigger')
-        self.launch_path = rospkg.RosPack().get_path('sauvc_startup') + '/launch/sauvc_'
-        self.message = None
-        # self.previousMessage = None
+    def __init__(self, launch_pkg_name: str, name_pattern: str):
+        rospy.loginfo('QrTrigger init')
 
-    def barcode_callback(self, msg):
-        # rospy.loginfo('barcode_callback')
-        # if self.callbackRequested == True:
-        #     return
-        # else:
-        #     self.callbackRequested = True
-        # self.previousMessage = self.message
-        self.message = msg.data.lower()
+        self.launch_dir_path = os.path.join(
+            rospkg.RosPack().get_path(launch_pkg_name), "launch")
+        self.name_pattern = name_pattern
+        self.launch_names = self.get_launch_names(
+            self.launch_dir_path, self.name_pattern)
+        rospy.loginfo('launch names {}'.format(self.launch_names))
 
-        # if not (message in ['demo', 'stop', 'qualification', 'simple', 'medium', 'medium_ha']):
-        #     rospy.logerr('Unknown messages')
-        #     return
-        #
-        # if message == 'stop':
-        #     if not self.launched:
-        #         rospy.logwarn('Not launched yet')
-        #         return
-        #     else:
-        #         rospy.loginfo('Shutting down launch config...')
-        #         self.launch.shutdown()
-        #         self.launched = False
-        #         return
-        #
-        # if self.launched:
-        #     rospy.logwarn('Already launched')
-        #     return
-        #
-        # uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-        # roslaunch.configure_logging(uuid)
-        # launch = roslaunch.parent.ROSLaunchParent(uuid, [self.launch_path + message + ".launch"]) #TODO: установить унивирсальный путь
-        # rospy.loginfo('Starting launch mode ' + message)
-        # launch.start()
-        # rospy.loginfo('start ' + message)
-        #
-        # self.launched = True
-        # self.callbackRequested = False
+        # configs
+        # TODO MOVE THIS TO UTILS OR RESOURSES
+        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
+        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
+            self.ros_config = json.load(f)
 
-        return
-def main():
-    rospy.init_node('qr_trigger')
-    qr = QrTrigger()
-    rospy.Subscriber('/barcode', std_msgs.msg.String, qr.barcode_callback)
+        # ROS subscribers
+        rospy.Subscriber('/barcode', String, self.barcode_callback)
 
-    rate = rospy.Rate(1)
-    while not rospy.is_shutdown():
-        if not (qr.message in ['demo', 'stop', 'qualification', 'simple', 'medium', 'medium_ha']):
-            rospy.logerr('Unknown messages')
-            rate.sleep()
-            continue
+        self.detected_qr = None
+        self.is_launched = False
+        self.launched_file = None
+        self.launched_name = None
 
-        if qr.message == 'stop':
-            if not qr.launched:
-                rospy.logwarn('Not launched yet')
-                rate.sleep()
-                continue
+    def get_launch_names(self, path: str, pattern: str) -> List[str]:
+        matched_files = glob(os.path.join(path, pattern) + "*.launch")
+        launch_names = []
+        for match in matched_files:
+            launch_names.append(os.path.split(
+                match)[-1].split(pattern)[-1].split(".launch")[0])
+        return launch_names
+
+    def barcode_callback(self, msg: String):
+        self.detected_qr = msg.data.lower()
+        rospy.sleep(0.5)
+
+    def launch_detected(self):
+        if self.detected_qr is None:
+            return
+        if self.is_launched:
+            if self.detected_qr == "stop":
+                self.launched_file.shutdown()
+                self.is_launched = False
+            elif self.detected_qr == self.launched_name:
+                rospy.logwarn('{} already launched'.format(self.detected_qr))
+            elif self.detected_qr in self.launch_names:
+                rospy.logwarn('Stop {} first, then launch {}'.format(
+                    self.launched_name, self.detected_qr))
+        else:
+            if self.detected_qr == "stop":
+                rospy.logwarn('Nothing launched!')
+            elif self.detected_qr in self.launch_names:
+                launchfile_name = self.name_pattern + self.detected_qr + ".launch"
+                launchfile_path = os.path.join(
+                    self.launch_dir_path, launchfile_name)
+                if os.path.isfile(launchfile_path):
+                    uuid = rlutil.get_or_generate_uuid(None, False)
+                    configure_logging(uuid)
+                    self.launched_file = parent.ROSLaunchParent(
+                        uuid, [launchfile_path])
+                    self.launched_file.start()
+                    self.is_launched = True
+                    self.launched_name = self.detected_qr
+                    rospy.loginfo('Launching {}'.format(launchfile_name))
+                else:
+                    rospy.logwarn("Launch file with name {} doesn't exist in {}!".format(
+                        launchfile_name, self.launch_dir_path))
             else:
-                rospy.loginfo('Shutting down launch config...')
-                qr.launch.shutdown()
-                qr.launched = False
-                rate.sleep()
-                continue
-
-        if qr.launched:
-            rospy.logwarn('Already launched')
-            rate.sleep()
-            continue
-
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-        roslaunch.configure_logging(uuid)
-        launch = roslaunch.parent.ROSLaunchParent(uuid, [qr.launch_path + qr.message + ".launch"]) #TODO: установить унивирсальный путь
-        rospy.loginfo('Starting launch mode ' + qr.message)
-        launch.start()
-        rospy.loginfo('start ' + qr.message)
-
-        qr.launched = True
-        qr.callbackRequested = False
-
-        rate.sleep()
+                rospy.logerr('Unknown qr code {}'.format(self.detected_qr))
 
 
 if __name__ == '__main__':
+    rospy.init_node('qr_trigger')
+    # parameters
+    launch_pkg_name = rospy.get_param('~launch_pkg_name')
+    name_pattern = rospy.get_param('~name_pattern')
+
+    qr = QrTrigger(launch_pkg_name, name_pattern)
+
     try:
-        main()
+        rate = rospy.Rate(1)
+        while not rospy.is_shutdown():
+            qr.launch_detected()
+            rate.sleep()
+
     except rospy.ROSInterruptException:
-        pass
+        rospy.logerr("Shutting down {} node".format(rospy.get_name()))

@@ -30,8 +30,8 @@
     <!-- Defines device that will be used as camera -->
     <!-- < arg name="device_front" default="/dev/v4l/by-path/platform-3530000.xhci-usb-0:1:1.0-video-index0"> -->
     <!-- < arg name="device_bottom" default="/dev/v4l/by-path/platform-3530000.xhci-usb-0:2:1.0-video-index0"> -->
-    <arg name="front_cam" default="/dev/video0" />
-    <arg name="bottom_cam" default="/dev/video2" />
+    <arg name="front_cam" default="/dev/video4" />
+    <arg name="bottom_cam" default="/dev/video0" />
 
     <!-- SIMULATION CAM -->
     <!-- Providing video from simulation -->
