@@ -11,7 +11,14 @@ from glob import glob
 
 
 class QrTrigger:
+    """ Node to trigger launch files with qr codes
+    """
     def __init__(self, launch_pkg_name: str, name_pattern: str):
+        """
+        Args:
+            launch_pkg_name (str): package name with *launch/* directori which contains launch files you want to trigger
+            name_pattern (str): specify this prefix to trigger specific launch files
+        """
         rospy.loginfo('QrTrigger init')
 
         self.launch_dir_path = os.path.join(
@@ -37,6 +44,15 @@ class QrTrigger:
         self.detected_but_not_launched = False
 
     def get_launch_names(self, path: str, pattern: str) -> List[str]:
+        """ Explore directory and find files mathing the pattern
+
+        Args:
+            path (str): Directory path
+            pattern (str): Name pattern
+
+        Returns:
+            List[str]: list of paths
+        """
         matched_files = glob(os.path.join(path, pattern) + "*.launch")
         launch_names = []
         for match in matched_files:
@@ -45,11 +61,20 @@ class QrTrigger:
         return launch_names
 
     def barcode_callback(self, msg: String):
+        """ Callback when qr code was found
+
+        Args:
+            msg (String): decoded qr code
+        """
         self.detected_qr = msg.data.lower()
         self.detected_but_not_launched = True
         rospy.loginfo('Detected {}'.format(self.detected_qr))
 
     def launch_detected(self):
+        """ Trigger launch file after qr code has been detected
+        
+        If 'stop' has been detected then running launch file will be stopped 
+        """
         if self.detected_qr is None:
             return
         if not self.detected_but_not_launched:
