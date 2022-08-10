@@ -1,7 +1,7 @@
-from stingray_tfsm.pure_transitions import FSM_Simple
+from stingray_tfsm.core.pure_fsm import PureStateMachine
 from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
-from stingray_tfsm.load_config import load_config
+from stingray_resources.utils import load_config
 from std_msgs.msg import Int32
 import rospy
 
@@ -18,7 +18,7 @@ def callback_feedback(feedback):
     rospy.loginfo("Feedback:%s" % str(feedback))
 
 
-class AUVStateMachine(FSM_Simple):
+class AUVStateMachine(PureStateMachine):
     def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
         """
         The __init__ function is called when an instance of the class is created.

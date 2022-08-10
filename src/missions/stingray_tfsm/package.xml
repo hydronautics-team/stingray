@@ -5,6 +5,7 @@
   <description>PyTransitions FSM drive</description>
 
   <maintainer email="davtart2000@yandex.ru">Davtyan Artyom</maintainer>
+  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
 
 
   <license>MIT</license>

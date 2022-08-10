@@ -4,7 +4,27 @@ from copy import copy
 from ast import literal_eval
 
 
-class FSM_Simple:
+class PureStateMachine:
+    def __init__(self, states: tuple = (), transitions: list = (), path=None, *args, **kwargs):
+        """
+        The __init__ function is called when the class is instantiated.
+        :param self: Refer to the object itself
+        :param states:tuple=(): Define the states of the machine
+        :param transitions:list=(): Define the transitions of the graph
+        :param path=None: Pass the path to the rulebook
+        :param *args: Pass a non-keyworded, variable-length argument list
+        :param **kwargs: Pass keyworded, variable-length arguments to the function
+        :return: The object of the class
+        :doc-author: Trelent
+        """
+        self.gsm = copy(self)
+        if path is not None:
+            states, transitions = self.read_rulebook(path)
+        self.g_fsm = GraphMachine(
+            model=self.gsm, states=states, transitions=transitions, initial='init')
+        self.fsm = Machine(model=self, states=states, transitions=transitions,
+                           initial='init', auto_transitions=False)
+        self.verbose = True
 
     @staticmethod
     def callback_wrapper(userdata: dict = None, external_cb=None):
@@ -64,28 +84,6 @@ class FSM_Simple:
                 elif line[0] == '{':
                     tr_list.append(literal_eval(line))
         return states, tr_list
-
-    def __init__(self, states: tuple = (), transitions: list = (), path=None, *args, **kwargs):
-        """
-        The __init__ function is called when the class is instantiated.
-        :param self: Refer to the object itself
-        :param states:tuple=(): Define the states of the machine
-        :param transitions:list=(): Define the transitions of the graph
-        :param path=None: Pass the path to the rulebook
-        :param *args: Pass a non-keyworded, variable-length argument list
-        :param **kwargs: Pass keyworded, variable-length arguments to the function
-        :return: The object of the class
-        :doc-author: Trelent
-        """
-        self.gsm = copy(self)
-        if path is not None:
-            states, transitions = self.read_rulebook(path)
-        self.g_fsm = GraphMachine(
-            model=self.gsm, states=states, transitions=transitions, initial='init')
-        self.fsm = Machine(model=self, states=states, transitions=transitions,
-                           initial='init', auto_transitions=False)
-        self.verbose = True
-        
 
     def set_verbose(self, verbose):
         """

@@ -1,4 +1,4 @@
-from stingray_tfsm.event import TopicEvent
+from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 
 
