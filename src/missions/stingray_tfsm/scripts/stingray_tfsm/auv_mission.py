@@ -17,7 +17,7 @@ class AUVMission(PureMission):
         super().__init__()
         self.ros_config = load_config("ros.json")
 
-    def enable_object_detection(self, camera_topic: str):
+    def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera
 
         Args:
@@ -26,7 +26,6 @@ class AUVMission(PureMission):
         srv_name = self.ros_config["services"]["set_enable_object_detection"]
         rospy.wait_for_service(srv_name)
         set_camera = rospy.ServiceProxy(srv_name, SetEnableObjectDetection)
-        response = set_camera(camera_topic, True)
+        response = set_camera(camera_topic, enable)
         rospy.loginfo(f" Cam {camera_topic} enabled: {response}")
-        # TODO метод в вижне чтобы возвращал имя топика с объектами
         rospy.wait_for_message(get_objects_topic(camera_topic), ObjectsArray)
