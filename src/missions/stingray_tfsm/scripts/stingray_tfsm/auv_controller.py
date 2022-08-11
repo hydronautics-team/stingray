@@ -10,13 +10,24 @@ class AUVController(ABC):
     """ Control fsm class for AUV missions """
     @abstractmethod
     def __init__(self):
+        self.machine: PureStateMachine = None
+        """ pure state machine """
+        self._reset()
+        
+    def _reset(self):
+        """
+        The reset function is called at the beginning of each trial. It is used to
+        set the initial state of any variables that are needed for your condition
+        script, and can also be used to reset ROS nodes between trials.
+        
+        """
         self.machine = PureStateMachine(
             self.__class__.__name__)
-        """ pure state machine """
+        self.setup_missions()
         self.machine.add_transitions((
             {'trigger': 'skip',
-             'source': 'init',
-             'dest': 'done',
+             'source': self.machine.state_init,
+             'dest': self.machine.state_done,
              'prepare': self.no_mission_set},
         ))
 
@@ -27,7 +38,7 @@ class AUVController(ABC):
             mission (AUVMission): mission object which name is the state in control fsm
             mission_transitions (List): transitions for this mission
         """
-        self.machine.add_state(mission.name, on_enter=mission.run)
+        self.machine.add_states(mission.name, on_enter=mission.run)
         self.machine.add_transitions(mission_transitions)
 
     def add_mission_transitions(self, mission_transitions: List):

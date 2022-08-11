@@ -19,8 +19,8 @@ class AUVMission(PureMission):
         Args:
             name (str): mission name
         """
-        super().__init__(name)
         self.ros_config = load_config("ros.json")
+        super().__init__(name)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera

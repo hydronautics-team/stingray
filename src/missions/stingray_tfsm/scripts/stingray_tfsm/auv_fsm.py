@@ -19,7 +19,7 @@ def callback_feedback(feedback):
 
 
 class AUVStateMachine(PureStateMachine):
-    def __init__(self, name: str, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
+    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None, verbose=False):
         """ State machine for AUV
 
         :param name:str=(): Define the name of the machine
@@ -30,9 +30,6 @@ class AUVStateMachine(PureStateMachine):
         :param verbose=True: Print out the state of the robot as it moves through its states
         
         """
-        super().__init__(name, states, transitions, path, verbose)
-        
-        self.scene = scene
         self.absolute_angle = 0
         # configs
         self.ros_config = load_config("ros.json")
@@ -45,6 +42,7 @@ class AUVStateMachine(PureStateMachine):
                                                msg.RotateAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
                                              msg.DiveAction)
+        super().__init__(name, states, transitions, path, verbose)
 
     def yaw_topic_callback(self, msg):
         """
@@ -172,6 +170,10 @@ class AUVStateMachine(PureStateMachine):
         :return: None
         
         """
+        state = self.state
+        if self.name.upper() in state:
+            state.replace(self.name.upper() + "_", "")
+            
         state_keyword = self.state.split('_')[0]
         scene = self.scene[self.state]
 
@@ -179,7 +181,6 @@ class AUVStateMachine(PureStateMachine):
 
         if rospy.is_shutdown():
             self.set_state(self.state_aborted)
-        
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
@@ -189,25 +190,19 @@ class AUVStateMachine(PureStateMachine):
                     scene['custom'](scene['args'])
             else:
                 scene['custom'](scene['args'])
-
         elif state_keyword == self.state_init:
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             elif 'preps' in scene:
                 scene['preps'](scene['args'])
-
         elif state_keyword == 'dummy':
             self.dummy(scene)
-
         elif state_keyword == 'move':
             self.execute_move_goal(scene)
-
         elif state_keyword == 'rotate':
             self.execute_rotate_goal(scene)
-
         elif state_keyword == 'dive':
             self.execute_dive_goal(scene)
-
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
