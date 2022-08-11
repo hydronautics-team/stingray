@@ -37,6 +37,7 @@ class PureStateMachine:
         self.default_states = (self.state_init,
                                self.state_aborted, self.state_end)
         """ default states for FSM """
+        # TODO
         self.default_transitions = [
             [self.transition_end, '*', self.state_end]
         ]

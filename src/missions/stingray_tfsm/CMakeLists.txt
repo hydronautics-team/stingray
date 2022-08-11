@@ -14,6 +14,7 @@ find_package(
              std_msgs
              std_srvs
              stingray_communication_msgs
+             stingray_object_detection
              stingray_object_detection_msgs
              stingray_movement_msgs)
 

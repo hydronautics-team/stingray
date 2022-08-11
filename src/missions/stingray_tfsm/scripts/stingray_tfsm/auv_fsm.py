@@ -172,12 +172,12 @@ class AUVStateMachine(PureStateMachine):
         """
         state = self.state
         if self.name.upper() in state:
-            state.replace(self.name.upper() + "_", "")
-            
-        state_keyword = self.state.split('_')[0].lower()
+            state = state.replace(self.name.upper() + "_", "")
+        
+        state_keyword = state.split('_')[0].lower()
+
         scene = self.scene[self.state]
 
-        rospy.loginfo(f"AUVStateMachine {self.name}: Current state of ros machine is {self.state}")
         next_trigger = self.machine.get_triggers(self.state)[0]
 
         if rospy.is_shutdown():
@@ -186,16 +186,16 @@ class AUVStateMachine(PureStateMachine):
             if 'subFSM' in scene:
                 if scene['subFSM']:
                     scene['custom'].set_state(self.state_init)
-                    scene['custom'].run(scene['args'])
+                    scene['custom'].run(*scene['args'])
                 else:
-                    scene['custom'](scene['args'])
+                    scene['custom'](*scene['args'])
             else:
-                scene['custom'](scene['args'])
-        elif state_keyword == self.state_init:
+                scene['custom'](*scene['args'])
+        elif state_keyword == 'init':
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             elif 'preps' in scene:
-                scene['preps'](scene['args'])
+                scene['preps'](*scene['args'])
         elif state_keyword == 'dummy':
             self.dummy(scene)
         elif state_keyword == 'move':
@@ -208,13 +208,11 @@ class AUVStateMachine(PureStateMachine):
             if 'subFSM' in scene:
                 if scene['subFSM']:
                     scene['condition'].set_state(self.state_init)
-                    decision = scene['condition'].run(scene['args'])
+                    decision = scene['condition'].run(*scene['args'])
                 else:
-                    decision = scene['condition'](scene['args'])
+                    decision = scene['condition'](*scene['args'])
             else:
-                rospy.loginfo(f"{self.state} {scene['args']}")
-
-                decision = scene['condition'](scene['args'])
+                decision = scene['condition'](*scene['args'])
             if decision:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results True")

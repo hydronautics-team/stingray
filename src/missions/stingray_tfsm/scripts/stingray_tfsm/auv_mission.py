@@ -34,5 +34,5 @@ class AUVMission(PureMission):
         rospy.wait_for_service(srv_name)
         set_camera = rospy.ServiceProxy(srv_name, SetEnableObjectDetection)
         response = set_camera(camera_topic, enable)
-        rospy.loginfo(f" Cam {camera_topic} enabled: {response}")
+        rospy.loginfo(f"Object detection enabled: {response} for camera: {camera_topic} ")
         rospy.wait_for_message(get_objects_topic(camera_topic), ObjectsArray)
