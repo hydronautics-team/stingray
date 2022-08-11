@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from abc import abstractmethod
 from stingray_tfsm.core.pure_mission import PureMission
 from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
@@ -13,6 +14,7 @@ class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
     FSM_CLASS = AUVStateMachine
 
+    @abstractmethod
     def __init__(self, name: str):
         """ Abstract class to implement missions for AUV with useful methods
 

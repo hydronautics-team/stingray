@@ -42,7 +42,7 @@ class AUVStateMachine(PureStateMachine):
                                                msg.RotateAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
                                              msg.DiveAction)
-        super().__init__(name, states, transitions, path, verbose)
+        super().__init__(name, states, transitions, scene, path)
 
     def yaw_topic_callback(self, msg):
         """
@@ -174,10 +174,11 @@ class AUVStateMachine(PureStateMachine):
         if self.name.upper() in state:
             state.replace(self.name.upper() + "_", "")
             
-        state_keyword = self.state.split('_')[0]
+        state_keyword = self.state.split('_')[0].lower()
         scene = self.scene[self.state]
 
-        rospy.loginfo(f"Current state of ros machine is {self.state}")
+        rospy.loginfo(f"AUVStateMachine {self.name}: Current state of ros machine is {self.state}")
+        next_trigger = self.machine.get_triggers(self.state)[0]
 
         if rospy.is_shutdown():
             self.set_state(self.state_aborted)
@@ -211,16 +212,20 @@ class AUVStateMachine(PureStateMachine):
                 else:
                     decision = scene['condition'](scene['args'])
             else:
+                rospy.loginfo(f"{self.state} {scene['args']}")
+
                 decision = scene['condition'](scene['args'])
             if decision:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results True")
-                self.trigger('condition_s')
+                next_trigger ='condition_s'
             else:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results False")
-                self.trigger('condition_f')
+                next_trigger = 'condition_f'
             return
-        elif state_keyword == self.state_done:
+        elif state_keyword == self.state_end:
             exit()
-        self.trigger(self.machine.get_triggers(self.state)[0])
+
+        rospy.loginfo(f"AUVStateMachine {self.name}: Doing the transition {next_trigger}")
+        self.trigger(next_trigger)

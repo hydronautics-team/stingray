@@ -5,7 +5,7 @@ from ast import literal_eval
 
 
 class PureStateMachine:
-    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = None, path=None):
+    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None):
         """ Base state machine class
 
         :param name:str=(): Define the name of the machine
@@ -28,22 +28,22 @@ class PureStateMachine:
         """ default init FSM state"""
         self.state_aborted = self.name.upper() + "_ABORTED"
         """ default aborted FSM state"""
-        self.state_done = self.name.upper() + "_DONE"
+        self.state_end = self.name.upper() + "_END"
         """ default done FSM state"""
         self.transition_start = self.name.lower() + "_start"
         """ default start FSM transition"""
         self.transition_end = self.name.lower() + "_end"
         """ default end FSM transition"""
         self.default_states = (self.state_init,
-                               self.state_aborted, self.state_done)
+                               self.state_aborted, self.state_end)
         """ default states for FSM """
         self.default_transitions = [
-            [self.transition_end, '*', self.state_done]
+            [self.transition_end, '*', self.state_end]
         ]
         """ default transitions for FSM """
 
         self.states += self.default_states
-        self.transitions = self.default_transitions
+        # self.transitions = self.default_transitions
 
         self.g_machine = GraphMachine(
             model=self.gsm, states=self.states, transitions=self.transitions, initial=self.state_init)
@@ -78,10 +78,8 @@ class PureStateMachine:
         :param self: Access the attributes of the class
         :return: The trigger that is associated with the current state
         """
-        print(f"DEBUG: current state of abstract machine is {self.state}")
+        print(f"DEBUG {self.name}: current state of abstract machine is {self.state}")
         next_trigger = self.machine.get_triggers(self.state)[0]
-
-        print(f"DEBUG: self.machine.get_triggers(self.state_init) {self.machine.get_triggers(self.state_init)}")
 
         if self.state == self.state_init:
             if self.transition_start in self.machine.get_triggers(self.state_init):
@@ -89,7 +87,7 @@ class PureStateMachine:
             elif len(self.machine.get_triggers(self.state)) > 0:
                 next_trigger = self.machine.get_triggers(self.state)[1]
 
-        print(f"DEBUG: doing the transition {next_trigger}")
+        print(f"DEBUG {self.name}: doing the transition {next_trigger}")
 
         self.trigger(next_trigger)
 
@@ -157,14 +155,14 @@ class PureStateMachine:
         """
         current_state = self.state
         
-        while current_state != self.state_done and current_state != self.state_aborted:
+        while current_state != self.state_end and current_state != self.state_aborted:
             """conditional transitions are handled in next_step"""
 
             self.next_step()
             current_state = self.state
             # print('\n==== STEP IS OVER ====\n')
 
-        if current_state == self.state_done:
+        if current_state == self.state_end:
             return 1
         elif current_state == self.state_aborted:
             return 0
@@ -176,6 +174,7 @@ class PureStateMachine:
 
     def add_transitions(self, transitions):
         self.machine.add_transitions(transitions)
+        # self.machine.add_transitions(self.default_transitions)
 
     def add_scene(self, scene):
         self.scene.update(scene)

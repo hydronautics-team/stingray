@@ -44,14 +44,14 @@ class PureMission(ABC):
         self.setup_events()
         self.machine = self.FSM_CLASS(self.name)
         self.machine.add_states(self.setup_states())
-        self.machine.add_transitions(self.setup_transitions)
+        self.machine.add_transitions(self.setup_transitions())
         self.default_scene = {
             self.machine.state_init: {
                 'time': 0.1
             }
         }
         """ default arguments for FSM """
-        self.machine.add_scene(self.default_scene.update(self.setup_scene()))
+        self.machine.add_scene(self.setup_scene())
 
     @abstractmethod
     def setup_states(self) -> Tuple:
