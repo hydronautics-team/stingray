@@ -16,20 +16,22 @@ class PureMission(ABC):
     FSM_CLASS = PureStateMachine
 
     @abstractmethod
-    def __init__(self, mission_name: str):
+    def __init__(self, name: str):
         """
         Args: 
             mission_name (str): mission name
         """
-        self.state_init = mission_name.upper() + "_INIT"
+        self.name = name
+        """ mission name """
+        self.state_init = name.upper() + "_INIT"
         """ default init FSM state"""
-        self.state_aborted = mission_name.upper() + "_ABORTED"
+        self.state_aborted = name.upper() + "_ABORTED"
         """ default aborted FSM state"""
-        self.state_done = mission_name.upper() + "_DONE"
+        self.state_done = name.upper() + "_DONE"
         """ default done FSM state"""
-        self.transition_start = mission_name.lower() + "_start"
+        self.transition_start = name.lower() + "_start"
         """ default start FSM transition"""
-        self.transition_end = mission_name.lower() + "_end"
+        self.transition_end = name.lower() + "_end"
         """ default end FSM transition"""
         self.default_states = (self.state_init,
                                self.state_aborted, self.state_done)
