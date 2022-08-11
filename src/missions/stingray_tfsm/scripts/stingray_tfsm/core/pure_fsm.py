@@ -5,7 +5,7 @@ from ast import literal_eval
 
 
 class PureStateMachine:
-    def __init__(self, name: str, states: tuple = (), transitions: list = (), path=None):
+    def __init__(self, name: str, states: tuple = (), transitions: list = [], path=None):
         """ Base state machine class
 
         :param name:str=(): Define the name of the machine

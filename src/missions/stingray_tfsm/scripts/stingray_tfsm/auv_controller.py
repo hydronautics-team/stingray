@@ -10,15 +10,15 @@ class AUVController(ABC):
     """ Control fsm class for AUV missions """
     @abstractmethod
     def __init__(self):
-        transitions = (
+        self.machine = PureStateMachine(
+            self.__class__.__name__)
+        """ pure state machine """
+        self.machine.add_transitions((
             {'trigger': 'skip',
              'source': 'init',
              'dest': 'done',
              'prepare': self.no_mission_set},
-        )
-        self.machine = PureStateMachine(
-            self.__class__.__name__, transitions=transitions)
-        """ pure state machine """
+        ))
 
     def add_mission(self, mission: AUVMission, mission_transitions: List):
         """ Adding AUVMission to control fsm
