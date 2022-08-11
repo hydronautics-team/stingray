@@ -13,8 +13,13 @@ class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
     FSM_CLASS = AUVStateMachine
 
-    def __init__(self, ):
-        super().__init__()
+    def __init__(self, name: str):
+        """ Abstract class to implement missions for AUV with useful methods
+
+        Args:
+            name (str): mission name
+        """
+        super().__init__(name)
         self.ros_config = load_config("ros.json")
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):

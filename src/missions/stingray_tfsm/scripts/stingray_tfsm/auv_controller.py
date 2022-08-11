@@ -10,33 +10,15 @@ class AUVController(ABC):
     """ Control fsm class for AUV missions """
     @abstractmethod
     def __init__(self):
-        self.state_init = self.__class__.__name__.upper() + "_INIT"
-        """ default init FSM state"""
-        self.state_aborted = self.__class__.__name__.upper() + "_ABORTED"
-        """ default aborted FSM state"""
-        self.state_done = self.__class__.__name__.upper() + "_DONE"
-        """ default done FSM state"""
-        self.transition_start = self.__class__.__name__.lower() + "_start"
-        """ default start FSM transition"""
-        self.transition_end = self.__class__.__name__.lower() + "_end"
-        """ default end FSM transition"""
-        self.default_states = (self.state_init,
-                               self.state_aborted, self.state_done)
-        """ default states for FSM """
-        self.default_transitions = [
-            [self.transition_end, '*', self.state_done]
-        ]
-        """ default transitions for FSM """
-        self.master_fsm = PureStateMachine(
-            self.default_states, self.default_transitions)
-        """ pure state machine """
-
-        self.master_fsm.add_transitions((
+        transitions = (
             {'trigger': 'skip',
              'source': 'init',
              'dest': 'done',
              'prepare': self.no_mission_set},
-        ))
+        )
+        self.machine = PureStateMachine(
+            self.__class__.__name__, transitions=transitions)
+        """ pure state machine """
 
     def add_mission(self, mission: AUVMission, mission_transitions: List):
         """ Adding AUVMission to control fsm
@@ -45,8 +27,8 @@ class AUVController(ABC):
             mission (AUVMission): mission object which name is the state in control fsm
             mission_transitions (List): transitions for this mission
         """
-        self.master_fsm.add_state(mission.name, on_enter=mission.run)
-        self.master_fsm.add_transitions(mission_transitions)
+        self.machine.add_state(mission.name, on_enter=mission.run)
+        self.machine.add_transitions(mission_transitions)
 
     def add_mission_transitions(self, mission_transitions: List):
         """ Adding custom transitions
@@ -54,7 +36,7 @@ class AUVController(ABC):
         Args:
             mission_transitions (List): custom transitions
         """
-        self.master_fsm.add_transitions(mission_transitions)
+        self.machine.add_transitions(mission_transitions)
 
     @abstractmethod
     def setup_missions(self):
@@ -67,7 +49,7 @@ class AUVController(ABC):
 
     def run(self):
         """ Start control fsm """
-        self.master_fsm.run()
+        self.machine.run()
 
     def no_mission_set(self):
         rospy.loginfo("No mission set!")

@@ -19,19 +19,18 @@ def callback_feedback(feedback):
 
 
 class AUVStateMachine(PureStateMachine):
-    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
-        """
-        The __init__ function is called when an instance of the class is created.
-        :param self: Reference the object itself
+    def __init__(self, name: str, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
+        """ State machine for AUV
+
+        :param name:str=(): Define the name of the machine
         :param states:tuple: Define the states of the state machine
         :param transitions:list=None: Pass a list of transitions to the super class
         :param scene:dict=None: Pass a dictionary of objects in the scene
         :param path=None: Specify the path to a file that contains the states and transitions
         :param verbose=True: Print out the state of the robot as it moves through its states
-        :return: The object of the class
-        :doc-author: Trelent
+        
         """
-        super().__init__(states, transitions, path, verbose)
+        super().__init__(name, states, transitions, path, verbose)
         
         self.scene = scene
         self.absolute_angle = 0
@@ -56,7 +55,7 @@ class AUVStateMachine(PureStateMachine):
         :param self: Access the variables and methods inside a class
         :param msg: Store the data from the topic
         :return: None
-        :doc-author: Trelent
+        
         """
         self.absolute_angle = msg.data
         if self.verbose:
@@ -69,7 +68,7 @@ class AUVStateMachine(PureStateMachine):
         :param self: Refer to the instance of the class
         :param scene: Access the scene object
         :return: None
-        :doc-author: Trelent
+        
         """
         rospy.loginfo(scene['message'])
         rospy.sleep(10)
@@ -83,7 +82,7 @@ class AUVStateMachine(PureStateMachine):
         :param self: Access the class attributes and methods
         :param scene: Pass the scene information to the execute_move_goal function
         :return: :
-        :doc-author: Trelent
+        
         """
         goal = msg.LinearMoveGoal(
             scene['direction'], scene['velocity'], scene['duration'])
@@ -105,7 +104,7 @@ class AUVStateMachine(PureStateMachine):
         :param self: Access the variables and methods of the class
         :param scene: Pass the scene information to the dive action server
         :return: The result of the action
-        :doc-author: Trelent
+        
         """
         goal = msg.DiveClientGoal(scene['depth'])
         self.DiveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
@@ -122,7 +121,7 @@ class AUVStateMachine(PureStateMachine):
 
         :param self: Reference the class object within the function
         :return: None
-        :doc-author: Trelent
+        
         """
         self._topic_sub = rospy.Subscriber(self.ros_config["topics"]["yaw"],
                                            Int32,
@@ -136,7 +135,7 @@ class AUVStateMachine(PureStateMachine):
         :param self: Access the attributes and methods of the class in python
         :param scene: Pass the scene information to the rotate goal function
         :return: The result of the action server
-        :doc-author: Trelent
+        
         """
         angle = scene['angle']
         self._get_yaw()
@@ -171,7 +170,7 @@ class AUVStateMachine(PureStateMachine):
         and chooses the next transition basing on the calculations
         :param self: Access the class attributes and methods
         :return: None
-        :doc-author: Trelent
+        
         """
         state_keyword = self.state.split('_')[0]
         scene = self.scene[self.state]
@@ -179,19 +178,19 @@ class AUVStateMachine(PureStateMachine):
         rospy.loginfo(f"Current state of ros machine is {self.state}")
 
         if rospy.is_shutdown():
-            self.set_state('aborted')
-
+            self.set_state(self.state_aborted)
+        
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['custom'].set_state('init')
+                    scene['custom'].set_state(self.state_init)
                     scene['custom'].run(scene['args'])
                 else:
                     scene['custom'](scene['args'])
             else:
                 scene['custom'](scene['args'])
 
-        elif state_keyword == 'init':
+        elif state_keyword == self.state_init:
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             elif 'preps' in scene:
@@ -212,7 +211,7 @@ class AUVStateMachine(PureStateMachine):
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['condition'].set_state('init')
+                    scene['condition'].set_state(self.state_init)
                     decision = scene['condition'].run(scene['args'])
                 else:
                     decision = scene['condition'](scene['args'])
@@ -227,6 +226,6 @@ class AUVStateMachine(PureStateMachine):
                     rospy.loginfo("DEBUG: Current condition results False")
                 self.trigger('condition_f')
             return
-        elif state_keyword == 'done':
+        elif state_keyword == self.state_done:
             exit()
-        self.trigger(self.fsm.get_triggers(self.state)[0])
+        self.trigger(self.machine.get_triggers(self.state)[0])
