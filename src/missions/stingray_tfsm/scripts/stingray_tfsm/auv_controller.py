@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from stingray_tfsm.auv_mission import AUVMission
 from stingray_tfsm.core.pure_fsm import PureStateMachine
+import rospy
 
 
 class AUVController(ABC):
@@ -30,6 +31,13 @@ class AUVController(ABC):
             self.default_states, self.default_transitions)
         """ pure state machine """
 
+        self.master_fsm.add_transitions((
+            {'trigger': 'skip',
+             'source': 'init',
+             'dest': 'done',
+             'prepare': self.no_mission_set},
+        ))
+
     @abstractmethod
     def add_mission(self, mission: AUVMission, mission_transitions: List):
         """ Adding AUVMission to control fsm
@@ -40,7 +48,7 @@ class AUVController(ABC):
         """
         self.master_fsm.add_state(mission.name, on_enter=mission.run)
         self.master_fsm.add_transitions(mission_transitions)
-    
+
     @abstractmethod
     def add_mission_transitions(self, mission_transitions: List):
         """ Adding custom transitions
@@ -63,3 +71,6 @@ class AUVController(ABC):
     def run(self):
         """ Start control fsm """
         self.master_fsm.run()
+
+    def no_mission_set(self):
+        rospy.loginfo("No mission set!")
