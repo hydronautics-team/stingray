@@ -5,21 +5,23 @@ import rospkg
 from cv_bridge import CvBridge, CvBridgeError
 from stingray_object_detection_msgs.msg import Object, ObjectsArray
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection, SetEnableObjectDetectionResponse, SetEnableObjectDetectionRequest
+from stingray_resources.utils import load_config
+from stingray_object_detection.utils import get_objects_topic, get_debug_image_topic
 from sensor_msgs.msg import Image
 import os
 import sys
 import torch
 import numpy as np
-import json
 
 sys.path.insert(1, os.path.join(rospkg.RosPack().get_path(
     "stingray_object_detection"), "scripts/yolov5"))
-from utils.augmentations import letterbox
-from utils.torch_utils import select_device, time_sync
-from utils.plots import Annotator, colors
+from models.common import DetectMultiBackend
 from utils.general import (
     check_img_size, non_max_suppression, scale_coords)
-from models.common import DetectMultiBackend
+from utils.plots import Annotator, colors
+from utils.torch_utils import select_device, time_sync
+from utils.augmentations import letterbox
+
 
 class YoloDetector:
     def __init__(self,
@@ -69,9 +71,7 @@ class YoloDetector:
         self.line_thickness = line_thickness
 
         # configs
-        stingray_resources_path = rospkg.RosPack().get_path("stingray_resources")
-        with open(os.path.join(stingray_resources_path, "configs/ros.json")) as f:
-            self.ros_config = json.load(f)
+        self.ros_config = load_config()
 
         # get node name
         node_name = rospy.get_name()
@@ -89,7 +89,7 @@ class YoloDetector:
             self.detection_enabled[input_topic] = False
 
             # ROS Topic names
-            objects_array_topic = "%s%s/objects" % (input_topic, node_name)
+            objects_array_topic = get_objects_topic(input_topic)
             rospy.loginfo("Node: {}, input topic: {}, output objects topic: {}".format(
                 node_name, input_topic, objects_array_topic))
 
@@ -103,7 +103,7 @@ class YoloDetector:
             self.objects_array_publishers[input_topic] = objects_array_pub
 
             if self.debug:
-                output_image_topic = "%s%s/image" % (input_topic, node_name)
+                output_image_topic = get_debug_image_topic(input_topic)
                 rospy.loginfo("Node: {}, input topic: {}, output image topic: {}".format(
                     node_name, input_topic, output_image_topic))
                 image_pub = rospy.Publisher(
@@ -142,8 +142,7 @@ class YoloDetector:
         Returns:
             SetEnableObjectDetectionResponse: response with str message and success bool arg
         """
-        self.detection_enabled[self.image_topic_list[request.camera_id]
-                               ] = request.enabled
+        self.detection_enabled[request.camera_topic] = request.enabled
         response = SetEnableObjectDetectionResponse()
         response.success = True
         return response
@@ -265,7 +264,7 @@ class YoloDetector:
 
 
 if __name__ == '__main__':
-    rospy.init_node('yolo_detector')
+    rospy.init_node(load_config()["nodes"]["object_detection"])
     # parameters
     weights_pkg_name = rospy.get_param('~weights_pkg_name')
     image_topic_list = rospy.get_param('~image_topic_list')

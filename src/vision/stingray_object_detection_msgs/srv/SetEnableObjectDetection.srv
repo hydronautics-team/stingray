@@ -1,5 +1,5 @@
 # Request
-uint8 camera_id
+string camera_topic
 bool enabled
 ---
 # Response
