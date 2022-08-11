@@ -185,7 +185,7 @@ class AUVStateMachine(PureStateMachine):
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['custom'].set_state(self.state_init)
+                    scene['custom'].set_init_state()
                     scene['custom'].run(*scene['args'])
                 else:
                     scene['custom'](*scene['args'])
@@ -207,7 +207,7 @@ class AUVStateMachine(PureStateMachine):
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['condition'].set_state(self.state_init)
+                    scene['condition'].set_init_state()
                     decision = scene['condition'].run(*scene['args'])
                 else:
                     decision = scene['condition'](*scene['args'])
