@@ -7,7 +7,7 @@ Stolen from TimeEscaper
 """
 
 
-class EventBase(ABC):
+class PureEvent(ABC):
     """An abstract class for creating events.
 
     Child classes should implement event logic. When the event is happening, child class must set
@@ -34,7 +34,7 @@ class EventBase(ABC):
         pass
 
 
-class TopicEvent(EventBase):
+class TopicEvent(PureEvent):
     """An event that is triggered when specific message appears in topic for some time.
     """
 

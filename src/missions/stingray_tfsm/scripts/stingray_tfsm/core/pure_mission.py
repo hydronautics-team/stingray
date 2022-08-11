@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Dict, List, Tuple
 from stingray_tfsm.core.pure_fsm import PureStateMachine
-from stingray_tfsm.core.pure_events import TopicEvent
+from stingray_tfsm.core.pure_events import PureEvent, TopicEvent
 import rospy
 
 """
@@ -11,49 +12,45 @@ Inspired by TimeEscaper
 
 class PureMission(ABC):
     """ Abstract class with default transitions, states and basic methods to implement mission """
+
+    FSM_CLASS = PureStateMachine
+
     @abstractmethod
     def __init__(self, mission_name: str):
         """
-        The __init__ function is called automatically whenever a new instance of the class is created.
-        The __init__ function receives an instance of the class as its first parameter, followed by any number
-        of parameters that are passed to the constructor. The __init__ function is used to initialize attributes
-        of an object when it's created.
-        
         Args: 
             mission_name (str): mission name
         """
         self.state_init = mission_name.upper() + "_INIT"
+        """ default init FSM state"""
         self.state_aborted = mission_name.upper() + "_ABORTED"
+        """ default aborted FSM state"""
         self.state_done = mission_name.upper() + "_DONE"
+        """ default done FSM state"""
         self.transition_start = mission_name.lower() + "_start"
+        """ default start FSM transition"""
         self.transition_end = mission_name.lower() + "_end"
-        self.default_states = [self.state_init,
-                               self.state_aborted, self.state_done]
+        """ default end FSM transition"""
+        self.default_states = (self.state_init,
+                               self.state_aborted, self.state_done)
+        """ default states for FSM """
         self.default_transitions = [
             [self.transition_end, '*', self.state_done]
         ]
-
-        self.transitions = []
-        self.states = []
-        self.scene = dict()
-        self.machine = None
-        self.events_inited = False
-
-        self.ros_parameter = rospy.get_param(
-            '/control_fsm'+'/parameter_name', self.other_defaults)
-        self.specific_event = None
-        self.other_defaults = None
+        """ default transitions for FSM """
         self.default_scene = {
-            'condition_state': {
-                'event_handler': PureMission.event_handler,
-                'args': self.specific_event
+            self.state_init: {
+                'time': 0.1
             }
         }
+        """ default arguments for FSM """
+        self.machine: PureStateMachine = None
+        """ the PureStateMachine object """
 
         self.reset()
 
     @abstractmethod
-    def reset(self, *args, **kwargs):
+    def reset(self):
         """
         The reset function is called at the beginning of each trial. It is used to
         set the initial state of any variables that are needed for your condition
@@ -65,30 +62,56 @@ class PureMission(ABC):
         :return: The scene dictionary
         :doc-author: Trelent
         """
-        self.events_inited = False
-        self.setup_events(self.ros_parameter, self.other_defaults)
-
-        self.machine = PureStateMachine(
-            self.default_states, self.default_transitions, self.default_scene)
+        self.setup_events()
+        self.machine = self.FSM_CLASS(
+            self.default_states + self.setup_states(), self.default_transitions + self.setup_transitions, self.default_scene.update(self.setup_scene()))
 
     @abstractmethod
-    def setup_events(self, topic_name, object_name):
+    def setup_states(self) -> Tuple:
+        """ Method to setup user states
+
+        Raises:
+            NotImplementedError: you need to implement it in your mission class
+
+        Returns:
+            Tuple: tuple of states
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def setup_transitions(self) -> List:
+        """ Method to setup user transitions
+
+        Raises:
+            NotImplementedError: you need to implement it in your mission class
+
+        Returns:
+            List: list of transitions
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def setup_scene(self) -> Dict:
+        """ Method to setup user scene args
+
+        Raises:
+            NotImplementedError: you need to implement it in your mission class
+
+        Returns:
+            Dict: dict with args
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def setup_events(self):
         """
         The setup_events function sets up the events for a specific topic and object.
         It is called by the setup_events function in the Topic class, which sets up events for all topics and objects.
-
-        :param self: Access the attributes and methods of the class in python
-        :param topic_name: Specify the name of the topic that will be used for communication
-        :param object_name: Pass the name of the object that is being observed
-        :return: self.events: boolean value that is True if all events are created successfully
-        :doc-author: Trelent
         """
-        self.specific_event = TopicEvent(topic_name, object_name)
-        self.events_inited = True
-        return self.events_inited
+        raise NotImplementedError
 
     @staticmethod
-    def event_handler(event):
+    def event_handler(event: PureEvent):
         """
         The event_handler function is a function that is called when the event is triggered.
         It returns True or False depending on whether the event was triggered or not.
@@ -116,7 +139,7 @@ class PureMission(ABC):
         self.machine.set_verbose(verbose)
 
     @abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self):
         """
         The run function is a relay to state machine's run function.
 
