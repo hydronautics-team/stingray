@@ -221,7 +221,6 @@ class AUVStateMachine(PureStateMachine):
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results False")
                 next_trigger = 'condition_f'
-            return
         elif state_keyword == self.state_end:
             exit()
 
