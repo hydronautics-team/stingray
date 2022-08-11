@@ -47,10 +47,10 @@ class PureMission(ABC):
         self.machine: PureStateMachine = None
         """ the PureStateMachine object """
 
-        self.reset()
+        self._reset()
 
     @abstractmethod
-    def reset(self):
+    def _reset(self):
         """
         The reset function is called at the beginning of each trial. It is used to
         set the initial state of any variables that are needed for your condition
