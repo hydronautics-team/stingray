@@ -38,7 +38,6 @@ class AUVController(ABC):
              'prepare': self.no_mission_set},
         ))
 
-    @abstractmethod
     def add_mission(self, mission: AUVMission, mission_transitions: List):
         """ Adding AUVMission to control fsm
 
@@ -49,7 +48,6 @@ class AUVController(ABC):
         self.master_fsm.add_state(mission.name, on_enter=mission.run)
         self.master_fsm.add_transitions(mission_transitions)
 
-    @abstractmethod
     def add_mission_transitions(self, mission_transitions: List):
         """ Adding custom transitions
 
@@ -67,7 +65,6 @@ class AUVController(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def run(self):
         """ Start control fsm """
         self.master_fsm.run()
