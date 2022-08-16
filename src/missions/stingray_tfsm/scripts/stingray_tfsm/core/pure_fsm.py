@@ -11,6 +11,7 @@ class PureStateMachine:
         :param name:str=(): Define the name of the machine
         :param states:tuple=(): Define the states of the machine
         :param transitions:list=(): Define the transitions of the graph
+        TODO: scene: dict = {}.....
         :param path=None: Pass the path to the rulebook
         """
         self.gsm = copy(self)
