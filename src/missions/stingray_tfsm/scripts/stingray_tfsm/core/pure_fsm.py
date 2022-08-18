@@ -5,45 +5,52 @@ from ast import literal_eval
 
 
 class PureStateMachine:
-    def __init__(self, name: str, states: tuple = (), transitions: list = (), path=None):
+    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None):
         """ Base state machine class
 
         :param name:str=(): Define the name of the machine
         :param states:tuple=(): Define the states of the machine
         :param transitions:list=(): Define the transitions of the graph
+        TODO: scene: dict = {}.....
         :param path=None: Pass the path to the rulebook
         """
         self.gsm = copy(self)
         self.name = name
         """ name of state machine """
+        self.states = states
+        self.transitions = transitions
         if path is not None:
-            states, transitions = self.read_rulebook(path)
+            rulebook_states, rulebook_transitions = self.read_rulebook(path)
+            self.states += rulebook_states
+            self.transitions += rulebook_transitions
+        self.scene = scene
 
         self.state_init = self.name.upper() + "_INIT"
         """ default init FSM state"""
         self.state_aborted = self.name.upper() + "_ABORTED"
         """ default aborted FSM state"""
-        self.state_done = self.name.upper() + "_DONE"
+        self.state_end = self.name.upper() + "_END"
         """ default done FSM state"""
         self.transition_start = self.name.lower() + "_start"
         """ default start FSM transition"""
         self.transition_end = self.name.lower() + "_end"
         """ default end FSM transition"""
         self.default_states = (self.state_init,
-                               self.state_aborted, self.state_done)
+                               self.state_aborted, self.state_end)
         """ default states for FSM """
+        # TODO
         self.default_transitions = [
-            [self.transition_end, '*', self.state_done]
+            [self.transition_end, '*', self.state_end]
         ]
         """ default transitions for FSM """
 
-        states = self.default_states + states
-        transitions = self.default_transitions + transitions
+        self.states += self.default_states
+        # self.transitions = self.default_transitions
 
         self.g_machine = GraphMachine(
-            model=self.gsm, states=states, transitions=transitions, initial=self.state_init)
+            model=self.gsm, states=self.states, transitions=self.transitions, initial=self.state_init)
         """ pytransitions graph state machine """
-        self.machine = Machine(model=self, states=states, transitions=transitions,
+        self.machine = Machine(model=self, states=self.states, transitions=self.transitions,
                                initial=self.state_init, auto_transitions=False)
         """ pytransitions state machine """
         self.verbose = True
@@ -73,13 +80,18 @@ class PureStateMachine:
         :param self: Access the attributes of the class
         :return: The trigger that is associated with the current state
         """
-        if self.verbose:
-            print(f"DEBUG: current state of abstract machine is {self.state}")
-            print(
-                f"DEBUG: doing the transition {self.machine.get_triggers(self.state)[0]}")
+        print(f"DEBUG {self.name}: current state of abstract machine is {self.state}")
+        next_trigger = self.machine.get_triggers(self.state)[0]
 
-        self.trigger(self.machine.get_triggers(self.state)[0],
-                     {'state_name': self.state})
+        if self.state == self.state_init:
+            if self.transition_start in self.machine.get_triggers(self.state_init):
+                next_trigger = self.transition_start
+            elif len(self.machine.get_triggers(self.state)) > 0:
+                next_trigger = self.machine.get_triggers(self.state)[1]
+
+        print(f"DEBUG {self.name}: doing the transition {next_trigger}")
+
+        self.trigger(next_trigger)
 
     @staticmethod
     def read_rulebook(path):
@@ -90,7 +102,7 @@ class PureStateMachine:
 
         :param path: Specify the location of the rulebook
         :return: A list of dictionaries
-        
+
         """
         """rules for writings rulebooks should be specified"""
         states = None
@@ -111,7 +123,7 @@ class PureStateMachine:
 
         :param verbose: Determine whether the function will print out a message
         :return: The value of the verbose parameter
-        
+
         """
         if verbose:
             self.verbose = True
@@ -129,7 +141,7 @@ class PureStateMachine:
         The set_state function sets the state of the FSM.
 
         :param state: Set the valid state of the FSM
-        
+
         """
         self.machine.set_state(state)
 
@@ -144,22 +156,27 @@ class PureStateMachine:
         :return: 1 if the state is done
         """
         current_state = self.state
-        while current_state != self.state_done and current_state != self.state_aborted:
+        
+        while current_state != self.state_end and current_state != self.state_aborted:
             """conditional transitions are handled in next_step"""
 
             self.next_step()
             current_state = self.state
             # print('\n==== STEP IS OVER ====\n')
 
-        if current_state == self.state_done:
+        if current_state == self.state_end:
             return 1
         elif current_state == self.state_aborted:
             return 0
         else:
             raise TypeError('Machine final state is not "done" or "aborted"')
 
-    def add_state(self, states, **kwargs):
+    def add_states(self, states, **kwargs):
         self.machine.add_states(states, **kwargs)
 
     def add_transitions(self, transitions):
         self.machine.add_transitions(transitions)
+        # self.machine.add_transitions(self.default_transitions)
+
+    def add_scene(self, scene):
+        self.scene.update(scene)

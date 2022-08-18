@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from abc import abstractmethod
 from stingray_tfsm.core.pure_mission import PureMission
 from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
@@ -13,14 +14,15 @@ class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
     FSM_CLASS = AUVStateMachine
 
+    @abstractmethod
     def __init__(self, name: str):
         """ Abstract class to implement missions for AUV with useful methods
 
         Args:
             name (str): mission name
         """
-        super().__init__(name)
         self.ros_config = load_config("ros.json")
+        super().__init__(name)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera
@@ -32,5 +34,5 @@ class AUVMission(PureMission):
         rospy.wait_for_service(srv_name)
         set_camera = rospy.ServiceProxy(srv_name, SetEnableObjectDetection)
         response = set_camera(camera_topic, enable)
-        rospy.loginfo(f" Cam {camera_topic} enabled: {response}")
+        rospy.loginfo(f"Object detection enabled: {response} for camera: {camera_topic} ")
         rospy.wait_for_message(get_objects_topic(camera_topic), ObjectsArray)

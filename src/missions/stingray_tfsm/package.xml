@@ -21,6 +21,7 @@
   <depend>std_srvs</depend>
   <depend>stingray_communication_msgs</depend>
   <depend>stingray_movement_msgs</depend>
+  <depend>stingray_object_detection</depend>
   <depend>stingray_object_detection_msgs</depend>
 
 

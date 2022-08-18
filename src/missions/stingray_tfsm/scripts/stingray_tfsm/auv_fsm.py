@@ -19,7 +19,7 @@ def callback_feedback(feedback):
 
 
 class AUVStateMachine(PureStateMachine):
-    def __init__(self, name: str, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
+    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None, verbose=False):
         """ State machine for AUV
 
         :param name:str=(): Define the name of the machine
@@ -30,9 +30,6 @@ class AUVStateMachine(PureStateMachine):
         :param verbose=True: Print out the state of the robot as it moves through its states
         
         """
-        super().__init__(name, states, transitions, path, verbose)
-        
-        self.scene = scene
         self.absolute_angle = 0
         # configs
         self.ros_config = load_config("ros.json")
@@ -45,6 +42,7 @@ class AUVStateMachine(PureStateMachine):
                                                msg.RotateAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
                                              msg.DiveAction)
+        super().__init__(name, states, transitions, scene, path)
 
     def yaw_topic_callback(self, msg):
         """
@@ -172,60 +170,59 @@ class AUVStateMachine(PureStateMachine):
         :return: None
         
         """
-        state_keyword = self.state.split('_')[0]
+        state = self.state
+        if self.name.upper() in state:
+            state = state.replace(self.name.upper() + "_", "")
+        
+        state_keyword = state.split('_')[0].lower()
+
         scene = self.scene[self.state]
 
-        rospy.loginfo(f"Current state of ros machine is {self.state}")
+        next_trigger = self.machine.get_triggers(self.state)[0]
 
         if rospy.is_shutdown():
             self.set_state(self.state_aborted)
-        
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['custom'].set_state(self.state_init)
-                    scene['custom'].run(scene['args'])
+                    scene['custom'].set_init_state()
+                    scene['custom'].run(*scene['args'])
                 else:
-                    scene['custom'](scene['args'])
+                    scene['custom'](*scene['args'])
             else:
-                scene['custom'](scene['args'])
-
-        elif state_keyword == self.state_init:
+                scene['custom'](*scene['args'])
+        elif state_keyword == 'init':
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             elif 'preps' in scene:
-                scene['preps'](scene['args'])
-
+                scene['preps'](*scene['args'])
         elif state_keyword == 'dummy':
             self.dummy(scene)
-
         elif state_keyword == 'move':
             self.execute_move_goal(scene)
-
         elif state_keyword == 'rotate':
             self.execute_rotate_goal(scene)
-
         elif state_keyword == 'dive':
             self.execute_dive_goal(scene)
-
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['condition'].set_state(self.state_init)
-                    decision = scene['condition'].run(scene['args'])
+                    scene['condition'].set_init_state()
+                    decision = scene['condition'].run(*scene['args'])
                 else:
-                    decision = scene['condition'](scene['args'])
+                    decision = scene['condition'](*scene['args'])
             else:
-                decision = scene['condition'](scene['args'])
+                decision = scene['condition'](*scene['args'])
             if decision:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results True")
-                self.trigger('condition_s')
+                next_trigger ='condition_s'
             else:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results False")
-                self.trigger('condition_f')
-            return
-        elif state_keyword == self.state_done:
+                next_trigger = 'condition_f'
+        elif state_keyword == self.state_end:
             exit()
-        self.trigger(self.machine.get_triggers(self.state)[0])
+
+        rospy.loginfo(f"AUVStateMachine {self.name}: Doing the transition {next_trigger}")
+        self.trigger(next_trigger)

@@ -24,19 +24,11 @@ class PureMission(ABC):
         """
         self.name = name
         """ mission name """
-        """ default transitions for FSM """
-        self.default_scene = {
-            self.machine.state_init: {
-                'time': 0.1
-            }
-        }
-        """ default arguments for FSM """
         self.machine: PureStateMachine = None
         """ the PureStateMachine object """
 
         self._reset()
 
-    @abstractmethod
     def _reset(self):
         """
         The reset function is called at the beginning of each trial. It is used to
@@ -50,7 +42,16 @@ class PureMission(ABC):
         
         """
         self.setup_events()
-        self.machine = self.FSM_CLASS(self.name, self.setup_states(), self.setup_transitions, self.default_scene.update(self.setup_scene()))
+        self.machine = self.FSM_CLASS(self.name)
+        self.machine.add_states(self.setup_states())
+        self.machine.add_transitions(self.setup_transitions())
+        self.default_scene = {
+            self.machine.state_init: {
+                'time': 0.1
+            }
+        }
+        """ default arguments for FSM """
+        self.machine.add_scene(self.setup_scene())
 
     @abstractmethod
     def setup_states(self) -> Tuple:
@@ -112,7 +113,6 @@ class PureMission(ABC):
         event.stop_listening()
         return value
 
-    @abstractmethod
     def verbose(self, verbose):
         """
         The verbose function is used to set machine's extended output
@@ -124,7 +124,6 @@ class PureMission(ABC):
         """
         self.machine.set_verbose(verbose)
 
-    @abstractmethod
     def run(self):
         """
         The run function is a relay to state machine's run function.
