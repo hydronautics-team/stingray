@@ -1,7 +1,7 @@
-from stingray_tfsm.pure_transitions import FSM_Simple
+from stingray_tfsm.core.pure_fsm import PureStateMachine
 from actionlib import SimpleActionClient
 import stingray_movement_msgs.msg as msg
-from stingray_tfsm.load_config import load_config
+from stingray_resources.utils import load_config
 from std_msgs.msg import Int32
 import rospy
 
@@ -18,22 +18,18 @@ def callback_feedback(feedback):
     rospy.loginfo("Feedback:%s" % str(feedback))
 
 
-class AUVStateMachine(FSM_Simple):
-    def __init__(self, states: tuple, transitions: list = None, scene: dict = None, path=None, verbose=False):
-        """
-        The __init__ function is called when an instance of the class is created.
-        :param self: Reference the object itself
+class AUVStateMachine(PureStateMachine):
+    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None, verbose=False):
+        """ State machine for AUV
+
+        :param name:str=(): Define the name of the machine
         :param states:tuple: Define the states of the state machine
         :param transitions:list=None: Pass a list of transitions to the super class
         :param scene:dict=None: Pass a dictionary of objects in the scene
         :param path=None: Specify the path to a file that contains the states and transitions
         :param verbose=True: Print out the state of the robot as it moves through its states
-        :return: The object of the class
-        :doc-author: Trelent
-        """
-        super().__init__(states, transitions, path, verbose)
         
-        self.scene = scene
+        """
         self.absolute_angle = 0
         # configs
         self.ros_config = load_config("ros.json")
@@ -46,6 +42,7 @@ class AUVStateMachine(FSM_Simple):
                                                msg.RotateAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
                                              msg.DiveAction)
+        super().__init__(name, states, transitions, scene, path)
 
     def yaw_topic_callback(self, msg):
         """
@@ -56,7 +53,7 @@ class AUVStateMachine(FSM_Simple):
         :param self: Access the variables and methods inside a class
         :param msg: Store the data from the topic
         :return: None
-        :doc-author: Trelent
+        
         """
         self.absolute_angle = msg.data
         if self.verbose:
@@ -69,7 +66,7 @@ class AUVStateMachine(FSM_Simple):
         :param self: Refer to the instance of the class
         :param scene: Access the scene object
         :return: None
-        :doc-author: Trelent
+        
         """
         rospy.loginfo(scene['message'])
         rospy.sleep(10)
@@ -83,7 +80,7 @@ class AUVStateMachine(FSM_Simple):
         :param self: Access the class attributes and methods
         :param scene: Pass the scene information to the execute_move_goal function
         :return: :
-        :doc-author: Trelent
+        
         """
         goal = msg.LinearMoveGoal(
             scene['direction'], scene['velocity'], scene['duration'])
@@ -105,7 +102,7 @@ class AUVStateMachine(FSM_Simple):
         :param self: Access the variables and methods of the class
         :param scene: Pass the scene information to the dive action server
         :return: The result of the action
-        :doc-author: Trelent
+        
         """
         goal = msg.DiveClientGoal(scene['depth'])
         self.DiveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
@@ -122,7 +119,7 @@ class AUVStateMachine(FSM_Simple):
 
         :param self: Reference the class object within the function
         :return: None
-        :doc-author: Trelent
+        
         """
         self._topic_sub = rospy.Subscriber(self.ros_config["topics"]["yaw"],
                                            Int32,
@@ -136,7 +133,7 @@ class AUVStateMachine(FSM_Simple):
         :param self: Access the attributes and methods of the class in python
         :param scene: Pass the scene information to the rotate goal function
         :return: The result of the action server
-        :doc-author: Trelent
+        
         """
         angle = scene['angle']
         self._get_yaw()
@@ -171,62 +168,61 @@ class AUVStateMachine(FSM_Simple):
         and chooses the next transition basing on the calculations
         :param self: Access the class attributes and methods
         :return: None
-        :doc-author: Trelent
+        
         """
-        state_keyword = self.state.split('_')[0]
+        state = self.state
+        if self.name.upper() in state:
+            state = state.replace(self.name.upper() + "_", "")
+        
+        state_keyword = state.split('_')[0].lower()
+
         scene = self.scene[self.state]
 
-        rospy.loginfo(f"Current state of ros machine is {self.state}")
+        next_trigger = self.machine.get_triggers(self.state)[0]
 
         if rospy.is_shutdown():
-            self.set_state('aborted')
-
+            self.set_state(self.state_aborted)
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['custom'].set_state('init')
-                    scene['custom'].run(scene['args'])
+                    scene['custom'].set_init_state()
+                    scene['custom'].run(*scene['args'])
                 else:
-                    scene['custom'](scene['args'])
+                    scene['custom'](*scene['args'])
             else:
-                scene['custom'](scene['args'])
-
+                scene['custom'](*scene['args'])
         elif state_keyword == 'init':
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             elif 'preps' in scene:
-                scene['preps'](scene['args'])
-
+                scene['preps'](*scene['args'])
         elif state_keyword == 'dummy':
             self.dummy(scene)
-
         elif state_keyword == 'move':
             self.execute_move_goal(scene)
-
         elif state_keyword == 'rotate':
             self.execute_rotate_goal(scene)
-
         elif state_keyword == 'dive':
             self.execute_dive_goal(scene)
-
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
-                    scene['condition'].set_state('init')
-                    decision = scene['condition'].run(scene['args'])
+                    scene['condition'].set_init_state()
+                    decision = scene['condition'].run(*scene['args'])
                 else:
-                    decision = scene['condition'](scene['args'])
+                    decision = scene['condition'](*scene['args'])
             else:
-                decision = scene['condition'](scene['args'])
+                decision = scene['condition'](*scene['args'])
             if decision:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results True")
-                self.trigger('condition_s')
+                next_trigger ='condition_s'
             else:
                 if self.verbose:
                     rospy.loginfo("DEBUG: Current condition results False")
-                self.trigger('condition_f')
-            return
-        elif state_keyword == 'done':
+                next_trigger = 'condition_f'
+        elif state_keyword == self.state_end:
             exit()
-        self.trigger(self.fsm.get_triggers(self.state)[0])
+
+        rospy.loginfo(f"AUVStateMachine {self.name}: Doing the transition {next_trigger}")
+        self.trigger(next_trigger)

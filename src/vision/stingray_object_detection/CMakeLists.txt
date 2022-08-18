@@ -20,6 +20,6 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
-        scripts/yolo_detector.py
+        scripts/stingray_object_detection/yolo_detector.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )

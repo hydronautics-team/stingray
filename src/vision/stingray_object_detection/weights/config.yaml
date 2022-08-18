@@ -1,0 +1,2 @@
+nc: 6  # number of classes
+names: ['gate','red_flare','yellow_flare','mat','red_bowl','blue_bowl']  # class names

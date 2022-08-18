@@ -53,9 +53,9 @@ source devel/setup.bash
 ```bash
 roslaunch stingray_startup base.launch 
 ```
-*see args inside
+*see args [inside launch file](src/utils/stingray_startup/launch/base.launch) or [below](#other-args)
 
-### Simulation startup
+### Run with simulator
 
 * Clone and build our [simulator](https://github.com/hidronautics/simulator) (now it's only for sauvc competition).
 * Run simulator.
@@ -66,8 +66,19 @@ And use arg:
 simulation:=true 
 ```
 
-### Other args:
+### Run with qr codes
 
+[➦ Full description here](#launch-with-qrtrigger-node)
+
+Use arg:
+```bash
+qr_launch:=true 
+```
+Show your qr code to vehicle camera. 
+
+If `stop` qr code has been detected then the running launch file will be stopped.
+
+### Other args:
 - `hardware_connection:=false` - disable connection btw jetson and stm32 via serial (uart_driver) 
 - `stream:=true` - enable web video stream from all cameras 
 - `debug:=false` - disable image_view nodes and publishing output videos after object detection
@@ -96,6 +107,21 @@ roslaunch stingray_startup vision.launch file:=true file1_path:=PATH_TO_VIDEO_1 
 
 
 # Packages
+
+## stingray_communication
+TODO: description
+
+## stingray_gazebo_communication
+TODO: description
+
+## stingray_devices
+TODO: description
+
+## stingray_tfsm
+TODO: description
+
+## stingray_movement
+TODO: description
 
 ## stingray_resources
 
@@ -137,3 +163,6 @@ qr_launch:=true
 and you'll able to trigger launch files with qr codes.
 
 If `stop` has been detected then running launch file will be stopped.
+
+## stingray_video_recorder
+TODO: description

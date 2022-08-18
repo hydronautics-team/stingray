@@ -5,7 +5,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 # fetch values from package.xml
 setup_args = generate_distutils_setup(
-    packages=['stingray_object_detection', 'yolov5'],
+    packages=['stingray_resources'],
     package_dir={'': 'scripts'},
 )
 

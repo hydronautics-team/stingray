@@ -5,6 +5,7 @@
   <description>PyTransitions FSM drive</description>
 
   <maintainer email="davtart2000@yandex.ru">Davtyan Artyom</maintainer>
+  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
 
 
   <license>MIT</license>
@@ -20,6 +21,7 @@
   <depend>std_srvs</depend>
   <depend>stingray_communication_msgs</depend>
   <depend>stingray_movement_msgs</depend>
+  <depend>stingray_object_detection</depend>
   <depend>stingray_object_detection_msgs</depend>
 
 

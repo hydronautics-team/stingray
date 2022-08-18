@@ -1,4 +1,7 @@
 {
+    "nodes": {
+        "object_detection": "yolo_detector"
+    },
     "topics": {
         "output_parcel": "/stingray/topics/hardware_bridge/parcels",
         "input_parcel": "/stingray/topics/drivers/parcels",
