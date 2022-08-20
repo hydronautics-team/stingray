@@ -1,0 +1,7 @@
+# Request
+string camera_topic
+bool enabled
+---
+# Response
+bool success
+string message

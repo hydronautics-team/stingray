@@ -1,0 +1,36 @@
+{
+    "nodes": {
+        "object_detection": "yolo_detector"
+    },
+    "topics": {
+        "output_parcel": "/stingray/topics/hardware_bridge/parcels",
+        "input_parcel": "/stingray/topics/drivers/parcels",
+        "depth": "/stingray/topics/position/depth",
+        "yaw": "/stingray/topics/position/yaw",
+        "gazebo_velocity": "/cmd_vel",
+        "gazebo_odometry": "/odom"
+    },
+    "services": {
+        "set_lag_march": "/stingray/services/control/set_lag_and_march",
+        "set_depth": "/stingray/services/control/set_depth",
+        "set_yaw": "/stingray/services/control/set_yaw",
+        "set_imu_enabled": "/stingray/services/control/set_imu_enabled",
+        "set_stabilization_enabled": "/stingray/services/control/set_stabilization",
+        "set_device": "/stingray/services/control/set_device",
+        "gazebo_get_state": "/gazebo/get_model_state",
+        "gazebo_set_state": "/gazebo/set_model_state",
+        "set_enable_object_detection": "/stingray/services/vision/set_enable_object_detection",
+        "updown": "/stingray/services/devices/updown"
+    },
+    "actions": {
+        "movement": {
+            "linear": "/stingray/actions/movement/linear",
+            "rotate": "/stingray/actions/movement/rotate",
+            "dive": "/stingray/actions/movement/dive",
+            "align": "/stingray/actions/movement/align",
+            "align_low_level": "/stingray/actions/movement/align_low_level",
+            "tack": "/stingray/actions/movement/tack"
+        },
+        "updown": "/stingray/actions/devices/updown"
+    }
+}

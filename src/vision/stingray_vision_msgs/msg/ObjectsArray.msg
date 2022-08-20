@@ -1,1 +1,0 @@
-stingray_vision_msgs/Object[] objects

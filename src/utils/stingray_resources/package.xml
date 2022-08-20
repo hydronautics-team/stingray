@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>stingray_utils</name>
+  <name>stingray_resources</name>
   <version>0.0.0</version>
-  <description>The stingray_utils package</description>
+  <description>The stingray_resources package</description>
 
   <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
 
