@@ -6,19 +6,22 @@ import rospy
 
 
 class AUVController(ABC):
-    """ Control fsm class for AUV missions """
+    """ Class for controlling AUV missions """
+
     @abstractmethod
     def __init__(self):
+        """ Class for controlling AUV missions.
+        """
         self.machine: PureStateMachine = None
         """ pure state machine """
         self._reset()
-        
+
     def _reset(self):
         """
         The reset function is called at the beginning of each trial. It is used to
         set the initial state of any variables that are needed for your condition
         script, and can also be used to reset ROS nodes between trials.
-        
+
         """
         self.machine = PureStateMachine(
             self.__class__.__name__)
