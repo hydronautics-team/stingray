@@ -32,6 +32,8 @@ class AUVStateMachine(PureStateMachine):
 
         """
         state = self.state
+        rospy.loginfo(state)
+        
         if self.name.upper() in state:
             state = state.replace(self.name.upper() + "_", "")
 
