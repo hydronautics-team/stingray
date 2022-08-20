@@ -58,11 +58,11 @@ class AUVStateMachine(PureStateMachine):
             elif 'preps' in scene:
                 scene['preps'](*scene['args'])
         elif state_keyword == 'move':
-            self.execute_move_goal(scene)
+            self.auv.execute_move_goal(scene)
         elif state_keyword == 'rotate':
-            self.execute_rotate_goal(scene)
+            self.auv.execute_rotate_goal(scene)
         elif state_keyword == 'dive':
-            self.execute_dive_goal(scene)
+            self.auv.execute_dive_goal(scene)
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
