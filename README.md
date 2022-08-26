@@ -2,7 +2,9 @@
 
 Stingray is a ROS based framework for autonomous (AUV) and remote operated (ROV) underwater vehicles
 
-![Stingray logo](logo.jpg "Stingray logo")
+<div align="center">
+    <img src="logo.jpg" alt="Stingray logo" width="600"/>
+</div>
 
 ## Dependencies
 - [ROS Noetic](https://wiki.ros.org/noetic)
