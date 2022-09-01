@@ -93,8 +93,6 @@ class AUVControl:
         :return: :
 
         """
-        rospy.loginfo(
-                f" Linear direction {scene['direction']}, velosity {scene['velocity']}")
         goal = LinearMoveGoal(
             scene['direction'], scene['velocity'], scene['duration'])
         self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
