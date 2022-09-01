@@ -71,6 +71,8 @@ class ObjectDetectionEvent(TopicEvent):
                          queue_size=queue_size)
         self._object_name = object_name
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
@@ -107,6 +109,8 @@ class ObjectIsCloseEvent(TopicEvent):
         self.center = _range / 2
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
@@ -145,6 +149,8 @@ class ObjectOnRight(TopicEvent):
         self.center = _range / 2
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
@@ -190,6 +196,8 @@ class ObjectOnLeft(TopicEvent):
         self.center = _range / 2
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
@@ -234,6 +242,8 @@ class ObjectOrtho(TopicEvent):
         self._range = _range
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
