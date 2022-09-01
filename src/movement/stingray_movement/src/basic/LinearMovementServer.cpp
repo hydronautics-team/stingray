@@ -15,18 +15,15 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     {
         actionServer.setAborted(stingray_movement_msgs::LinearMoveResult(),
                                 "Velocity value must be between 0.0 and 1.0");
-        ROS_INFO("pidor");
         return;
     }
     auto velocity = velocityCoefficient * goal->velocity;
-    ROS_INFO("Velositi suka %d", velocity);
     serviceCall.request.lag = serviceCall.request.march = 0.0;
 
     if (goal->duration < 0.0)
     {
         actionServer.setAborted(stingray_movement_msgs::LinearMoveResult(),
                                 "Duration value must not be less than 0.0");
-        ROS_INFO("pidor2");
         return;
     }
 
@@ -54,7 +51,6 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
         break;
     default:
         actionServer.setAborted(stingray_movement_msgs::LinearMoveResult(), "Wrong direction value");
-        ROS_INFO("pidor");
         return;
         ;
     }
