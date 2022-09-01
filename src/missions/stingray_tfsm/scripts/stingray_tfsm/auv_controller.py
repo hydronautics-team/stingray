@@ -32,6 +32,8 @@ class AUVController(ABC):
              'dest': self.machine.state_end,
              'prepare': self.no_mission_set},
         ))
+        rospy.loginfo("Missions setup done")
+
 
     def add_mission(self, mission: AUVMission, mission_transitions: list = []):
         """ Adding AUVMission to control fsm
