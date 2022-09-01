@@ -21,7 +21,7 @@ def very_close(tlx, brx, tly, bry, mrange, target, *args, **kwargs):
     if target == 'red_flare':
         prox += 0.45
     if prox < 0:
-        print('too far away to assess')
+        print(f'too far away to assess {target}')
         return False
     print(prox)
     if target == 'gate':
@@ -243,6 +243,7 @@ class ObjectOrtho(TopicEvent):
                     _obj = msg.objects[i]
                     x_side = _obj.top_left_x + _obj.bottom_right_x
                     y_side = _obj.top_left_y + _obj.bottom_right_y
+                    print()
                     if x_side / y_side > self._tolerance:
                         return 1
         return 0
