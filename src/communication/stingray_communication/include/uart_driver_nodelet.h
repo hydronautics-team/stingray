@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "messages/messages.h"
+#include "TopicsAndServices.h"
 
 class uart_driver : public nodelet::Nodelet {
 public:

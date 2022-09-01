@@ -140,6 +140,7 @@ add_library(stingray_communication
         src/uart_driver_nodelet.cpp
         src/hardware_bridge_nodelet.cpp
         src/messages/messages.cpp
+        include/TopicsAndServices.h
         include/uart_driver_nodelet.h
         include/hardware_bridge_nodelet.h
         include/messages/messages.h)
