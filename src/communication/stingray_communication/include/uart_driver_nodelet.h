@@ -10,14 +10,17 @@
 #include <string>
 #include <vector>
 #include "messages/messages.h"
-#include "TopicsAndServices.h"
+#include "stingray_utils/json.hpp"
 
-class uart_driver : public nodelet::Nodelet {
+using json = nlohmann::json;
+
+class uart_driver : public nodelet::Nodelet
+{
 public:
     virtual void onInit();
 
 private:
-    void portInitialize(ros::NodeHandle& nodeHandle);
+    void portInitialize(ros::NodeHandle &nodeHandle);
     bool sendData();
     bool receiveData();
     void inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg);
@@ -27,10 +30,13 @@ private:
     // ROS subscribers
     ros::Subscriber inputMessage_sub;
     // Other
-    serial::Serial port;    //serial port
+    serial::Serial port; // serial port
     // Message containers
-    std_msgs::UInt8MultiArray inputMessage;// Hardware bridge -> Protocol_driver
-    std_msgs::UInt8MultiArray outputMessage;// Protocol_driver -> Hardware bridge
+    std_msgs::UInt8MultiArray inputMessage;  // Hardware bridge -> Protocol_driver
+    std_msgs::UInt8MultiArray outputMessage; // Protocol_driver -> Hardware bridge
+    // get json config
+    json ros_config;
+    json hardware_config;
 };
 
-#endif //STINGRAY_COMMUNICATION_UART_DRIVER_NODELET_H
+#endif // STINGRAY_COMMUNICATION_UART_DRIVER_NODELET_H
