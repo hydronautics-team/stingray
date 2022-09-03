@@ -14,7 +14,7 @@ class ReachSub(AUVMission):
                  front_camera: str,
                  bottom_camera: str,
                  target: str,
-                 avoid: list,
+                 avoid: list=[],
                  rotate='left',
                  lag='left'):
         if target == 'yellow_flare':
@@ -40,11 +40,25 @@ class ReachSub(AUVMission):
                 )
 
     def setup_transitions(self):
-        return [
-                   [self.machine.transition_start, [self.machine.state_init, ],
-                    'custom_avoid'],
+        if self.avoid:
+             partial_transitions = [
+                [self.machine.transition_start, [self.machine.state_init, ],
+                 'custom_avoid'],
 
-                   ['avoid', 'custom_avoid', 'condition_visible'],
+                ['avoid', 'custom_avoid', 'condition_visible'],
+
+                ['condition_f', 'condition_in_front', 'custom_avoid'],
+            ]
+        else:
+            partial_transitions = [
+                [self.machine.transition_start, [self.machine.state_init, ],
+                 'condition_visible'],
+
+                ['condition_f', 'condition_in_front', 'condition_visible'],
+            ]
+
+        return [
+
 
                    ['condition_f', 'condition_visible', 'rotate_search'],
                    ['condition_s', 'condition_visible', 'condition_centering'],
@@ -56,12 +70,17 @@ class ReachSub(AUVMission):
 
                    ['next', 'move_march', 'condition_in_front'],
 
-                   ['condition_f', 'condition_in_front', 'custom_avoid'],
+
                    ['condition_s', 'condition_in_front', self.machine.state_end],
                ] + self.machine.default_transitions
 
     def setup_scene(self):
-        return {
+        partial_scene = {'custom_avoid': {
+                'subFSM': True,
+                'custom': self.avoid,
+                'args': ()
+            }, } if self.avoid else dict()
+        scene = {
             self.machine.state_init: {
                 'preps': self.enable_object_detection,
                 "args": (self.front_camera, True),
@@ -93,6 +112,8 @@ class ReachSub(AUVMission):
                 'args': ()
             },
         }
+        scene.update(partial_scene)
+        return scene
 
     def setup_events(self):
         if self.target == "yellow_flare":
