@@ -40,9 +40,9 @@
         </group>
     </group>
 
-    <!-- Movement nodes -->
+    <!-- Movement nodes
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ROS_OUTPUT)" respawn="true" />
-    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ROS_OUTPUT)" respawn="true" />
+    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ROS_OUTPUT)" respawn="true" /> -->
 
     <!-- Qr code launcher -->
     <group if="$(arg QR_LAUNCH)">
