@@ -1,0 +1,67 @@
+<launch>
+    <!-- Launch file of Stingray for real AUV -->
+
+    <!-- Settings for "output" parameter of nodes -->
+    <arg name="ROS_OUTPUT" default="screen" />
+    <!-- Debug mode. Enabled output images publishing after object detection -->
+    <arg name="DEBUG" default="true" />
+    <!-- Enables video streaming -->
+    <arg name="STREAM" default="false" />
+    <!-- Enables connection with simulator -->
+    <arg name="SIMULATION" default="false" />
+    <!-- Enables connection with hardware -->
+    <arg name="HARDWARE_CONNECTION" default="true" />
+
+    <!-- QR TRIGGER -->
+    <!-- Enable launch with qr codes -->
+    <arg name="QR_LAUNCH" default="false" />
+    <!-- Camera topic for qr code reader -->
+    <arg name="QR_CAMERA" default="" />
+    <!-- Package name with launch files -->
+    <arg name="QR_LAUNCH_PACKAGE_NAME" default="stingray_startup" />
+    <!-- Filename pattern -->
+    <arg name="QR_NAME_PATTERN" default="stingray_qr_" />
+
+    <!-- NODES-->
+
+    <!-- SIMULATION MODE -->
+    <group if="$(arg SIMULATION)">
+        <!-- Connection with simulator -->
+        <node pkg="stingray_gazebo_communication" name="gazebo_bridge" type="gazebo_bridge" output="$(arg ROS_OUTPUT)" respawn="true" />
+    </group>
+
+    <!-- REAL VEHICLE MODE -->
+    <group unless="$(arg SIMULATION)">
+        <!-- Connection with real vehicle -->
+        <group if="$(arg HARDWARE_CONNECTION)">
+            <node pkg="nodelet" type="nodelet" name="standalone_nodelet" args="manager" output="$(arg ROS_OUTPUT)" respawn="true" />
+            <node pkg="nodelet" type="nodelet" name="uart_driver" args="load stingray_communication/uart_driver standalone_nodelet" output="$(arg ROS_OUTPUT)" respawn="true" />
+            <node pkg="nodelet" type="nodelet" name="hardware_bridge" args="load stingray_communication/hardware_bridge standalone_nodelet" output="$(arg ROS_OUTPUT)" respawn="true" />
+        </group>
+    </group>
+
+    <!-- Movement nodes -->
+    <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ROS_OUTPUT)" respawn="true" />
+    <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ROS_OUTPUT)" respawn="true" />
+
+    <!-- Qr code launcher -->
+    <group if="$(arg QR_LAUNCH)">
+        <node pkg="zbar_ros" type="barcode_reader_node" name="barcode_reader" output="$(arg ROS_OUTPUT)">
+            <remap from="image" to="$(arg QR_CAMERA)" />
+        </node>
+        <node pkg="stingray_startup" type="qr_trigger.py" name="qr_trigger" output="$(arg ROS_OUTPUT)">
+            <param name="launch_pkg_name" value="$(arg QR_LAUNCH_PACKAGE_NAME)" />
+            <param name="name_pattern" value="$(arg QR_NAME_PATTERN)" />
+        </node>
+    </group>
+
+    <!-- Video web server -->
+    <group if="$(arg STREAM)">
+        <!-- Stream will be available at http://<hostname>:8080/stream_viewer?topic=<image topic> -->
+        <!-- For direct images from camera the topic is /<camera_name>/image_raw -->
+        <node name="video_server" pkg="web_video_server" type="web_video_server" output="$(arg ROS_OUTPUT)" respawn="true">
+            <param name="server_threads" value="4" />
+            <param name="ros_threads" value="10" />
+        </node>
+    </group>
+</launch>
