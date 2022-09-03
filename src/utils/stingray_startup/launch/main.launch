@@ -10,7 +10,7 @@
     <!-- Enables connection with simulator -->
     <arg name="SIMULATION" default="false" />
     <!-- Enables connection with hardware -->
-    <arg name="HARDWARE_CONNECTION" default="true" />
+    <arg name="HARDWARE_CONNECTION" default="false" />
 
     <!-- QR TRIGGER -->
     <!-- Enable launch with qr codes -->
