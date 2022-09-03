@@ -9,20 +9,26 @@ import rospy
 class AvoidSub(AUVMission):
     def __init__(self,
                  name: str,
-                 front_camera: str,
-                 bottom_camera: str,
+                 camera: str,
                  avoid: list,
-                 lag_dir='left'):
+                 lag_dir='left',
+                 confirmation: int = 2,
+                 tolerance: int = 6,
+                 ):
+        self.name = name
+        self.camera = camera
         self.avoid = avoid
         self.lag_dir = lag_dir
+        self.confirmation = confirmation
+        self.tolerance = tolerance
         self.avoid_states = tuple(f'condition_avoid_{i}' for i in self.avoid)
         if not self.avoid_states:
             raise TypeError('empty avoidance list given')
-        super().__init__(name, front_camera, bottom_camera)
+        super().__init__(name)
 
     def setup_events(self):
         self.avoid_assessions = [
-                ObjectIsCloseEvent(get_objects_topic(self.front_camera), i, self.confirmation)
+                ObjectIsCloseEvent(get_objects_topic(self.camera), i, self.confirmation)
                 for i in self.avoid
         ]
 
@@ -77,7 +83,7 @@ class AvoidSub(AUVMission):
         scene = {
             self.machine.state_init: {
                 'preps': self.enable_object_detection,
-                "args": (self.front_camera, True),
+                "args": (self.camera, True),
             },
             'move_lag': {
                 'direction': 1 if self.lag_dir == 'left' else 2,

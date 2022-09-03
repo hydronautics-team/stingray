@@ -11,27 +11,32 @@ import rospy
 class ReachSub(AUVMission):
     def __init__(self,
                  name: str,
-                 front_camera: str,
-                 bottom_camera: str,
+                 camera: str,
                  target: str,
                  avoid: list=[],
                  rotate='left',
-                 lag='left'):
+                 lag='left',
+                 confirmation: int = 2,
+                 tolerance: int = 6,
+                 vision: bool = True,
+                 acoustics: bool = False):
         if target == 'yellow_flare':
             tolerance = 3
             confirmation = 1
-        else:
-            tolerance = self.tolerance
-            confirmation = self.confirmation
+
+        self.camera = camera
+        self.target = target
+        self.tolerance = tolerance
+        self.confirmation = confirmation
         self.centering_submachine = CenteringAngleSub(
-            "centering", front_camera, target, tolerance=tolerance, confirmation=confirmation)
+            "centering", camera, target, tolerance=self.tolerance, confirmation=self.confirmation)
         self.rotate_dir = 1 if rotate == "left" else -1
         self.target = target
         if avoid:
             self.avoid = True
             self.avoid_submachine = AvoidSub(
-                "avoid", front_camera, bottom_camera, avoid, lag)
-        super().__init__(name, front_camera, bottom_camera)
+                "avoid", camera, avoid, lag)
+        super().__init__(name)
 
     def setup_states(self):
         return ('condition_visible', 'move_march',
@@ -83,7 +88,7 @@ class ReachSub(AUVMission):
         scene = {
             self.machine.state_init: {
                 'preps': self.enable_object_detection,
-                "args": (self.front_camera, True),
+                "args": (self.camera, True),
             },
             'condition_visible': {
                 'condition': self.target_event_handler,
@@ -120,7 +125,7 @@ class ReachSub(AUVMission):
             self.confirmation = 0.20
 
         self.target_detection_event = ObjectDetectionEvent(
-            get_objects_topic(self.front_camera), self.target, self.confirmation )
+            get_objects_topic(self.camera), self.target, self.confirmation )
 
     def target_event_handler(self):
         self.target_detection_event.start_listening()

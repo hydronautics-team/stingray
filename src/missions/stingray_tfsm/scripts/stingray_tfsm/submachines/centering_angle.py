@@ -8,7 +8,11 @@ from stingray_tfsm.vision_events import ObjectDetectionEvent, ObjectOnRight, Obj
 class CenteringAngleSub(AUVMission):
     """ Submission for centering on object in camera """
 
-    def __init__(self, name: str, camera: str, target: str, confirmation: int = 2, tolerance: int = 6):
+    def __init__(self, name: str,
+                 camera: str,
+                 target: str,
+                 confirmation: int = 2,
+                 tolerance: int = 6):
         """ Submission for centering on object in camera
 
         Args:
