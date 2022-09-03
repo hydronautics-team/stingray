@@ -15,13 +15,13 @@ class AvoidSub(AUVMission):
                  confirmation: int = 2,
                  tolerance: int = 6,
                  ):
-        self.name = name
+        self.name = '_' + name
         self.camera = camera
         self.avoid = avoid
         self.lag_dir = lag_dir
         self.confirmation = confirmation
         self.tolerance = tolerance
-        self.avoid_states = tuple(f'condition_avoid_{i}' for i in self.avoid)
+        self.avoid_states = tuple(f'condition_avoid_{i}' + self.name for i in self.avoid)
         if not self.avoid_states:
             raise TypeError('empty avoidance list given')
         super().__init__(name)
@@ -45,12 +45,12 @@ class AvoidSub(AUVMission):
             return 0
 
     def setup_states(self):
-        states = ('move_lag', ) + self.machine.default_states + self.avoid_states
+        states = ('move_lag' + self.name, ) + self.machine.default_states + self.avoid_states
         return states
 
     def setup_transitions(self):
         t1 = [
-            ['condition_s', self.avoid_states[i], 'move_lag'] for i in range(1, len(self.avoid))
+            ['condition_s', self.avoid_states[i], 'move_lag' + self.name] for i in range(1, len(self.avoid))
         ] if len(self.avoid) > 1 else []
 
         t2 = [
@@ -62,11 +62,11 @@ class AvoidSub(AUVMission):
         t1 = t1 + t2 + t3
         transitions = t1 + [
                    [self.machine.transition_start, [self.machine.state_init,
-                                                    'move_lag'], self.avoid_states[0]],
+                                                    'move_lag' + self.name], self.avoid_states[0]],
 
                    ['condition_f', self.avoid_states[0], self.avoid_states[1]] if len(self.avoid) > 1 else
                    ['condition_f', self.avoid_states[0], self.machine.state_end],
-                   ['condition_s', self.avoid_states[0], 'move_lag'],
+                   ['condition_s', self.avoid_states[0], 'move_lag' + self.name],
 
                ] + self.machine.default_transitions
         return transitions
@@ -85,7 +85,7 @@ class AvoidSub(AUVMission):
                 'preps': self.enable_object_detection,
                 "args": (self.camera, True),
             },
-            'move_lag': {
+            'move_lag' + self.name: {
                 'direction': 1 if self.lag_dir == 'left' else 2,
                 'velocity': 0.5,
                 'duration': 1000

@@ -12,7 +12,8 @@ class CenteringAngleSub(AUVMission):
                  camera: str,
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 6):
+                 tolerance: int = 6,
+                 angle: int = 5):
         """ Submission for centering on object in camera
 
         Args:
@@ -22,6 +23,8 @@ class CenteringAngleSub(AUVMission):
             confirmation (int, optional): confirmation value of continuously detected object after which will be event triggered. Defaults to 2.
             tolerance (int, optional): centering tolerance. Defaults to 14.
         """
+        self.name = '_'+name
+        self.d_angle = angle
         self.target = target
         self.confirmation = confirmation
         self.tolerance = tolerance
@@ -33,48 +36,50 @@ class CenteringAngleSub(AUVMission):
         super().__init__(name)
 
     def setup_states(self):
-        return ('condition_detected',
+        states = ('condition_detected',
                 'condition_lefter', 'condition_righter',
                 'rotate_clock', 'rotate_anti',
-                ) + self.machine.default_states
+                )
+        states = tuple(i + self.name for i in states)
+        return states + self.machine.default_states
 
     def setup_transitions(self):
         return [
-            [self.machine.transition_start, [self.machine.state_init, 'rotate_clock',
-                                             'rotate_anti'], 'condition_detected'],
+            [self.machine.transition_start, [self.machine.state_init, 'rotate_clock' + self.name,
+                                             'rotate_anti' + self.name], 'condition_detected' + self.name],
 
-            ['condition_f', 'condition_detected', self.machine.state_aborted],
-            ['condition_s', 'condition_detected', 'condition_lefter'],
+            ['condition_f', 'condition_detected' + self.name, self.machine.state_aborted],
+            ['condition_s', 'condition_detected' + self.name, 'condition_lefter' + self.name],
 
-            ['condition_f', 'condition_lefter', 'condition_righter'],
-            ['condition_s', 'condition_lefter', 'rotate_anti'],
+            ['condition_f', 'condition_lefter' + self.name, 'condition_righter' + self.name],
+            ['condition_s', 'condition_lefter' + self.name, 'rotate_anti' + self.name],
 
-            ['condition_f', 'condition_righter', self.machine.state_end],
-            ['condition_s', 'condition_righter', 'rotate_clock'],
+            ['condition_f', 'condition_righter' + self.name, self.machine.state_end],
+            ['condition_s', 'condition_righter' + self.name, 'rotate_clock' + self.name],
         ] + self.machine.default_transitions
 
     def setup_scene(self):
         return {
             self.machine.state_init: {
-                'time': 0.1
+                'time': 0.01
             },
-            'condition_detected': {
+            'condition_detected' + self.name: {
                 'condition': self.event_handler,
                 'args': (self.gate_detected,)
             },
-            'condition_righter': {
+            'condition_righter' + self.name: {
                 'condition': self.event_handler,
                 'args': (self.gate_righter,)
             },
-            'condition_lefter': {
+            'condition_lefter' + self.name: {
                 'condition': self.event_handler,
                 'args': (self.gate_lefter,)
             },
-            'rotate_anti': {
-                'angle': -5
+            'rotate_anti' + self.name: {
+                'angle': -self.d_angle
             },
-            'rotate_clock': {
-                'angle': 5
+            'rotate_clock' + self.name: {
+                'angle': self.d_angle
             }
         }
 

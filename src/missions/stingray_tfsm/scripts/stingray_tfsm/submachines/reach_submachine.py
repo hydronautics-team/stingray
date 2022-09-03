@@ -23,66 +23,67 @@ class ReachSub(AUVMission):
         if target == 'yellow_flare':
             tolerance = 3
             confirmation = 1
-
+        self.name = '_'+name
         self.camera = camera
         self.target = target
         self.tolerance = tolerance
         self.confirmation = confirmation
         self.centering_submachine = CenteringAngleSub(
-            "centering", camera, target, tolerance=self.tolerance, confirmation=self.confirmation)
+            name + "_centering", camera, target, tolerance=self.tolerance, confirmation=self.confirmation)
         self.rotate_dir = 1 if rotate == "left" else -1
         self.target = target
         if avoid:
             self.avoid = True
             self.avoid_submachine = AvoidSub(
-                "avoid", camera, avoid, lag)
+                name + "_avoid", camera, avoid, lag)
         super().__init__(name)
 
     def setup_states(self):
-        return ('condition_visible', 'move_march',
+        states = ('condition_visible', 'move_march',
                 'rotate_search', 'condition_centering',
                 'custom_avoid', 'move_lag', 'condition_in_front'
                 )
+        states = tuple(i + self.name for i in states)
+        return states
 
     def setup_transitions(self):
         if self.avoid:
              partial_transitions = [
-                [self.machine.transition_start, [self.machine.state_init, ],
-                 'custom_avoid'],
+                [self.machine.transition_start, [self.machine.state_init, ], 'custom_avoid' + self.name],
 
-                ['avoid', 'custom_avoid', 'condition_visible'],
+                ['avoid' + self.name, 'custom_avoid' + self.name, 'condition_visible' + self.name],
 
-                ['condition_f', 'condition_in_front', 'custom_avoid'],
+                ['condition_f', 'condition_in_front' + self.name, 'custom_avoid' + self.name],
             ]
         else:
             partial_transitions = [
                 [self.machine.transition_start, [self.machine.state_init, ],
-                 'condition_visible'],
+                 'condition_visible' + self.name],
 
-                ['condition_f', 'condition_in_front', 'condition_visible'],
+                ['condition_f', 'condition_in_front' + self.name, 'condition_visible' + self.name],
             ]
-
-        return [
-
-
-                   ['condition_f', 'condition_visible', 'rotate_search'],
-                   ['condition_s', 'condition_visible', 'condition_centering'],
-
-                   ['search', 'rotate_search', 'condition_visible'],
-
-                   ['condition_f', 'condition_centering', 'condition_visible'],
-                   ['condition_s', 'condition_centering', 'move_march'],
-
-                   ['next', 'move_march', 'condition_in_front'],
+        transitions = partial_transitions + [
 
 
-                   ['condition_s', 'condition_in_front', self.machine.state_end],
+                   ['condition_f', 'condition_visible' + self.name, 'rotate_search' + self.name],
+                   ['condition_s', 'condition_visible' + self.name, 'condition_centering' + self.name],
+
+                   ['search' + self.name, 'rotate_search' + self.name, 'condition_visible' + self.name],
+
+                   ['condition_f', 'condition_centering' + self.name, 'condition_visible' + self.name],
+                   ['condition_s', 'condition_centering' + self.name, 'move_march' + self.name],
+
+                   ['next' + self.name, 'move_march' + self.name, 'condition_in_front' + self.name],
+
+
+                   ['condition_s', 'condition_in_front' + self.name, self.machine.state_end],
                ] + self.machine.default_transitions
+        return transitions
 
     def setup_scene(self):
-        partial_scene = {'custom_avoid': {
+        partial_scene = {'custom_avoid' + self.name: {
                 'subFSM': True,
-                'custom': self.avoid,
+                'custom': self.avoid_submachine,
                 'args': ()
             }, } if self.avoid else dict()
         scene = {
@@ -90,28 +91,28 @@ class ReachSub(AUVMission):
                 'preps': self.enable_object_detection,
                 "args": (self.camera, True),
             },
-            'condition_visible': {
+            'condition_visible' + self.name: {
                 'condition': self.target_event_handler,
                 'args': ()
             },
-            'condition_in_front': {
+            'condition_in_front' + self.name: {
                 'condition': self.arrival_handler,
                 'args': ()
             },
-            'rotate_search': {
+            'rotate_search' + self.name: {
                 'angle': 5 * self.rotate_dir
             },
-            'condition_centering': {
+            'condition_centering' + self.name: {
                 'subFSM': True,
                 'condition': self.centering_submachine,
                 'args': ()
             },
-            'move_march': {
+            'move_march' + self.name: {
                 'direction': 3,
                 'velocity': 0.4,
                 'duration': 1500
             },
-            'custom_avoid': {
+            'custom_avoid' + self.name: {
                 'subFSM': True,
                 'custom': self.avoid_submachine,
                 'args': ()
