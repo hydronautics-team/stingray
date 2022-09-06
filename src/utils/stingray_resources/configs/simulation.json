@@ -4,5 +4,6 @@
     "initial_yaw": 3.141501,
     "initial_roll": 0.0,
     "initial_pitch": 0.0,
-    "initial_depth": 2.9
+    "initial_depth": 2.9,
+    "initial_pinger": "pinger"
 }

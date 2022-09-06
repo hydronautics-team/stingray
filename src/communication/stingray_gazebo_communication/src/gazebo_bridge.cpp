@@ -3,6 +3,8 @@
 #include <std_msgs/Int32.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <gazebo_msgs/SetModelState.h>
+//#include <physics/physics.hh>
+//#include <gazebo/physics/physics.h>  // for pinger
 #include <tf/tf.h>
 #include <std_srvs/SetBool.h>
 #include <ros/package.h>
@@ -12,6 +14,7 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <map>
 
 #include <stingray_communication_msgs/SetInt32.h>
 #include <stingray_communication_msgs/SetStabilization.h>
@@ -27,6 +30,7 @@ static const json simulation_config = json::parse(std::ifstream(ros::package::ge
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
+std_msgs::Int32 pingerMessage;
 geometry_msgs::Twist currentTwist;
 bool depthStabilizationEnabled = false;
 bool yawStabilizationEnabled = true;
@@ -118,6 +122,56 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
     response.success = true;
     return true;
 }
+// get pinger position
+//    physics::ModelPtr model = this->world->ModelByName("pinger");
+//    physics::LinkPtr link = model->GetLink("link");
+//    ignition::math::Pose3d pose = link->WorldCoGPose();
+//    ignition::math::Vector3<double> position = pose.Pos();
+//    // Get model
+//    auto model = _world->ModelByName("pinger");
+//    // Get pose
+//    auto pose = model->WorldPose();
+// get corner
+//    physics::Link_V links = this->world->ModelByName("pinger")->GetLinks();
+//    for (physics::Link_V::iterator iter = links.begin(); iter !=links.end(); ++iter){
+//        if((*iter)->GetName().find(this->anchorPrefix) == 0){
+//            physics::LinkPtr anchor = *iter;
+//            ignition::math::Pose3d anchorPose = anchor->GetWorldPose();
+//        }
+//    }
+/**
+ * This method allows you to determine the angles to the pinger
+ * @return {@code pair} Angle by xy and z to pinger
+ */
+std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
+    // get robot position
+    gazebo_msgs::GetModelState modelState;
+    modelState.request.model_name = simulation_config["model_name"];
+    bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
+    if (!result || !modelState.response.success)
+    {
+        throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
+    }
+    gazebo_msgs::GetModelState pingerModelState;
+    pingerModelState.request.model_name = simulation_config["initial_pinger"];
+    bool result1 = ros::service::call(ros_config["services"]["gazebo_get_state"], pingerModelState);
+    if (!result1 || !pingerModelState.response.success)
+    {
+        throw std::runtime_error("Failed to obtain state in Gazebo: " + pingerModelState.response.status_message);
+    }
+
+    double path_x = pingerModelState.response.pose.position.x - modelState.response.pose.position.x;
+    double path_y = pingerModelState.response.pose.position.y - modelState.response.pose.position.y;
+    double path_z = modelState.response.pose.position.z - pingerModelState.response.pose.position.z;
+
+    double r_xy = sqrt(path_x*path_x + path_y*path_y);
+    std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
+    corner_XY.data = (int(std::atan(path_y/path_x)) % 360) * M_PI / 180.0;
+    corner_Z.data = (int(std::atan(r_xy/path_z)) % 360) * M_PI / 180.0;
+
+    std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
+    return df;
+}
 
 /**
  * Rotates vehicle on specified yaw angle
@@ -191,6 +245,7 @@ int main(int argc, char **argv)
 
     ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 20);
     ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
+    ros::Publisher pingerPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger"], 20);
     ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["gazebo_velocity"], 20);
 
     ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["set_lag_march"], lagAndMarchCallback);
@@ -219,10 +274,14 @@ int main(int argc, char **argv)
             // Convert back to initial values
             depthMessage.data = -(modelState.response.pose.position.z - simulation_config["initial_depth"].get<double>()) * 100;
             yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
+
+            auto df = pingerStatus();
+            pingerMessage = df.first;
         }
 
         depthPublisher.publish(depthMessage);
         yawPublisher.publish(yawMessage);
+        pingerPublisher.publish(pingerMessage);
 
         velocityPublisher.publish(currentTwist);
 
