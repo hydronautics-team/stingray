@@ -143,21 +143,18 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + pingerModelState.response.status_message);
     }
 
-    ROS_INFO("modelState x %f", modelState.response.pose.position.x);
-    ROS_INFO("modelState y %f", modelState.response.pose.position.y);
-    ROS_INFO("modelState z %f", modelState.response.pose.position.z);
-    ROS_INFO("pingerModelState x %f", pingerModelState.response.pose.position.x);
-    ROS_INFO("pingerModelState y %f", pingerModelState.response.pose.position.y);
-    ROS_INFO("pingerModelState z %f", pingerModelState.response.pose.position.z);
-
     double path_x = pingerModelState.response.pose.position.x - modelState.response.pose.position.x;
     double path_y = pingerModelState.response.pose.position.y - modelState.response.pose.position.y;
     double path_z = modelState.response.pose.position.z - pingerModelState.response.pose.position.z;
 
-    double r_xy = sqrt(path_x*path_x + path_y*path_y);
+
+
+    double r_xy = std::sqrt(path_x*path_x + path_y*path_y);
     std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
     corner_XY.data = (int(std::atan(path_y/path_x)) % 360) * M_PI / 180.0 - simulation_config["initial_yaw"].get<double>() * 180.0 / M_PI;
-    corner_Z.data = (int(std::atan(r_xy/path_z)) % 360) * M_PI / 180.0;
+    corner_Z.data = (int(std::atan(path_z/r_xy)) % 360) * M_PI / 180.0;
+
+
 
     std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
     return df;
@@ -235,7 +232,7 @@ int main(int argc, char **argv)
 
     ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 20);
     ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
-    ros::Publisher pingerPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger"], 20);
+    ros::Publisher pingerPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger_buckets"], 20);
     ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["gazebo_velocity"], 20);
 
     ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["set_lag_march"], lagAndMarchCallback);
