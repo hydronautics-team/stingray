@@ -122,37 +122,20 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
     response.success = true;
     return true;
 }
-// get pinger position
-//    physics::ModelPtr model = this->world->ModelByName("pinger");
-//    physics::LinkPtr link = model->GetLink("link");
-//    ignition::math::Pose3d pose = link->WorldCoGPose();
-//    ignition::math::Vector3<double> position = pose.Pos();
-//    // Get model
-//    auto model = _world->ModelByName("pinger");
-//    // Get pose
-//    auto pose = model->WorldPose();
-// get corner
-//    physics::Link_V links = this->world->ModelByName("pinger")->GetLinks();
-//    for (physics::Link_V::iterator iter = links.begin(); iter !=links.end(); ++iter){
-//        if((*iter)->GetName().find(this->anchorPrefix) == 0){
-//            physics::LinkPtr anchor = *iter;
-//            ignition::math::Pose3d anchorPose = anchor->GetWorldPose();
-//        }
-//    }
+
 /**
  * This method allows you to determine the angles to the pinger
  * @return {@code pair} Angle by xy and z to pinger
  */
 std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
-    // get robot position
-    gazebo_msgs::GetModelState modelState;
+    gazebo_msgs::GetModelState modelState;  // get robot position
     modelState.request.model_name = simulation_config["model_name"];
     bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
     if (!result || !modelState.response.success)
     {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
     }
-    gazebo_msgs::GetModelState pingerModelState;
+    gazebo_msgs::GetModelState pingerModelState;  // get pinger position
     pingerModelState.request.model_name = simulation_config["initial_pinger"];
     bool result1 = ros::service::call(ros_config["services"]["gazebo_get_state"], pingerModelState);
     if (!result1 || !pingerModelState.response.success)
