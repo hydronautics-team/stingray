@@ -7,14 +7,10 @@
 #include <pluginlib/class_list_macros.h>
 #include "hardware_bridge_nodelet.h"
 #include <fstream>
-#include "stingray_utils/json.hpp"
-
-using json = nlohmann::json;
-// get json config
-static const json ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
 
 void hardware_bridge::onInit()
 {
+    ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
     // Initializing nodelet and parameters
     NODELET_INFO("Initializing nodelet: hardware_bridge");
     ros::NodeHandle &nodeHandle = getNodeHandle();

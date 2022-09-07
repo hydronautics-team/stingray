@@ -8,15 +8,12 @@
 #include <ros/package.h>
 #include <fstream>
 #include "uart_driver_nodelet.h"
-#include "stingray_utils/json.hpp"
 
-using json = nlohmann::json;
-// get json config
-static const json ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
-static const json hardware_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/hardware.json"));
 
 void uart_driver::onInit()
 {
+    ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
+    hardware_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/hardware.json"));
     // Initializing nodelet and parameters
     ros::NodeHandle &nodeHandle = getNodeHandle();
     // Serial port initialization
@@ -71,11 +68,11 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
     std::string parityStr = hardware_config["uart"]["parity"];
     std::transform(parityStr.begin(), parityStr.end(), parityStr.begin(), ::tolower);
     serial::parity_t parity;
-    if (parityStr == hardware_config["uart"]["PARITY_EVEN"])
+    if (parityStr == "even")
         parity = serial::parity_t::parity_even;
-    else if (parityStr == hardware_config["uart"]["PARITY_ODD"])
+    else if (parityStr == "odd")
         parity = serial::parity_t::parity_odd;
-    else if (parityStr == hardware_config["uart"]["PARITY_NONE"])
+    else if (parityStr == "none")
         parity = serial::parity_t::parity_none;
     else
     {

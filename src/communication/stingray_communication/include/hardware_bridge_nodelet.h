@@ -21,6 +21,9 @@
 #include <stingray_communication_msgs/SetDeviceAction.h>
 #include <stingray_communication_msgs/SetStabilization.h>
 #include "messages/messages.h"
+#include "stingray_utils/json.hpp"
+
+using json = nlohmann::json;
 
 class hardware_bridge : public nodelet::Nodelet
 {
@@ -69,6 +72,9 @@ private:
     bool depthStabilizationEnabled = false;
     bool yawStabilizationEnabled = false;
     bool lagStabilizationEnabled = false;
+
+    // get json config
+    json ros_config;
 };
 
 #endif // STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
