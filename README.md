@@ -38,7 +38,7 @@ pip3 install pygraphviz transitions
 
 - Build
 ```bash
-source /opt/ros/$ROS_DISTRO/setup.bash
+source /opt/ros/noetic/setup.bash
 catkin_make
 ```
 

@@ -143,13 +143,20 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + pingerModelState.response.status_message);
     }
 
+    ROS_INFO("modelState x %f", modelState.response.pose.position.x);
+    ROS_INFO("modelState y %f", modelState.response.pose.position.y);
+    ROS_INFO("modelState z %f", modelState.response.pose.position.z);
+    ROS_INFO("pingerModelState x %f", pingerModelState.response.pose.position.x);
+    ROS_INFO("pingerModelState y %f", pingerModelState.response.pose.position.y);
+    ROS_INFO("pingerModelState z %f", pingerModelState.response.pose.position.z);
+
     double path_x = pingerModelState.response.pose.position.x - modelState.response.pose.position.x;
     double path_y = pingerModelState.response.pose.position.y - modelState.response.pose.position.y;
     double path_z = modelState.response.pose.position.z - pingerModelState.response.pose.position.z;
 
     double r_xy = sqrt(path_x*path_x + path_y*path_y);
     std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
-    corner_XY.data = (int(std::atan(path_y/path_x)) % 360) * M_PI / 180.0;
+    corner_XY.data = (int(std::atan(path_y/path_x)) % 360) * M_PI / 180.0 - simulation_config["initial_yaw"].get<double>() * 180.0 / M_PI;
     corner_Z.data = (int(std::atan(r_xy/path_z)) % 360) * M_PI / 180.0;
 
     std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
