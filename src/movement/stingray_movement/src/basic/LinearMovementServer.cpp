@@ -56,7 +56,6 @@ void LinearMovementServer::goalCallback(const stingray_movement_msgs::LinearMove
     }
 
     auto result = ros::service::call(ros_config["services"]["set_lag_march"], serviceCall);
-    ROS_INFO("LAG_MARCH_SERVICE called");
 
     if (!result || !serviceCall.response.success)
     {

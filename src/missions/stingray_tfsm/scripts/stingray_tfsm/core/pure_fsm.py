@@ -87,7 +87,7 @@ class PureStateMachine:
             if self.transition_start in self.machine.get_triggers(self.state_init):
                 next_trigger = self.transition_start
             elif len(self.machine.get_triggers(self.state)) > 0:
-                next_trigger = self.machine.get_triggers(self.state)[1]
+                next_trigger = self.machine.get_triggers(self.state)[0]
 
         print(f"DEBUG {self.name}: doing the transition {next_trigger}")
 

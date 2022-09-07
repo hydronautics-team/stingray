@@ -101,6 +101,7 @@ class AUVControl:
             rospy.loginfo('Goal sent')
         self.LinearMoveClient.wait_for_result(
             timeout=rospy.Duration(secs=scene['duration'] // 1000 + 1))
+        
         if self.verbose:
             rospy.loginfo('Result got')
 

@@ -21,7 +21,7 @@ def very_close(tlx, brx, tly, bry, mrange, target, *args, **kwargs):
     if target == 'red_flare':
         prox += 0.45
     if prox < 0:
-        print('too far away to assess')
+        print(f'too far away to assess {target}')
         return False
     print(prox)
     if target == 'gate':
@@ -71,6 +71,8 @@ class ObjectDetectionEvent(TopicEvent):
                          queue_size=queue_size)
         self._object_name = object_name
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
@@ -107,6 +109,8 @@ class ObjectIsCloseEvent(TopicEvent):
         self.center = _range / 2
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
@@ -145,6 +149,8 @@ class ObjectOnRight(TopicEvent):
         self.center = _range / 2
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
@@ -190,6 +196,8 @@ class ObjectOnLeft(TopicEvent):
         self.center = _range / 2
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
@@ -234,6 +242,8 @@ class ObjectOrtho(TopicEvent):
         self._range = _range
         self._tolerance = tolerance
         self._confidence = confidence
+        if object_name == 'yellow_flare':
+            self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
@@ -243,6 +253,7 @@ class ObjectOrtho(TopicEvent):
                     _obj = msg.objects[i]
                     x_side = _obj.top_left_x + _obj.bottom_right_x
                     y_side = _obj.top_left_y + _obj.bottom_right_y
+                    print()
                     if x_side / y_side > self._tolerance:
                         return 1
         return 0
