@@ -260,8 +260,13 @@ int main(int argc, char **argv)
         {
             // Convert back to initial values
             depthMessage.data = -(modelState.response.pose.position.z - simulation_config["initial_depth"].get<double>()) * 100;
-            yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
-
+            float yaw_postprocessed = -(tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
+            if (yaw_postprocessed > 180) {
+                yaw_postprocessed -= 360;
+            } else if (yaw_postprocessed < -180) {
+                yaw_postprocessed += 360;
+            }
+            yawMessage.data = yaw_postprocessed;
             auto df = pingerStatus();
             pingerMessage = df.first;
         }
