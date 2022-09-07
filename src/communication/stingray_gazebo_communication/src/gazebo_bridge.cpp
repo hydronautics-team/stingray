@@ -187,8 +187,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "gazebo_bridge");
     ros::NodeHandle nodeHandle;
 
-    ROS_INFO("gazebo bridge main");
-
     ros::Rate communicationDelay(1000.0 / simulation_config["communication_delay"].get<uint32_t>());
 
     ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 20);
@@ -220,9 +218,13 @@ int main(int argc, char **argv)
         {
             // Convert back to initial values
             depthMessage.data = -(modelState.response.pose.position.z - simulation_config["initial_depth"].get<double>()) * 100;
-            yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
-            ROS_INFO("Yaw raw %f", tf::getYaw(modelState.response.pose.orientation));
-            ROS_INFO("Yaw postprocessed %f", yawMessage.data);
+            float yaw_postprocessed = -(tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
+            if (yaw_postprocessed > 180) {
+                yaw_postprocessed -= 360;
+            } else if (yaw_postprocessed < -180) {
+                yaw_postprocessed += 360;
+            }
+            yawMessage.data = yaw_postprocessed;
         }
 
         depthPublisher.publish(depthMessage);
