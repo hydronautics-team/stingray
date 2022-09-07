@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     json control_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/control.json"));
 
     double velocityCoefficient = control_config["movement"]["velocity_coefficient"];
-    ROS_INFO("Velocity coefficient %d", velocityCoefficient);
+    ROS_INFO("Velocity coefficient %f", velocityCoefficient);
 
     if (velocityCoefficient < 1.0)
     {
