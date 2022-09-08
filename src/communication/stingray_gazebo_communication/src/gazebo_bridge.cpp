@@ -128,6 +128,14 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
  * @return {@code pair} Angle by xy and z to pinger
  */
 std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
+    auto f90 = [](float corner) {
+        if (corner > 0) {
+            corner -= 90;
+        } else if (corner < -0) {
+            corner += 90;
+        }
+        return corner;
+    };
     gazebo_msgs::GetModelState modelState;  // get robot position
     modelState.request.model_name = simulation_config["model_name"];
     bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
@@ -147,14 +155,12 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
     double path_y = pingerModelState.response.pose.position.y - modelState.response.pose.position.y;
     double path_z = modelState.response.pose.position.z - pingerModelState.response.pose.position.z;
 
-
-
     double r_xy = std::sqrt(path_x*path_x + path_y*path_y);
     std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
-    corner_XY.data = (int(std::atan(path_y/path_x)) % 360) * M_PI / 180.0 - simulation_config["initial_yaw"].get<double>() * 180.0 / M_PI;
-    corner_Z.data = (int(std::atan(path_z/r_xy)) % 360) * M_PI / 180.0;
-
-
+    float corner_XY_data = /*simulation_config["initial_yaw"].get<double>() * 180.0 / M_PI*/ - std::atan(path_y/path_x) * 180 / M_PI;
+    corner_XY.data = f90(corner_XY_data);
+    float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
+    corner_XY.data = -corner_Z_data;
 
     std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
     return df;
@@ -260,7 +266,14 @@ int main(int argc, char **argv)
         {
             // Convert back to initial values
             depthMessage.data = -(modelState.response.pose.position.z - simulation_config["initial_depth"].get<double>()) * 100;
-            yawMessage.data = (tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
+            float yaw_postprocessed = -(tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
+            if (yaw_postprocessed > 180) {
+                yaw_postprocessed -= 360;
+            } else if (yaw_postprocessed < -180) {
+                yaw_postprocessed += 360;
+            }
+
+            yawMessage.data = yaw_postprocessed;
 
             auto df = pingerStatus();
             pingerMessage = df.first;
