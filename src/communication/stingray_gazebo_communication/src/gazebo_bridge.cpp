@@ -162,6 +162,9 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
     float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
     corner_XY.data = -corner_Z_data;
 
+    ROS_INFO("XY %f", corner_XY_data);
+    ROS_INFO("Z %f", corner_Z_data);
+
     std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
     return df;
 }
