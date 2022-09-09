@@ -3,7 +3,8 @@
 from abc import abstractmethod
 from stingray_tfsm.core.pure_mission import PureMission
 from stingray_tfsm.auv_fsm import AUVStateMachine
-from stingray_object_detection_msgs.srv import SetEnableObjectDetection, ObjectsArray
+from stingray_object_detection_msgs.srv import SetEnableObjectDetection
+from stingray_object_detection_msgs.msg import ObjectsArray
 from stingray_communication_msgs.srv import SetStabilization
 from stingray_object_detection.utils import get_objects_topic
 from stingray_resources.utils import load_config
