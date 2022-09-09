@@ -1,0 +1,15 @@
+# Goal
+
+# Velocity value from 0.0 to 1.0
+float64 march
+float64 lag
+int32 yaw
+
+# Duration in milliseconds
+uint32 duration
+---
+# Result
+std_msgs/Empty empty
+---
+# Feedback
+std_msgs/Empty empty
