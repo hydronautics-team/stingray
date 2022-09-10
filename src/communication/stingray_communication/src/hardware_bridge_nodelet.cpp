@@ -51,11 +51,11 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
     bool ok = responseMessage.parseVector(received_vector);
     if (ok)
     {
-        NODELET_DEBUG("Received depth: %f", responseMessage.depth);
-        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth)); // Convert metres to centimetres
+        // NODELET_INFO("Received depth: %f", responseMessage.depth);
+        depthMessage.data = - std::abs(static_cast<int>(responseMessage.depth)); // Convert metres to centimetres
         // depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
         // TODO: Test yaw obtaining
-        yawMessage.data = static_cast<int>(responseMessage.yaw);
+        yawMessage.data = - static_cast<int>(responseMessage.yaw);
         // yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
         // NODELET_INFO("Received yaw: %f", responseMessage.yaw);
     }
@@ -94,7 +94,7 @@ bool hardware_bridge::depthCallback(stingray_communication_msgs::SetInt32::Reque
         return true;
     }
     NODELET_DEBUG("Setting depth to %d", depthRequest.value);
-    requestMessage.depth = -(static_cast<int16_t>(depthRequest.value * 100)); // For low-level stabilization purposes
+    requestMessage.depth = (static_cast<int16_t>(depthRequest.value)); // For low-level stabilization purposes
     NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.depth);
 
     isReady = true;

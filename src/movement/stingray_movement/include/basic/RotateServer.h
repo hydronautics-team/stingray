@@ -16,7 +16,7 @@ protected:
     void goalCallback(const stingray_movement_msgs::RotateGoalConstPtr &goal) override;
 
 public:
-    RotateServer(const std::string &actionName);
+    RotateServer(const std::string &actionName, double rotateCoefficient);
     ~RotateServer() = default;
 };
 

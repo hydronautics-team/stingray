@@ -46,6 +46,7 @@ class AUVMission(PureMission):
         Args:
             camera_topic (str): camera topic name
         """
+        rospy.sleep(5)
         srv_name = self.ros_config["services"]["set_stabilization_enabled"]
         rospy.wait_for_service(srv_name)
         set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)

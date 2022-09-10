@@ -135,8 +135,11 @@ class AUVControl:
 
         """
         angle = scene['angle']
-        self.new_yaw = angle
-        # self.new_yaw = self.yaw + angle
+        rospy.loginfo(f'Setting yaw delta: {angle}')
+        rospy.loginfo(f'self.yaw: {self.yaw}')
+        # self.new_yaw = angle
+        self.new_yaw = self.yaw + angle
+        rospy.loginfo(f'self.new_yaw: {self.new_yaw}')
 
         # if self.new_yaw > 360:
         #     self.new_yaw -= 360
@@ -151,10 +154,10 @@ class AUVControl:
         self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                     active_cb=callback_active)
 
-        rospy.sleep(0.1)
+        rospy.sleep(7)
         if self.verbose:
             rospy.loginfo('Goal sent')
-        self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))
+        self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=10))
         if self.verbose:
             rospy.loginfo('Result got')
         # else:

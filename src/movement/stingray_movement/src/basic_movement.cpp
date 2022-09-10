@@ -14,7 +14,9 @@ int main(int argc, char **argv)
     json control_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/control.json"));
 
     double velocityCoefficient = control_config["movement"]["velocity_coefficient"];
+    double rotateCoefficient = control_config["movement"]["rotate_coefficient"];
     ROS_INFO("Velocity coefficient %f", velocityCoefficient);
+    ROS_INFO("Rotate coefficient %f", rotateCoefficient);
 
     if (velocityCoefficient < 1.0)
     {
@@ -24,7 +26,7 @@ int main(int argc, char **argv)
 
     LinearMovementServer linearMovementServer(ros_config["actions"]["movement"]["linear"], velocityCoefficient);
     DiveServer diveServer(ros_config["actions"]["movement"]["dive"]);
-    RotateServer rotateServer(ros_config["actions"]["movement"]["rotate"]);
+    RotateServer rotateServer(ros_config["actions"]["movement"]["rotate"], rotateCoefficient);
 
     ros::spin();
 
