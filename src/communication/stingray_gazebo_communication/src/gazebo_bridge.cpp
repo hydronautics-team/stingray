@@ -293,7 +293,7 @@ int main(int argc, char **argv)
         depthPublisher.publish(depthMessage);
         yawPublisher.publish(yawMessage);
         pingerBucketPublisher.publish(pingerBucketMessage);
-        pingerFlarePublisher.publish(pingerFlarePublisher);
+        pingerFlarePublisher.publish(pingerFlareMessage);
 
         velocityPublisher.publish(currentTwist);
 
