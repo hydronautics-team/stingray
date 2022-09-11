@@ -30,7 +30,8 @@ static const json simulation_config = json::parse(std::ifstream(ros::package::ge
 
 std_msgs::UInt32 depthMessage;
 std_msgs::Int32 yawMessage;
-std_msgs::Int32 pingerMessage;
+std_msgs::Int32 pingerBucketMessage;
+std_msgs::Int32 pingerFlareMessage;
 geometry_msgs::Twist currentTwist;
 bool depthStabilizationEnabled = false;
 bool yawStabilizationEnabled = true;
@@ -127,7 +128,7 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
  * This method allows you to determine the angles to the pinger
  * @return {@code pair} Angle by xy and z to pinger
  */
-std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
+std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(std::string pinger, const float& yaw = 0) {
     auto f90 = [](float corner) {
         if (corner > 0) {
             corner -= 90;
@@ -144,7 +145,7 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
     }
     gazebo_msgs::GetModelState pingerModelState;  // get pinger position
-    pingerModelState.request.model_name = simulation_config["initial_pinger"];
+    pingerModelState.request.model_name = simulation_config[pinger];
     bool result1 = ros::service::call(ros_config["services"]["gazebo_get_state"], pingerModelState);
     if (!result1 || !pingerModelState.response.success)
     {
@@ -157,13 +158,19 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus() {
 
     double r_xy = std::sqrt(path_x*path_x + path_y*path_y);
     std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
-    float corner_XY_data = /*simulation_config["initial_yaw"].get<double>() * 180.0 / M_PI*/ - std::atan(path_y/path_x) * 180 / M_PI;
-    corner_XY.data = f90(corner_XY_data);
+    float corner_XY_data = std::atan(path_y/path_x) * 180 / M_PI;
+    /*
+     * I'm not sure if the angle of rotation of the device should be added or subtracted
+     * */
+    corner_XY.data = f90(corner_XY_data) - yaw;  // ???
     float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
-    corner_XY.data = -corner_Z_data;
+    corner_Z.data = -corner_Z_data;
 
-    ROS_INFO("XY %f", corner_XY_data);
-    ROS_INFO("Z %f", corner_Z_data);
+    /*
+     * For tests
+     * */
+//    ROS_INFO("XY %f", corner_XY_data);
+//    ROS_INFO("Z %f", corner_Z_data);
 
     std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
     return df;
@@ -241,7 +248,8 @@ int main(int argc, char **argv)
 
     ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 20);
     ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
-    ros::Publisher pingerPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger_buckets"], 20);
+    ros::Publisher pingerBucketPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger_buckets"], 20);
+    ros::Publisher pingerFlarePublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger_flare"], 20);
     ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["gazebo_velocity"], 20);
 
     ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["set_lag_march"], lagAndMarchCallback);
@@ -276,13 +284,16 @@ int main(int argc, char **argv)
                 yaw_postprocessed += 360;
             }
             yawMessage.data = yaw_postprocessed;
-            auto df = pingerStatus();
-            pingerMessage = df.first;
+            auto df_pinger_bucket = pingerStatus("initial_pinger_buckets", yaw_postprocessed);
+            auto df_pinger_flare = pingerStatus("initial_pinger_flare", yaw_postprocessed);
+            pingerBucketMessage = df_pinger_bucket.first;
+            pingerFlareMessage = df_pinger_flare.first;
         }
 
         depthPublisher.publish(depthMessage);
         yawPublisher.publish(yawMessage);
-        pingerPublisher.publish(pingerMessage);
+        pingerBucketPublisher.publish(pingerBucketMessage);
+        pingerFlarePublisher.publish(pingerFlarePublisher);
 
         velocityPublisher.publish(currentTwist);
 
