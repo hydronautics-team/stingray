@@ -164,7 +164,7 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &ping
     /*
      * I'm not sure if the angle of rotation of the device should be added or subtracted
      * */
-    corner_XY.data = f90(corner_XY_data);  // ???
+    corner_XY.data = f90(corner_XY_data) + yaw;  // ???
     float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
     corner_Z.data = -corner_Z_data;
 
