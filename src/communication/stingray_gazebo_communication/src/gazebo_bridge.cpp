@@ -126,6 +126,8 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
 
 /**
  * This method allows you to determine the angles to the pinger
+ * @param pinger pinger name
+ * @param yaw corner robot now
  * @return {@code pair} Angle by xy and z to pinger
  */
 std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &pinger, const float &yaw = 0) {
