@@ -128,7 +128,7 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
  * This method allows you to determine the angles to the pinger
  * @return {@code pair} Angle by xy and z to pinger
  */
-std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(std::string pinger, const float& yaw = 0) {
+std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &pinger, const float &yaw = 0) {
     auto f90 = [](float corner) {
         if (corner > 0) {
             corner -= 90;
@@ -162,7 +162,7 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(std::string pinger, con
     /*
      * I'm not sure if the angle of rotation of the device should be added or subtracted
      * */
-    corner_XY.data = f90(corner_XY_data) - yaw;  // ???
+    corner_XY.data = f90(corner_XY_data);  // ???
     float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
     corner_Z.data = -corner_Z_data;
 
