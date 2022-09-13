@@ -2,7 +2,7 @@
 
 # Angle in degrees
 # Positive is for counterclockwise, negative - for clockwise
-int32 yaw
+int16 yaw
 ---
 # Result
 std_msgs/Empty empty

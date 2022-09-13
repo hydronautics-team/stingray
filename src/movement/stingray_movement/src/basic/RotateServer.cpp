@@ -23,6 +23,8 @@ void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr
     }
 
     int desiredYaw = goal->yaw;
+    auto yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
+
     while (true)
     {
         auto yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
@@ -30,14 +32,8 @@ void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr
 
         ROS_INFO("Current yaw: %d, desired yaw: %d", currentYaw, desiredYaw);
 
-        // Special case for the simulator
-        if (currentYaw < 0 && desiredYaw > 0)
-        {
-            currentYaw = 360 + currentYaw;
-        }
-        // TODO: Handle case when desiredYaw > 360 for simulator
-
         auto delta = std::abs(desiredYaw - currentYaw);
+        
         if (delta <= control_config["movement"]["yaw_error_range"])
         {
             break;

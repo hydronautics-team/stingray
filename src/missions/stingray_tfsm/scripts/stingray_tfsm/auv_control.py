@@ -135,29 +135,35 @@ class AUVControl:
 
         """
         angle = scene['angle']
+        rospy.loginfo(f'Setting yaw delta: {angle}')
+        rospy.loginfo(f'self.yaw: {self.yaw}')
+        # self.new_yaw = angle
         self.new_yaw = self.yaw + angle
+        rospy.loginfo(f'self.new_yaw: {self.new_yaw}')
 
-        if self.new_yaw > 360:
-            self.new_yaw -= 360
-        elif self.new_yaw < -360:
-            self.new_yaw += 360
+        # if self.new_yaw > 360:
+        #     self.new_yaw -= 360
+        # elif self.new_yaw < -360:
+        #     self.new_yaw += 360
         if self.verbose:
             rospy.loginfo("Absolute angle is {} now".format(
                 self.new_yaw))
 
-        if angle != 0:
-            goal = RotateGoal(yaw=self.new_yaw)
-            self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                        active_cb=callback_active)
+        # if angle != 0:
+        goal = RotateGoal(yaw=self.new_yaw)
+        self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                    active_cb=callback_active)
 
-            rospy.sleep(0.1)
-            if self.verbose:
-                rospy.loginfo('Goal sent')
-            self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))
-            if self.verbose:
-                rospy.loginfo('Result got')
-        else:
-            rospy.loginfo('Rotating is not required to achieve this angle')
+        rospy.sleep(5)
+        rospy.loginfo("Sleep after set yaw")
+
+        if self.verbose:
+            rospy.loginfo('Goal sent')
+        self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))
+        if self.verbose:
+            rospy.loginfo('Result got')
+        # else:
+        #     rospy.loginfo('Rotating is not required to achieve this angle')
 
     def rotate(self, yaw_deg: float):
         """Rotates the vehicle. Blocking call.

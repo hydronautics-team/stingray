@@ -41,7 +41,7 @@ class CenteringAngleSub(AUVMission):
                 'rotate_clock', 'rotate_anti',
                 )
         states = tuple(i + self.name for i in states)
-        return states + self.machine.default_states
+        return states
 
     def setup_transitions(self):
         return [
@@ -56,7 +56,7 @@ class CenteringAngleSub(AUVMission):
 
             ['condition_f', 'condition_righter' + self.name, self.machine.state_end],
             ['condition_s', 'condition_righter' + self.name, 'rotate_clock' + self.name],
-        ] + self.machine.default_transitions
+        ]
 
     def setup_scene(self):
         return {

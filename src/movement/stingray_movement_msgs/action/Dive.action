@@ -1,7 +1,7 @@
 # Goal
 
 # Depth in centimetres
-uint16 depth
+int16 depth
 ---
 # Result
 std_msgs/Empty empty

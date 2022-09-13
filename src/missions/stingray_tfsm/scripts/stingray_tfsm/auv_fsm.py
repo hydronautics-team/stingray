@@ -32,7 +32,7 @@ class AUVStateMachine(PureStateMachine):
 
         """
         state = self.state
-        rospy.loginfo(state)
+        rospy.loginfo(f"FSM: {self.name}\tSTATE: {self.state}")
         
         if self.name.upper() in state:
             state = state.replace(self.name.upper() + "_", "")
@@ -85,6 +85,5 @@ class AUVStateMachine(PureStateMachine):
         elif state_keyword == self.state_end:
             exit()
 
-        rospy.loginfo(
-            f"AUVStateMachine {self.name}: Doing the transition {next_trigger}")
+        rospy.loginfo(f"FSM: {self.name}\tTRANSITION: {next_trigger}")
         self.trigger(next_trigger)

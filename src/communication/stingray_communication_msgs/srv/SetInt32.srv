@@ -1,5 +1,5 @@
 # Request
-int32 value
+int16 value
 ---
 # Response
 bool success

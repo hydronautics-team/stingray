@@ -37,7 +37,7 @@ void hardware_bridge::onInit()
     outputMessage.layout.dim[0].stride = RequestMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     // Initializing timer for publishing messages. Callback interval: 0.05 ms
-    publishingTimer = nodeHandle.createTimer(ros::Duration(0.05),
+    publishingTimer = nodeHandle.createTimer(ros::Duration(0.1),
                                              &hardware_bridge::timerCallback, this);
 }
 
@@ -51,10 +51,13 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
     bool ok = responseMessage.parseVector(received_vector);
     if (ok)
     {
-        NODELET_DEBUG("Received depth: %f", responseMessage.depth);
-        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
+        // NODELET_INFO("Received depth: %f", responseMessage.depth);
+        depthMessage.data = static_cast<int>(responseMessage.depth); // Convert metres to centimetres
+        // depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
         // TODO: Test yaw obtaining
-        yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
+        yawMessage.data = static_cast<int>(responseMessage.yaw);
+        // yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
+        // NODELET_INFO("Received yaw: %f", responseMessage.yaw);
     }
     else
         NODELET_ERROR("Wrong checksum");
@@ -91,7 +94,7 @@ bool hardware_bridge::depthCallback(stingray_communication_msgs::SetInt32::Reque
         return true;
     }
     NODELET_DEBUG("Setting depth to %d", depthRequest.value);
-    requestMessage.depth = -(static_cast<int16_t>(depthRequest.value * 100)); // For low-level stabilization purposes
+    requestMessage.depth = (static_cast<int16_t>(depthRequest.value)); // For low-level stabilization purposes
     NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.depth);
 
     isReady = true;
@@ -108,9 +111,9 @@ bool hardware_bridge::yawCallback(stingray_communication_msgs::SetInt32::Request
         yawResponse.message = "Yaw stabilization is not enabled";
         return true;
     }
-    NODELET_DEBUG("Setting depth to %d", yawRequest.value);
+    NODELET_INFO("Setting yaw to %d", yawRequest.value);
     requestMessage.yaw = yawRequest.value;
-    NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.yaw);
+    NODELET_INFO("Sending to STM32 yaw value: %d", requestMessage.yaw);
 
     isReady = true;
     yawResponse.success = true;
@@ -120,7 +123,7 @@ bool hardware_bridge::yawCallback(stingray_communication_msgs::SetInt32::Request
 bool hardware_bridge::imuCallback(std_srvs::SetBool::Request &imuRequest,
                                   std_srvs::SetBool::Response &imuResponse)
 {
-    NODELET_DEBUG("Setting SHORE_STABILIZE_IMU_BIT to %d", imuRequest.data);
+    NODELET_INFO("Setting SHORE_STABILIZE_IMU_BIT to %d", imuRequest.data);
     setStabilizationState(requestMessage, SHORE_STABILIZE_IMU_BIT, imuRequest.data);
 
     isReady = true;
@@ -132,15 +135,23 @@ bool hardware_bridge::imuCallback(std_srvs::SetBool::Request &imuRequest,
 bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStabilization::Request &stabilizationRequest,
                                             stingray_communication_msgs::SetStabilization::Response &stabilizationResponse)
 {
-    NODELET_DEBUG("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
+    // set current yaw
+    requestMessage.yaw = responseMessage.yaw;
+    // set current depth
+    requestMessage.depth = responseMessage.depth;
+    
+    NODELET_INFO("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
-    NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
+    NODELET_INFO("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
-    NODELET_DEBUG("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
+    NODELET_INFO("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, stabilizationRequest.lagStabilization);
     depthStabilizationEnabled = stabilizationRequest.depthStabilization;
     yawStabilizationEnabled = stabilizationRequest.yawStabilization;
     lagStabilizationEnabled = stabilizationRequest.lagStabilization;
+
+    
+    
 
     isReady = true;
     stabilizationResponse.success = true;
