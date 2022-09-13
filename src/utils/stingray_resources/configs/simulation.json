@@ -4,5 +4,7 @@
     "initial_yaw": 3.141501,
     "initial_roll": 0.0,
     "initial_pitch": 0.0,
-    "initial_depth": 2.9
+    "initial_depth": 2.9,
+    "pinger_buckets_model_name": "pinger_buckets",
+    "pinger_flare_model_name": "pinger_flare"
 }

@@ -48,6 +48,7 @@ catkin_make
 
 ```bash
 source devel/setup.bash
+roslaunch stingray_startup main.launch simulation:=true
 ```
 
 ## Basic launch file:
