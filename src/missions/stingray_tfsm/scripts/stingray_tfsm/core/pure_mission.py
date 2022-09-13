@@ -16,7 +16,7 @@ class PureMission(ABC):
     FSM_CLASS = PureStateMachine
 
     @abstractmethod
-    def __init__(self, name: str, parent_mission_name: str = None):
+    def __init__(self, name: str):
         """ Abstract class with default transitions, states and basic methods to implement mission
 
         Args: 
@@ -24,8 +24,6 @@ class PureMission(ABC):
         """
         self.name = name
         """ mission name """
-        if parent_mission_name is not None:
-            self.name += parent_mission_name + "_"
         self.machine: PureStateMachine = None
         """ the PureStateMachine object """
 

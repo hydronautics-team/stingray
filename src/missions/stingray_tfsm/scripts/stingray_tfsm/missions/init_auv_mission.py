@@ -1,5 +1,5 @@
 from stingray_tfsm.auv_mission import AUVMission
-
+import rospy
 
 class InitAUVMission(AUVMission):
     """ Submission for robot initialization """
@@ -10,7 +10,7 @@ class InitAUVMission(AUVMission):
                  yaw_stabilization: bool = False,
                  lag_stabilization: bool = False,
                  reset_imu: bool = False,
-                 parent_mission_name: str = None):
+                 ):
         """ Submission for robot initialization
 
         Args:
@@ -19,14 +19,13 @@ class InitAUVMission(AUVMission):
             yaw_stabilization (bool, optional): flag to enable yaw stabilization. Defaults to False.
             lag_stabilization (bool, optional): flag to enable lag stabilization. Defaults to False.
             reset_imu (bool, optional): flag to enable IMU reset on start. Defaults to False.
-            parent_mission_name (str, optional): parent mission name. Defaults to None.
         """
         self.depth_stabilization = depth_stabilization
         self.yaw_stabilization = yaw_stabilization
         self.lag_stabilization = lag_stabilization
         self.reset_imu = reset_imu
 
-        super().__init__(name, parent_mission_name)
+        super().__init__(name)
 
     def setup_states(self):
         pass
@@ -45,6 +44,7 @@ class InitAUVMission(AUVMission):
         })
         self.enable_stabilization(
             self.depth_stabilization, self.yaw_stabilization, self.lag_stabilization)
+        rospy.loginfo("FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK")
 
     def setup_scene(self):
         return {

@@ -70,7 +70,7 @@ bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &r
                          stingray_communication_msgs::SetLagAndMarch::Response &response)
 {
 
-    ROS_INFO("lagAndMarchCallback in gazebo bridge");
+    // ROS_INFO("lagAndMarchCallback in gazebo bridge");
 
     currentTwist.linear.x = request.march;
     currentTwist.linear.y = -request.lag;

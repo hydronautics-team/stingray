@@ -2,6 +2,7 @@ from transitions import Machine
 from transitions.extensions import GraphMachine
 from copy import copy
 from ast import literal_eval
+import rospy
 
 
 class PureStateMachine:
@@ -83,8 +84,7 @@ class PureStateMachine:
         :param self: Access the attributes of the class
         :return: The trigger that is associated with the current state
         """
-        print(
-            f"DEBUG {self.name}: current state of abstract machine is {self.state}")
+        rospy.loginfo(f"FSM: {self.name}\tSTATE: {self.state}")
         next_trigger = self.machine.get_triggers(self.state)[0]
 
         if self.state == self.state_init:
@@ -93,7 +93,7 @@ class PureStateMachine:
             elif len(self.machine.get_triggers(self.state)) > 0:
                 next_trigger = self.machine.get_triggers(self.state)[0]
 
-        print(f"DEBUG {self.name}: doing the transition {next_trigger}")
+        rospy.loginfo(f"FSM: {self.name}\tTRANSITION: {next_trigger}")
 
         self.trigger(next_trigger)
 
@@ -185,3 +185,17 @@ class PureStateMachine:
 
     def add_scene(self, scene):
         self.scene.update(scene)
+    
+    @staticmethod
+    def construct_name(submachine_name: str, parent_name: str) -> str:
+        """ Construct hierarchical mission name
+
+        Args:
+            submachine_name (str): Submachine or child mission name
+            parent_name (str): Parent mission name
+
+        Returns:
+            str: Mission name
+        """
+        return parent_name + "_" + submachine_name
+
