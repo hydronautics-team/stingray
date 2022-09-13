@@ -46,10 +46,11 @@ class AUVMission(PureMission):
         Args:
             camera_topic (str): camera topic name
         """
-        rospy.sleep(5)
+        # rospy.loginfo("Sleep before enable stab")
         srv_name = self.ros_config["services"]["set_stabilization_enabled"]
         rospy.wait_for_service(srv_name)
         set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)
         response = set_stabilization(depthStabilization, yawStabilization, lagStabilization)
         rospy.loginfo(
             f"Stabilization enabled: {response.success}, message: {response.message} ")
+        # rospy.loginfo("Sleep after enable stab")

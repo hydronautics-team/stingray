@@ -37,7 +37,7 @@ void hardware_bridge::onInit()
     outputMessage.layout.dim[0].stride = RequestMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     // Initializing timer for publishing messages. Callback interval: 0.05 ms
-    publishingTimer = nodeHandle.createTimer(ros::Duration(0.05),
+    publishingTimer = nodeHandle.createTimer(ros::Duration(0.1),
                                              &hardware_bridge::timerCallback, this);
 }
 
@@ -55,9 +55,9 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
         depthMessage.data = - std::abs(static_cast<int>(responseMessage.depth)); // Convert metres to centimetres
         // depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
         // TODO: Test yaw obtaining
-        yawMessage.data = - static_cast<int>(responseMessage.yaw);
+        yawMessage.data = static_cast<int>(responseMessage.yaw);
         // yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
-        // NODELET_INFO("Received yaw: %f", responseMessage.yaw);
+        NODELET_INFO("Received yaw: %f", responseMessage.yaw);
     }
     else
         NODELET_ERROR("Wrong checksum");
@@ -135,6 +135,9 @@ bool hardware_bridge::imuCallback(std_srvs::SetBool::Request &imuRequest,
 bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStabilization::Request &stabilizationRequest,
                                             stingray_communication_msgs::SetStabilization::Response &stabilizationResponse)
 {
+    requestMessage.yaw = responseMessage.yaw;
+    NODELET_INFO("Sending to STM32 yaw value: %d", requestMessage.yaw);
+    
     NODELET_DEBUG("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
@@ -144,6 +147,9 @@ bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStab
     depthStabilizationEnabled = stabilizationRequest.depthStabilization;
     yawStabilizationEnabled = stabilizationRequest.yawStabilization;
     lagStabilizationEnabled = stabilizationRequest.lagStabilization;
+
+    
+    
 
     isReady = true;
     stabilizationResponse.success = true;

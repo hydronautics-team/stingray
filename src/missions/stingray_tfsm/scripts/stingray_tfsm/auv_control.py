@@ -154,10 +154,12 @@ class AUVControl:
         self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                     active_cb=callback_active)
 
-        rospy.sleep(7)
+        rospy.sleep(5)
+        rospy.loginfo("Sleep after set yaw")
+
         if self.verbose:
             rospy.loginfo('Goal sent')
-        self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=10))
+        self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))
         if self.verbose:
             rospy.loginfo('Result got')
         # else:
