@@ -123,7 +123,7 @@ bool hardware_bridge::yawCallback(stingray_communication_msgs::SetInt32::Request
 bool hardware_bridge::imuCallback(std_srvs::SetBool::Request &imuRequest,
                                   std_srvs::SetBool::Response &imuResponse)
 {
-    NODELET_DEBUG("Setting SHORE_STABILIZE_IMU_BIT to %d", imuRequest.data);
+    NODELET_INFO("Setting SHORE_STABILIZE_IMU_BIT to %d", imuRequest.data);
     setStabilizationState(requestMessage, SHORE_STABILIZE_IMU_BIT, imuRequest.data);
 
     isReady = true;
@@ -140,11 +140,11 @@ bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStab
     // set current depth
     requestMessage.depth = responseMessage.depth;
     
-    NODELET_DEBUG("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
+    NODELET_INFO("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
-    NODELET_DEBUG("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
+    NODELET_INFO("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
-    NODELET_DEBUG("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
+    NODELET_INFO("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, stabilizationRequest.lagStabilization);
     depthStabilizationEnabled = stabilizationRequest.depthStabilization;
     yawStabilizationEnabled = stabilizationRequest.yawStabilization;

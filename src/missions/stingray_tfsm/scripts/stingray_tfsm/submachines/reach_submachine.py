@@ -77,7 +77,7 @@ class ReachSub(AUVMission):
 
 
                    ['condition_s', 'condition_in_front' + self.name, self.machine.state_end],
-               ] + self.machine.default_transitions
+               ]
         return transitions
 
     def setup_scene(self):

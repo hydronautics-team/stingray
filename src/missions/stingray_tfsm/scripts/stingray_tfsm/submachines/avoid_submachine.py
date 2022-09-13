@@ -45,7 +45,7 @@ class AvoidSub(AUVMission):
             return 0
 
     def setup_states(self):
-        states = ('move_lag' + self.name, ) + self.machine.default_states + self.avoid_states
+        states = ('move_lag' + self.name, ) + self.avoid_states
         return states
 
     def setup_transitions(self):
@@ -68,7 +68,7 @@ class AvoidSub(AUVMission):
                    ['condition_f', self.avoid_states[0], self.machine.state_end],
                    ['condition_s', self.avoid_states[0], 'move_lag' + self.name],
 
-               ] + self.machine.default_transitions
+               ]
         return transitions
 
     def setup_scene(self):

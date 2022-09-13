@@ -18,12 +18,11 @@ class PureStateMachine:
         self.name = name
         """ name of state machine """
         self.states = states
+        """ FSM states """
         self.transitions = transitions
-        if path is not None:
-            rulebook_states, rulebook_transitions = self.read_rulebook(path)
-            self.states += rulebook_states
-            self.transitions += rulebook_transitions
+        """ FSM transitions """
         self.scene = scene
+        """ FSM scene args """
 
         self.state_init = self.name.upper() + "_INIT"
         """ default init FSM state"""
@@ -38,13 +37,17 @@ class PureStateMachine:
         self.default_states = (self.state_init,
                                self.state_aborted, self.state_end)
         """ default states for FSM """
+        self.states = self.default_states + self.states
+        if path is not None:
+            rulebook_states, rulebook_transitions = self.read_rulebook(path)
+            self.states += rulebook_states
+            self.transitions += rulebook_transitions
         # TODO
         self.default_transitions = [
             [self.transition_end, '*', self.state_end]
         ]
         """ default transitions for FSM """
 
-        self.states += self.default_states
         # self.transitions = self.default_transitions
 
         self.g_machine = GraphMachine(
@@ -80,7 +83,8 @@ class PureStateMachine:
         :param self: Access the attributes of the class
         :return: The trigger that is associated with the current state
         """
-        print(f"DEBUG {self.name}: current state of abstract machine is {self.state}")
+        print(
+            f"DEBUG {self.name}: current state of abstract machine is {self.state}")
         next_trigger = self.machine.get_triggers(self.state)[0]
 
         if self.state == self.state_init:
@@ -156,13 +160,12 @@ class PureStateMachine:
         :return: 1 if the state is done
         """
         current_state = self.state
-        
+
         while current_state != self.state_end and current_state != self.state_aborted:
             """conditional transitions are handled in next_step"""
 
             self.next_step()
             current_state = self.state
-            # print('\n==== STEP IS OVER ====\n')
 
         if current_state == self.state_end:
             return 1
@@ -171,12 +174,14 @@ class PureStateMachine:
         else:
             raise TypeError('Machine final state is not "done" or "aborted"')
 
-    def add_states(self, states, **kwargs):
-        self.machine.add_states(states, **kwargs)
+    def add_states(self, states):
+        self.machine.add_states(states)
 
     def add_transitions(self, transitions):
         self.machine.add_transitions(transitions)
-        # self.machine.add_transitions(self.default_transitions)
+
+    def add_default_transitions(self):
+        self.machine.add_transitions(self.default_transitions)
 
     def add_scene(self, scene):
         self.scene.update(scene)

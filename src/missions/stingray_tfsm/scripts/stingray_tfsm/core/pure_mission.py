@@ -16,18 +16,26 @@ class PureMission(ABC):
     FSM_CLASS = PureStateMachine
 
     @abstractmethod
-    def __init__(self, name: str):
+    def __init__(self, name: str, parent_mission_name: str = None):
         """ Abstract class with default transitions, states and basic methods to implement mission
-        
+
         Args: 
             mission_name (str): mission name
         """
         self.name = name
         """ mission name """
+        if parent_mission_name is not None:
+            self.name += parent_mission_name + "_"
         self.machine: PureStateMachine = None
         """ the PureStateMachine object """
 
         self._reset()
+
+    def mission_state(self, state: str):
+        return self.name.upper() + "_" + state.upper()
+
+    def mission_transition(self, transition: str):
+        return self.name.lower() + "_" + transition.lower()
 
     def _reset(self):
         """
@@ -39,18 +47,13 @@ class PureMission(ABC):
         :param *args: Pass a non-keyworded, variable-length argument list
         :param **kwargs: Pass a variable number of keyword arguments to a function
         :return: The scene dictionary
-        
+
         """
         self.setup_events()
         self.machine = self.FSM_CLASS(self.name)
         self.machine.add_states(self.setup_states())
         self.machine.add_transitions(self.setup_transitions())
-        self.default_scene = {
-            self.machine.state_init: {
-                'time': 0.1
-            }
-        }
-        """ default arguments for FSM """
+        self.machine.add_default_transitions()
         self.machine.add_scene(self.setup_scene())
 
     @abstractmethod
@@ -105,7 +108,7 @@ class PureMission(ABC):
 
         :param event: Pass the event that is being handled
         :return: True if the event is triggered and false if it is not
-        
+
         """
         event.start_listening()
         rospy.sleep(0.5)
@@ -120,7 +123,7 @@ class PureMission(ABC):
         :param self: Reference the class itself
         :param verbose: Determine whether to print the progress of the algorithm
         :return: None
-        
+
         """
         self.machine.set_verbose(verbose)
 
@@ -130,7 +133,7 @@ class PureMission(ABC):
 
         :param self: Reference the current instance of the class
         :return: True if machine finished its tasks successfully
-        
+
         """
         if self.machine is not None:
             return self.machine.run()
