@@ -174,8 +174,8 @@ class PureStateMachine:
         else:
             raise TypeError('Machine final state is not "done" or "aborted"')
 
-    def add_states(self, states):
-        self.machine.add_states(states)
+    def add_states(self, states, **kwargs):
+        self.machine.add_states(states, **kwargs)
 
     def add_transitions(self, transitions):
         self.machine.add_transitions(transitions)

@@ -6,7 +6,7 @@
 #include <std_msgs/Int32.h>
 
 RotateServer::RotateServer(const std::string &actionName) : AbstractMovementActionServer<stingray_movement_msgs::RotateAction,
-                                                                                         stingray_movement_msgs::RotateGoalConstPtr>(actionName){};
+                                                                                         stingray_movement_msgs::RotateGoalConstPtr>(actionName, 0.0){};
 
 void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr &goal)
 {
