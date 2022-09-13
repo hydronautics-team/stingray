@@ -5,8 +5,8 @@
 #include <stingray_communication_msgs/SetInt32.h>
 #include <std_msgs/Int32.h>
 
-RotateServer::RotateServer(const std::string &actionName, double rotateCoefficient) : AbstractMovementActionServer<stingray_movement_msgs::RotateAction,
-                                                                                         stingray_movement_msgs::RotateGoalConstPtr>(actionName, rotateCoefficient){};
+RotateServer::RotateServer(const std::string &actionName) : AbstractMovementActionServer<stingray_movement_msgs::RotateAction,
+                                                                                         stingray_movement_msgs::RotateGoalConstPtr>(actionName){};
 
 void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr &goal)
 {
@@ -25,31 +25,20 @@ void RotateServer::goalCallback(const stingray_movement_msgs::RotateGoalConstPtr
     int desiredYaw = goal->yaw;
     auto yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
 
-    auto currentYaw = yawMessage.data;
-    ROS_INFO("Current yaw: %d, desired yaw: %d", currentYaw, desiredYaw);
+    while (true)
+    {
+        auto yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
+        auto currentYaw = yawMessage.data;
 
-    // while (true)
-    // {
-    //     auto yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
-    //     auto currentYaw = yawMessage.data;
+        ROS_INFO("Current yaw: %d, desired yaw: %d", currentYaw, desiredYaw);
 
-    //     ROS_INFO("Current yaw: %d, desired yaw: %d", currentYaw, desiredYaw);
-
-    //     // Special case for the simulator
-    //     // if (currentYaw < 0 && desiredYaw > 0)
-    //     // {
-    //     //     currentYaw = 360 + currentYaw;
-    //     // }
-    //     // TODO: Handle case when desiredYaw > 360 for simulator
-
-    //     auto delta = std::abs(desiredYaw - currentYaw);
-    //     ROS_INFO("delta: %d", delta);
+        auto delta = std::abs(desiredYaw - currentYaw);
         
-    //     if (delta <= control_config["movement"]["yaw_error_range"])
-    //     {
-    //         break;
-    //     }
-    // }
+        if (delta <= control_config["movement"]["yaw_error_range"])
+        {
+            break;
+        }
+    }
 
     actionServer.setSucceeded();
 }
