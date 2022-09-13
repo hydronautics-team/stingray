@@ -3,8 +3,6 @@
 #include <std_msgs/Int32.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <gazebo_msgs/SetModelState.h>
-//#include <physics/physics.hh>
-//#include <gazebo/physics/physics.h>  // for pinger
 #include <tf/tf.h>
 #include <std_srvs/SetBool.h>
 #include <ros/package.h>
@@ -286,8 +284,8 @@ int main(int argc, char **argv)
                 yaw_postprocessed += 360;
             }
             yawMessage.data = yaw_postprocessed;
-            auto df_pinger_bucket = pingerStatus("initial_pinger_buckets", yaw_postprocessed);
-            auto df_pinger_flare = pingerStatus("initial_pinger_flare", yaw_postprocessed);
+            auto df_pinger_bucket = pingerStatus("pinger_buckets_model_name", yaw_postprocessed);
+            auto df_pinger_flare = pingerStatus("pinger_flare_model_name", yaw_postprocessed);
             pingerBucketMessage = df_pinger_bucket.first;
             pingerFlareMessage = df_pinger_flare.first;
         }
