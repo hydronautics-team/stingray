@@ -62,6 +62,12 @@ class AUVStateMachine(PureStateMachine):
                 rospy.sleep(scene['time'])
             if 'preps' in scene:
                 scene['preps'](*scene['args'])
+        
+        elif state_keyword == 'aborted':
+            if 'time' in scene:
+                rospy.sleep(scene['time'])
+            if 'preps' in scene:
+                scene['preps'](*scene['args'])
 
         elif state_keyword == 'move':
             self.auv.execute_move_goal(scene)
