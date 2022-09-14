@@ -2,7 +2,7 @@
     "movement": {
         "depth_error_range": 7,
         "yaw_error_range": 4,
-        "velocity_coefficient": 32000.0
+        "velocity_coefficient": 4.0
     },
     "missions": {
     }

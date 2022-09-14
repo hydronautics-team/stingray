@@ -1,7 +1,7 @@
 # Request
 float32 march # March velocity
 float32 lag # Lag velocity
-int16 yaw # Yaw degrees
+int32 yaw # Yaw degrees
 ---
 # Response
 bool success

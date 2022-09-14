@@ -1,7 +1,7 @@
 # Goal
 
 # Depth in centimetres
-int16 depth
+int32 depth
 ---
 # Result
 std_msgs/Empty empty

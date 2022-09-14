@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <std_msgs/UInt32.h>
 #include <std_msgs/Int32.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <gazebo_msgs/SetModelState.h>
@@ -16,7 +15,7 @@
 #include <stingray_communication_msgs/SetInt32.h>
 #include <stingray_communication_msgs/SetStabilization.h>
 #include <stingray_communication_msgs/SetDeviceAction.h>
-#include <stingray_communication_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetHorizontalMove.h>
 #include <stingray_utils/json.hpp>
 
 using json = nlohmann::json;
@@ -25,7 +24,7 @@ using json = nlohmann::json;
 static const json ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
 static const json simulation_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/simulation.json"));
 
-std_msgs::UInt32 depthMessage;
+std_msgs::Int32 depthMessage;
 std_msgs::Int32 yawMessage;
 geometry_msgs::Twist currentTwist;
 bool depthStabilizationEnabled = false;
@@ -66,14 +65,36 @@ void updateModelState(const std::function<void(gazebo_msgs::ModelState &)> &tran
  * @param response Service response
  * @return {@code true} if service call didn't fail
  */
-bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &request,
-                         stingray_communication_msgs::SetLagAndMarch::Response &response)
+bool horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Request &request,
+                            stingray_communication_msgs::SetHorizontalMove::Response &response)
 {
 
-    // ROS_INFO("lagAndMarchCallback in gazebo bridge");
+    // ROS_INFO("horizontalMoveCallback in gazebo bridge");
 
-    currentTwist.linear.x = request.march;
-    currentTwist.linear.y = -request.lag;
+    currentTwist.linear.x = request.lag;
+    currentTwist.linear.y = -request.march;
+
+    if (!yawStabilizationEnabled)
+    {
+        response.success = false;
+        response.message = "Yaw stabilization is not enabled";
+        return true;
+    }
+
+    try
+    {
+        updateModelState([request](gazebo_msgs::ModelState &modelState)
+                         {
+      double desiredYaw = request.yaw % 360;
+      double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
+      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
+    }
+    catch (std::runtime_error &e)
+    {
+        response.success = false;
+        response.message = "Failed to set depth in Gazebo: " + std::string(e.what());
+        return true;
+    }
 
     response.success = true;
     return true;
@@ -119,46 +140,6 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
     return true;
 }
 
-/**
- * Rotates vehicle on specified yaw angle
- * @param request Service request with yaw angle in degrees
- * @param response Service response
- * @return {@code true} if service call didn't fail
- */
-bool yawCallback(stingray_communication_msgs::SetInt32::Request &request,
-                 stingray_communication_msgs::SetInt32::Response &response)
-{
-    /*
-     * Here we simulate enabled yaw stabilization: we just pass desired yaw angle
-     * for Gazebo like it is low-level control system that stabilizes this angle.
-     */
-
-    if (!yawStabilizationEnabled)
-    {
-        response.success = false;
-        response.message = "Yaw stabilization is not enabled";
-        return true;
-    }
-
-    try
-    {
-        updateModelState([request](gazebo_msgs::ModelState &modelState)
-                         {
-      double desiredYaw = request.value % 360;
-      double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
-      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
-    }
-    catch (std::runtime_error &e)
-    {
-        response.success = false;
-        response.message = "Failed to set depth in Gazebo: " + std::string(e.what());
-        return true;
-    }
-
-    response.success = true;
-    return true;
-}
-
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response)
 {
     response.success = true;
@@ -189,13 +170,12 @@ int main(int argc, char **argv)
 
     ros::Rate communicationDelay(1000.0 / simulation_config["communication_delay"].get<uint32_t>());
 
-    ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 20);
+    ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["depth"], 20);
     ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
     ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["gazebo_velocity"], 20);
 
-    ros::ServiceServer velocityService = nodeHandle.advertiseService(ros_config["services"]["set_lag_march"], lagAndMarchCallback);
+    ros::ServiceServer horizontalMoveService = nodeHandle.advertiseService(ros_config["services"]["set_horizontal_move"], horizontalMoveCallback);
     ros::ServiceServer depthService = nodeHandle.advertiseService(ros_config["services"]["set_depth"], depthCallback);
-    ros::ServiceServer yawService = nodeHandle.advertiseService(ros_config["services"]["set_yaw"], yawCallback);
     ros::ServiceServer imuService = nodeHandle.advertiseService(ros_config["services"]["set_imu_enabled"], imuCallback);
     ros::ServiceServer stabilizationService = nodeHandle.advertiseService(ros_config["services"]["set_stabilization_enabled"], stabilizationCallback);
     ros::ServiceServer deviceService = nodeHandle.advertiseService(ros_config["services"]["set_device"], deviceActionCallback);
@@ -219,9 +199,12 @@ int main(int argc, char **argv)
             // Convert back to initial values
             depthMessage.data = -(modelState.response.pose.position.z - simulation_config["initial_depth"].get<double>()) * 100;
             float yaw_postprocessed = (tf::getYaw(modelState.response.pose.orientation) - simulation_config["initial_yaw"].get<double>()) * 180.0 / M_PI;
-            if (yaw_postprocessed > 180) {
+            if (yaw_postprocessed > 180)
+            {
                 yaw_postprocessed -= 360;
-            } else if (yaw_postprocessed < -180) {
+            }
+            else if (yaw_postprocessed < -180)
+            {
                 yaw_postprocessed += 360;
             }
             yawMessage.data = yaw_postprocessed;

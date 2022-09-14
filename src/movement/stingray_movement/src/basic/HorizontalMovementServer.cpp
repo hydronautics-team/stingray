@@ -1,6 +1,7 @@
 #include <basic/HorizontalMovementServer.h>
 
 #include <stingray_communication_msgs/SetHorizontalMove.h>
+#include <std_msgs/Int32.h>
 
 HorizontalMovementServer::HorizontalMovementServer(const std::string &actionName, double velocityCoefficient) : AbstractMovementActionServer<stingray_movement_msgs::HorizontalMoveAction,
                                                                                                                                              stingray_movement_msgs::HorizontalMoveGoalConstPtr>(actionName, velocityCoefficient){};
@@ -43,5 +44,25 @@ void HorizontalMovementServer::goalCallback(const stingray_movement_msgs::Horizo
     {
         ROS_INFO("Success set horizontal move");
         actionServer.setSucceeded();
+    }
+
+    if (goal->check_yaw)
+    {
+        int desiredYaw = goal->yaw;
+
+        while (true)
+        {
+            auto yawMessage = *ros::topic::waitForMessage<std_msgs::Int32>(ros_config["topics"]["yaw"], nodeHandle);
+            auto currentYaw = yawMessage.data;
+
+            ROS_INFO("Current yaw: %d, desired yaw: %d", currentYaw, desiredYaw);
+
+            auto delta = std::abs(desiredYaw - currentYaw);
+
+            if (delta <= control_config["movement"]["yaw_error_range"])
+            {
+                break;
+            }
+        }
     }
 }

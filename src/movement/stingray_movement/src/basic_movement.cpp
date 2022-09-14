@@ -1,6 +1,5 @@
-#include <basic/LinearMovementServer.h>
+#include <basic/HorizontalMovementServer.h>
 #include <basic/DiveServer.h>
-#include <basic/RotateServer.h>
 
 static const std::string NODE_NAME = "basic_movement";
 
@@ -22,9 +21,8 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    LinearMovementServer linearMovementServer(ros_config["actions"]["movement"]["linear"], velocityCoefficient);
+    HorizontalMovementServer horizontalMovementServer(ros_config["actions"]["movement"]["horizontal"], velocityCoefficient);
     DiveServer diveServer(ros_config["actions"]["movement"]["dive"]);
-    RotateServer rotateServer(ros_config["actions"]["movement"]["rotate"]);
 
     ros::spin();
 

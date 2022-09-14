@@ -4,7 +4,9 @@
 float32 march
 float32 lag
 # Degrees
-int16 yaw
+int32 yaw
+# check yaw
+bool check_yaw
 
 ---
 # Result

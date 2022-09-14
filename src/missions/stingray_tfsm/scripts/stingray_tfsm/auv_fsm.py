@@ -45,6 +45,8 @@ class AUVStateMachine(PureStateMachine):
 
         if rospy.is_shutdown():
             self.set_state(self.state_aborted)
+            self.auv.execute_stop_goal()
+
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
@@ -54,17 +56,19 @@ class AUVStateMachine(PureStateMachine):
                     scene['custom'](*scene['args'])
             else:
                 scene['custom'](*scene['args'])
+
         elif state_keyword == 'init':
             if 'time' in scene:
                 rospy.sleep(scene['time'])
-            elif 'preps' in scene:
+            if 'preps' in scene:
                 scene['preps'](*scene['args'])
+
         elif state_keyword == 'move':
             self.auv.execute_move_goal(scene)
-        elif state_keyword == 'rotate':
-            self.auv.execute_rotate_goal(scene)
+        
         elif state_keyword == 'dive':
             self.auv.execute_dive_goal(scene)
+
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:

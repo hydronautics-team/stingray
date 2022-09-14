@@ -16,16 +16,15 @@ void hardware_bridge::onInit()
     ros::NodeHandle &nodeHandle = getNodeHandle();
     // ROS publishers
     outputMessagePublisher = nodeHandle.advertise<std_msgs::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
-    depthPublisher = nodeHandle.advertise<std_msgs::UInt32>(ros_config["topics"]["depth"], 1000);
+    depthPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["depth"], 1000);
     yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
     // ROS subscribers
     inputMessageSubscriber = nodeHandle.subscribe(ros_config["topics"]["input_parcel"], 1000,
                                                   &hardware_bridge::inputMessage_callback, this);
     // ROS services
-    lagAndMarchService = nodeHandle.advertiseService(ros_config["services"]["set_lag_march"],
-                                                     &hardware_bridge::lagAndMarchCallback, this);
+    horizontalMoveService = nodeHandle.advertiseService(ros_config["services"]["set_horizontal_move"],
+                                                        &hardware_bridge::horizontalMoveCallback, this);
     depthService = nodeHandle.advertiseService(ros_config["services"]["set_depth"], &hardware_bridge::depthCallback, this);
-    yawService = nodeHandle.advertiseService(ros_config["services"]["set_yaw"], &hardware_bridge::yawCallback, this);
     imuService = nodeHandle.advertiseService(ros_config["services"]["set_imu_enabled"], &hardware_bridge::imuCallback, this);
     stabilizationService = nodeHandle.advertiseService(ros_config["services"]["set_stabilization_enabled"],
                                                        &hardware_bridge::stabilizationCallback, this);
@@ -63,24 +62,35 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
         NODELET_ERROR("Wrong checksum");
 }
 
-bool hardware_bridge::lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &lagAndMarchRequest,
-                                          stingray_communication_msgs::SetLagAndMarch::Response &lagAndMarchResponse)
+bool hardware_bridge::horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Request &horizontalMoveRequest,
+                                             stingray_communication_msgs::SetHorizontalMove::Response &horizontalMoveResponse)
 {
 
     if (lagStabilizationEnabled)
     {
         requestMessage.march = static_cast<int16_t>(0.0);
         requestMessage.lag = static_cast<int16_t>(0.0);
-        requestMessage.lag_error = static_cast<int16_t>(lagAndMarchRequest.lag);
+        requestMessage.lag_error = static_cast<int16_t>(horizontalMoveRequest.lag);
     }
     else
     {
-        requestMessage.march = static_cast<int16_t>(lagAndMarchRequest.march);
-        requestMessage.lag = static_cast<int16_t>(lagAndMarchRequest.lag);
+        NODELET_INFO("Setting march to %f", horizontalMoveRequest.march);
+        requestMessage.march = static_cast<int16_t>(horizontalMoveRequest.march);
+        NODELET_INFO("Setting lag to %f", horizontalMoveRequest.lag);
+        requestMessage.lag = static_cast<int16_t>(horizontalMoveRequest.lag);
     }
 
+    if (!yawStabilizationEnabled)
+    {
+        horizontalMoveResponse.success = false;
+        horizontalMoveResponse.message = "Yaw stabilization is not enabled";
+        return true;
+    }
+    NODELET_INFO("Setting yaw to %d", horizontalMoveRequest.yaw);
+    requestMessage.yaw = horizontalMoveRequest.yaw;
+
     isReady = true;
-    lagAndMarchResponse.success = true;
+    horizontalMoveResponse.success = true;
     return true;
 }
 
@@ -99,24 +109,6 @@ bool hardware_bridge::depthCallback(stingray_communication_msgs::SetInt32::Reque
 
     isReady = true;
     depthResponse.success = true;
-    return true;
-}
-
-bool hardware_bridge::yawCallback(stingray_communication_msgs::SetInt32::Request &yawRequest,
-                                  stingray_communication_msgs::SetInt32::Response &yawResponse)
-{
-    if (!yawStabilizationEnabled)
-    {
-        yawResponse.success = false;
-        yawResponse.message = "Yaw stabilization is not enabled";
-        return true;
-    }
-    NODELET_INFO("Setting yaw to %d", yawRequest.value);
-    requestMessage.yaw = yawRequest.value;
-    NODELET_INFO("Sending to STM32 yaw value: %d", requestMessage.yaw);
-
-    isReady = true;
-    yawResponse.success = true;
     return true;
 }
 
@@ -139,7 +131,7 @@ bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStab
     requestMessage.yaw = responseMessage.yaw;
     // set current depth
     requestMessage.depth = responseMessage.depth;
-    
+
     NODELET_INFO("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
     NODELET_INFO("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
@@ -149,9 +141,6 @@ bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStab
     depthStabilizationEnabled = stabilizationRequest.depthStabilization;
     yawStabilizationEnabled = stabilizationRequest.yawStabilization;
     lagStabilizationEnabled = stabilizationRequest.lagStabilization;
-
-    
-    
 
     isReady = true;
     stabilizationResponse.success = true;

@@ -6,7 +6,6 @@
 #include <ros/package.h>
 #include <fstream>
 
-#include <stingray_movement_msgs/LinearMoveAction.h>
 #include <stingray_utils/json.hpp>
 
 using json = nlohmann::json;

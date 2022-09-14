@@ -1,6 +1,7 @@
 from stingray_tfsm.auv_mission import AUVMission
 import rospy
 
+
 class InitAUVMission(AUVMission):
     """ Submission for robot initialization """
 
@@ -38,13 +39,23 @@ class InitAUVMission(AUVMission):
             self.enable_reset_imu()
         # get current yaw
         self.machine.auv.execute_move_goal({
-            'direction': 1,
-            'velocity': 0.0,
-            'duration': 1000
+            'march': 0.0,
+            'lag': 0.0,
+            'yaw': 0,
         })
         self.enable_stabilization(
             self.depth_stabilization, self.yaw_stabilization, self.lag_stabilization)
-        rospy.loginfo("FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK")
+
+        # init indication
+        self.machine.auv.execute_move_goal({
+            'march': 0.0,
+            'lag': 0.2,
+            'yaw': 0,
+            'wait': 0.1
+        })
+        self.machine.auv.execute_stop_goal()
+        rospy.loginfo(
+            "FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK")
 
     def setup_scene(self):
         return {
