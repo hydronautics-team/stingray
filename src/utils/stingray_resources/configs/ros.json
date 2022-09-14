@@ -7,6 +7,8 @@
         "input_parcel": "/stingray/topics/drivers/parcels",
         "depth": "/stingray/topics/position/depth",
         "yaw": "/stingray/topics/position/yaw",
+        "pinger_buckets": "/stingray/topics/position/pinger_buckets",
+        "pinger_flare": "/stingray/topics/position/pinger_flare",
         "gazebo_velocity": "/cmd_vel",
         "gazebo_odometry": "/odom"
     },

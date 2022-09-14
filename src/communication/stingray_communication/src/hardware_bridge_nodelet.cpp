@@ -52,9 +52,12 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
     if (ok)
     {
         NODELET_DEBUG("Received depth: %f", responseMessage.depth);
-        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
+        depthMessage.data = std::abs(static_cast<int>(responseMessage.depth)); // Convert metres to centimetres
+        // depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
         // TODO: Test yaw obtaining
-        yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
+        yawMessage.data = static_cast<int>(responseMessage.yaw);
+        // yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
+        // NODELET_INFO("Received yaw: %f", responseMessage.yaw);
     }
     else
         NODELET_ERROR("Wrong checksum");
@@ -108,9 +111,9 @@ bool hardware_bridge::yawCallback(stingray_communication_msgs::SetInt32::Request
         yawResponse.message = "Yaw stabilization is not enabled";
         return true;
     }
-    NODELET_DEBUG("Setting depth to %d", yawRequest.value);
+    NODELET_INFO("Setting yaw to %d", yawRequest.value);
     requestMessage.yaw = yawRequest.value;
-    NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.yaw);
+    NODELET_INFO("Sending to STM32 yaw value: %d", requestMessage.yaw);
 
     isReady = true;
     yawResponse.success = true;
