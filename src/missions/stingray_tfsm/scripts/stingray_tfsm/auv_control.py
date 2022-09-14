@@ -119,7 +119,11 @@ class AUVControl:
         :return: The result of the action
 
         """
-        goal = DiveGoal(scene['depth'])
+        check_depth = False
+        if 'check_depth' in scene:
+            check_depth = scene['check_depth']
+
+        goal = DiveGoal(scene['depth'], check_depth)
         self.DiveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                   active_cb=callback_active)
         if self.verbose:
@@ -135,7 +139,7 @@ class AUVControl:
             'yaw': 0,
         })
         # self.execute_dive_goal({
-        #     'depth': 0.0,
+        #     'depth': 0,
         # })
         rospy.loginfo('Everything stopped!')
 

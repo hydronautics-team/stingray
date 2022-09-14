@@ -29,10 +29,10 @@ class InitAUVMission(AUVMission):
         super().__init__(name)
 
     def setup_states(self):
-        pass
+        return []
 
     def setup_transitions(self):
-        pass
+        return []
 
     def initialize_auv(self):
         if self.reset_imu:
@@ -54,8 +54,6 @@ class InitAUVMission(AUVMission):
             'wait': 0.1
         })
         self.machine.auv.execute_stop_goal()
-        rospy.loginfo(
-            "FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK")
 
     def setup_scene(self):
         return {
