@@ -32,7 +32,7 @@ class AUVControl:
     # TODO: Errors handling
     # TODO: Devices support
 
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, multiplier=1):
         """ Class for controlling AUV in missions.
 
         The class is actually a unified wrap over actions and services calls.
@@ -41,7 +41,7 @@ class AUVControl:
             verbose (bool, optional): More debug messages. Defaults to False.
         """
         self.verbose = verbose
-
+        self.mult = multiplier
         self.yaw_angle = 0
         # configs
         self.ros_config = load_config("ros.json")
@@ -93,14 +93,18 @@ class AUVControl:
         :return: :
 
         """
+        if self.mult != 1:
+            actual_duration = scene['duration']*self.mult
+        else:
+            actual_duration = scene['duration']
         goal = LinearMoveGoal(
-            scene['direction'], scene['velocity'], scene['duration'])
+            scene['direction'], scene['velocity'], actual_duration)
         self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
         if self.verbose:
             rospy.loginfo('Goal sent')
         self.LinearMoveClient.wait_for_result(
-            timeout=rospy.Duration(secs=scene['duration'] // 1000 + 1))
+            timeout=rospy.Duration(secs=self.mult // 1000 + 1))
         
         if self.verbose:
             rospy.loginfo('Result got')
@@ -150,7 +154,10 @@ class AUVControl:
             self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
 
-            rospy.sleep(0.1)
+            if self.mult == 1:
+                rospy.sleep(0.1)
+            else:
+                rospy.sleep(angle//3/10 + 0.5)
             if self.verbose:
                 rospy.loginfo('Goal sent')
             self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))

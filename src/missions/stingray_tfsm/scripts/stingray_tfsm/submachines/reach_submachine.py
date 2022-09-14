@@ -19,17 +19,24 @@ class ReachSub(AUVMission):
                  confirmation: int = 2,
                  tolerance: int = 6,
                  vision: bool = True,
-                 acoustics: bool = False):
+                 acoustics: bool = False,
+                 speed: int = 1500,
+                 ):
         if target == 'yellow_flare':
             tolerance = 3
             confirmation = 1
         self.name = '_'+name
         self.camera = camera
         self.target = target
+        self.speed = speed
+        self.previous_center = (-1, -1)
         self.tolerance = tolerance
         self.confirmation = confirmation
+
+        self.target_detection_event = None
         self.centering_submachine = CenteringAngleSub(
             name + "_centering", camera, target, tolerance=self.tolerance, confirmation=self.confirmation)
+
         self.rotate_dir = 1 if rotate == "left" else -1
         self.target = target
         if avoid:
@@ -110,7 +117,7 @@ class ReachSub(AUVMission):
             'move_march' + self.name: {
                 'direction': 3,
                 'velocity': 0.4,
-                'duration': 1500
+                'duration': self.speed
             },
             'custom_avoid' + self.name: {
                 'subFSM': True,
@@ -126,7 +133,7 @@ class ReachSub(AUVMission):
             self.confirmation = 0.20
 
         self.target_detection_event = ObjectDetectionEvent(
-            get_objects_topic(self.camera), self.target, self.confirmation )
+            get_objects_topic(self.camera), self.target, self.confirmation)
 
     def target_event_handler(self):
         self.target_detection_event.start_listening()
@@ -134,7 +141,8 @@ class ReachSub(AUVMission):
 
         rospy.sleep(0.5)
         if self.target_detection_event.is_triggered():
-            rospy.loginfo("DEBUG: target detected by event")
+            rospy.loginfo(f"DEBUG: target detected by event")
+            rospy.loginfo(f"***\nDEBUG: target detected at {self.target_detection_event.get_track()}\n***")
             self.target_detection_event.stop_listening()
             return 1
         else:

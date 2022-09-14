@@ -6,6 +6,16 @@ DEFAULT_RANGE = 800
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_CONFIDENCE = 0.65
 
+# distance to height for yellow flare: 180 for 3, 90 for 6
+
+
+def width(_obj):
+    return abs(_obj.top_left_x - _obj.bottom_right_x)
+
+
+def height(_obj):
+    return abs(_obj.top_left_y - _obj.bottom_right_y)
+
 
 def calculate_proximity(tlx, brx, tly, bry, mrange):
     proximity = abs(tlx - brx)
@@ -14,6 +24,10 @@ def calculate_proximity(tlx, brx, tly, bry, mrange):
     # print("Ya sotvoril dich: ", proximity)
 
     return proximity
+
+
+def calculate_center(_obj):
+    return (_obj.top_left_x + _obj.bottom_right_x) // 2
 
 
 def very_close(tlx, brx, tly, bry, mrange, target, *args, **kwargs):
@@ -51,6 +65,20 @@ def get_best_object(objects, target_name, req_confidence):
         return None
 
 
+def get_closest_to_memorized(objects, target_name, memorized):
+    obj_to_asses = []
+    for obj in objects:
+        if obj.name == target_name:
+            pos = calculate_center(obj)
+            c = pos - memorized
+            direction = 1 if c >= 0 else -1
+            c = abs(c)
+            obj_to_asses.append((c, direction, pos))
+
+    result = min(obj_to_asses)
+    return result[0]*result[1], result[2]
+
+
 # todo unite all this mess into one class in order to check events analyzing only one message for all cases
 class ObjectDetectionEvent(TopicEvent):
     """An event that is triggered when specific object is detected in object detection topic.
@@ -75,8 +103,7 @@ class ObjectDetectionEvent(TopicEvent):
         self._object_name = object_name
         self._confidence = confidence
         self.current_center = None
-        if object_name == 'yellow_flare':
-            self._confidence -= 0.3
+        self.relative_shift = 0
 
     def get_track(self):
         return self.current_center
@@ -84,7 +111,11 @@ class ObjectDetectionEvent(TopicEvent):
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
         if _obj:
-            self.current_center = (_obj.top_left_x + _obj.bottom_right_x) // 2
+            if self.current_center is not None:
+                self.relative_shift, self.current_center =\
+                    get_closest_to_memorized(msg.objects, self._object_name, self.current_center + self.relative_shift)
+            else:
+                self.relative_shift, self.current_center = 0,  calculate_center(_obj)
             return 1
         return 0
 
