@@ -1,7 +1,7 @@
 # Request
-float64 march # March velocity
-float64 lag # Lag velocity
-float64 lag # Lag velocity
+float32 march # March velocity
+float32 lag # Lag velocity
+int16 yaw # Yaw degrees
 ---
 # Response
 bool success

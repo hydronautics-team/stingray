@@ -1,100 +1,47 @@
 #include <basic/HorizontalMovementServer.h>
 
-#include "common/AsyncTimer.h"
 #include <stingray_communication_msgs/SetHorizontalMove.h>
 
 HorizontalMovementServer::HorizontalMovementServer(const std::string &actionName, double velocityCoefficient) : AbstractMovementActionServer<stingray_movement_msgs::HorizontalMoveAction,
                                                                                                                                              stingray_movement_msgs::HorizontalMoveGoalConstPtr>(actionName, velocityCoefficient){};
 
-void HorizontalMsovementServer::goalCallback(const stingray_movement_msgs::HorizontalMoveGoalConstPtr &goal)
+void HorizontalMovementServer::goalCallback(const stingray_movement_msgs::HorizontalMoveGoalConstPtr &goal)
 {
-    ROS_INFO("Velosity: %f, direction: %d", goal->velocity, goal->direction);
+    ROS_INFO("March: %f", goal->march);
+    ROS_INFO("Lag: %f", goal->lag);
+    ROS_INFO("Yaw: %i", goal->yaw);
 
     stingray_communication_msgs::SetHorizontalMove serviceCall;
-    if (goal->velocity < 0.0 || goal->velocity > 1.0)
+    if (goal->march < 0.0 || goal->march > 1.0)
     {
         actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(),
-                                "Velocity value must be between 0.0 and 1.0");
+                                "March value must be between 0.0 and 1.0");
         return;
     }
-    auto velocity = velocityCoefficient * goal->velocity;
-    serviceCall.request.lag = serviceCall.request.march = 0.0;
 
-    if (goal->duration < 0.0)
+    if (goal->lag < 0.0 || goal->lag > 1.0)
     {
         actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(),
-                                "Duration value must not be less than 0.0");
+                                "Lag value must be between 0.0 and 1.0");
         return;
     }
 
-    ros::Rate checkRate(5);
-    AsyncTimer timer(goal->duration);
+    serviceCall.request.march = velocityCoefficient * goal->march;
+    serviceCall.request.lag = velocityCoefficient * goal->lag;
+    serviceCall.request.yaw = goal->yaw;
 
-    auto isStop = false;
-
-    switch (goal->direction)
-    {
-    case stingray_movement_msgs::HorizontalMoveGoal::DIRECTION_MARCH_FORWARD:
-        serviceCall.request.march = velocity;
-        break;
-    case stingray_movement_msgs::HorizontalMoveGoal::DIRECTION_MARCH_BACKWARDS:
-        serviceCall.request.march = -velocity;
-        break;
-    case stingray_movement_msgs::HorizontalMoveGoal::DIRECTION_LAG_RIGHT:
-        serviceCall.request.lag = velocity;
-        break;
-    case stingray_movement_msgs::HorizontalMoveGoal::DIRECTION_LAG_LEFT:
-        serviceCall.request.lag = -velocity;
-        break;
-    case stingray_movement_msgs::HorizontalMoveGoal::DIRECTION_STOP:
-        isStop = true;
-        break;
-    default:
-        actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(), "Wrong direction value");
-        return;
-        ;
-    }
-
-    auto result = ros::service::call(ros_config["services"]["set_lag_march"], serviceCall);
+    auto result = ros::service::call(ros_config["services"]["set_horizontal_move"], serviceCall);
 
     if (!result || !serviceCall.response.success)
     {
-        ROS_ERROR("Unable to set march and lag: %s", serviceCall.response.message.c_str());
+        ROS_ERROR("Unable to set horizontal move: %s", serviceCall.response.message.c_str());
         actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(),
                                 "Unable to set march and lag: %s" + serviceCall.response.message);
         return;
-    }
-    if (isStop)
-    {
-        actionServer.setSucceeded();
-        return;
-    }
-
-    timer.start();
-    bool preempted = false;
-    while (timer.isBusy() && !preempted)
-    {
-        preempted = actionServer.isPreemptRequested() || !ros::ok();
-        checkRate.sleep();
-    }
-
-    serviceCall.request.march = 0.0;
-    serviceCall.request.lag = 0.0;
-    result = ros::service::call(ros_config["services"]["set_lag_march"], serviceCall);
-    if (!result || !serviceCall.response.success)
-    {
-        ROS_ERROR("Unable to set march and lag: %s", serviceCall.response.message.c_str());
-        actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(),
-                                "Unable to set march and lag: %s" + serviceCall.response.message);
-        return;
-    }
-
-    if (!preempted)
-    {
-        actionServer.setSucceeded();
     }
     else
     {
-        actionServer.setPreempted();
+        ROS_INFO("Success set horizontal move");
+        actionServer.setSucceeded();
     }
 }

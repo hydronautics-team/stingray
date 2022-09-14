@@ -11,6 +11,7 @@
         "gazebo_odometry": "/odom"
     },
     "services": {
+        "set_horizontal_move": "/stingray/services/control/set_horizontal_move",
         "set_lag_march": "/stingray/services/control/set_lag_and_march",
         "set_depth": "/stingray/services/control/set_depth",
         "set_yaw": "/stingray/services/control/set_yaw",

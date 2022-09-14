@@ -66,6 +66,7 @@ add_message_files(
 add_action_files(
    FILES
    LinearMove.action
+   HorizontalMove.action
    Dive.action
    Rotate.action
    Align.action

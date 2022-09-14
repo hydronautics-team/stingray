@@ -20,6 +20,7 @@ add_service_files(
         SetStabilization.srv
         SetInt32.srv
         SetLagAndMarch.srv
+        SetHorizontalMove.srv
 )
 
 generate_messages(

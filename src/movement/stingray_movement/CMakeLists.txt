@@ -119,6 +119,8 @@ add_executable(
   include/common/AsyncTimer.h
   src/common/AsyncTimer.cpp
   include/common/AbstractMovementActionServer.h
+  include/basic/HorizontalMovementServer.h
+  src/basic/HorizontalMovementServer.cpp
   include/basic/LinearMovementServer.h
   src/basic/LinearMovementServer.cpp
   include/basic/DiveServer.h
