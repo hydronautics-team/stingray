@@ -54,6 +54,8 @@ class InitAUVMission(AUVMission):
             'wait': 0.1
         })
         self.machine.auv.execute_stop_goal()
+        rospy.loginfo('Sleep before missions')
+        rospy.sleep(5)
 
     def setup_scene(self):
         return {
