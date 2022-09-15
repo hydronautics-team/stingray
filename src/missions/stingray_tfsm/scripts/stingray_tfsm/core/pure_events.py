@@ -84,7 +84,10 @@ class TopicEvent(PureEvent):
                                            queue_size=self._queue_size)
 
     def stop_listening(self):
-        self._topic_sub.unregister()
+        try:
+            self._topic_sub.unregister()
+        except:
+            pass
 
     def is_triggered(self):
         return self._is_triggered

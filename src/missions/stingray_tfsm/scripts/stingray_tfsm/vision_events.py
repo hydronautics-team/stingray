@@ -2,7 +2,7 @@ from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 
 
-DEFAULT_RANGE = 800
+DEFAULT_RANGE = 640
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_CONFIDENCE = 0.65
 

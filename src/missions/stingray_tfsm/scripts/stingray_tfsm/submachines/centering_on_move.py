@@ -12,8 +12,8 @@ class CenteringOnMoveSub(AUVMission):
                  camera: str,
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 6,
-                 angle: int = 15):
+                 tolerance: int = 20,
+                 angle: int = 30):
         """ Submission for centering on object in camera
 
         Args:
@@ -63,7 +63,7 @@ class CenteringOnMoveSub(AUVMission):
             self.machine.state_init: {
                 'preps': self.machine.auv.execute_move_goal,
                 "args": ({
-                    'march': 0.5,
+                    'march': 1.0,
                     'lag': 0.0,
                     'yaw': 0,
                 },),
@@ -81,12 +81,12 @@ class CenteringOnMoveSub(AUVMission):
                 'args': (self.gate_lefter,)
             },
             'move_rotate_anti' + self.name: {
-                'march': 0.7,
+                'march': 1.0,
                 'lag': 0.0,
                 'yaw': -self.d_angle,
             },
             'move_rotate_clock' + self.name: {
-                'march': 0.7,
+                'march': 1.0,
                 'lag': 0.0,
                 'yaw': self.d_angle,
             },
