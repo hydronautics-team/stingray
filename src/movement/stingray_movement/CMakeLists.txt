@@ -119,12 +119,10 @@ add_executable(
   include/common/AsyncTimer.h
   src/common/AsyncTimer.cpp
   include/common/AbstractMovementActionServer.h
-  include/basic/LinearMovementServer.h
-  src/basic/LinearMovementServer.cpp
+  include/basic/HorizontalMovementServer.h
+  src/basic/HorizontalMovementServer.cpp
   include/basic/DiveServer.h
   src/basic/DiveServer.cpp
-  include/basic/RotateServer.h
-  src/basic/RotateServer.cpp
   src/basic_movement.cpp)
 target_link_libraries(basic_movement ${catkin_LIBRARIES})
 add_dependencies(basic_movement ${stingray_communication_msgs_EXPORTED_TARGETS}

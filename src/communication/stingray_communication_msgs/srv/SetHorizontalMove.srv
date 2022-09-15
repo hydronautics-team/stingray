@@ -1,0 +1,8 @@
+# Request
+float32 march # March velocity
+float32 lag # Lag velocity
+int32 yaw # Yaw degrees
+---
+# Response
+bool success
+string message

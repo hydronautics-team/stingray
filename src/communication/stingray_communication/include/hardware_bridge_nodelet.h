@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include <stingray_communication_msgs/SetLagAndMarch.h>
+#include <stingray_communication_msgs/SetHorizontalMove.h>
 #include <stingray_communication_msgs/SetFloat64.h>
 #include <stingray_communication_msgs/SetInt32.h>
 #include <stingray_communication_msgs/SetDeviceAction.h>
@@ -32,12 +32,10 @@ public:
 
 private:
     void inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg);
-    bool lagAndMarchCallback(stingray_communication_msgs::SetLagAndMarch::Request &lagAndMarchRequest,
-                             stingray_communication_msgs::SetLagAndMarch::Response &lagAndMarchResponse);
+    bool horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Request &horizontalMoveRequest,
+                             stingray_communication_msgs::SetHorizontalMove::Response &horizontalMoveResponse);
     bool depthCallback(stingray_communication_msgs::SetInt32::Request &depthRequest,
                        stingray_communication_msgs::SetInt32::Response &depthResponse);
-    bool yawCallback(stingray_communication_msgs::SetInt32::Request &yawRequest,
-                     stingray_communication_msgs::SetInt32::Response &yawResponse);
     bool imuCallback(std_srvs::SetBool::Request &imuRequest,
                      std_srvs::SetBool::Response &imuResponse);
     bool deviceActionCallback(stingray_communication_msgs::SetDeviceAction::Request &deviceRequest,
@@ -53,15 +51,14 @@ private:
     // ROS subscribers
     ros::Subscriber inputMessageSubscriber;
     // ROS services
-    ros::ServiceServer lagAndMarchService;
+    ros::ServiceServer horizontalMoveService;
     ros::ServiceServer depthService;
-    ros::ServiceServer yawService;
     ros::ServiceServer imuService;
     ros::ServiceServer stabilizationService;
     ros::ServiceServer deviceActionService;
     // Message containers
     std_msgs::UInt8MultiArray outputMessage; // Hardware bridge -> Protocol_bridge
-    std_msgs::UInt32 depthMessage;
+    std_msgs::Int32 depthMessage;
     std_msgs::Int32 yawMessage;
     RequestMessage requestMessage;
     ResponseMessage responseMessage;

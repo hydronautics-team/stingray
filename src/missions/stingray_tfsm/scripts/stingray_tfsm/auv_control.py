@@ -1,6 +1,6 @@
 import rospy
 from actionlib import SimpleActionClient, SimpleGoalState
-from stingray_movement_msgs.msg import LinearMoveAction, RotateAction, DiveAction, LinearMoveGoal, RotateGoal, DiveGoal
+from stingray_movement_msgs.msg import HorizontalMoveAction, DiveAction, HorizontalMoveGoal, DiveGoal
 from std_msgs.msg import Int32
 from stingray_resources.utils import load_config
 from stingray_tfsm.core.pure_events import PureEvent
@@ -52,14 +52,11 @@ class AUVControl:
                                                callback=self.yaw_topic_callback,
                                                queue_size=10)
 
-        self.LinearMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["linear"],
-                                                   LinearMoveAction)
-        self.RotateClient = SimpleActionClient(self.ros_config["actions"]["movement"]["rotate"],
-                                               RotateAction)
+        self.HorizontalMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["horizontal"],
+                                                   HorizontalMoveAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
                                              DiveAction)
-        self.LinearMoveClient.wait_for_server()
-        self.RotateClient.wait_for_server()
+        self.HorizontalMoveClient.wait_for_server()
         self.DiveClient.wait_for_server()
 
     @property
@@ -84,7 +81,7 @@ class AUVControl:
 
     def execute_move_goal(self, scene):
         """
-        The execute_move_goal function sends a goal to the LinearMoveClient action server.
+        The execute_move_goal function sends a goal to the HorizontalMoveClient action server.
         The goal is defined by the scene dictionary, which contains direction, velocity and duration.
         The function waits for the result of the action execution and returns it.
 
@@ -94,20 +91,28 @@ class AUVControl:
 
         """
         if self.mult != 1:
-            actual_duration = scene['duration']*self.mult
+            actual_duration = scene['wait']*self.mult
         else:
-            actual_duration = scene['duration']
+            actual_duration = scene['wait']
         goal = LinearMoveGoal(
             scene['direction'], scene['velocity'], actual_duration)
         self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+        check_yaw = False
+        if 'check_yaw' in scene:
+            check_yaw = scene['check_yaw']
+
+        goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
+
+        self.HorizontalMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                         active_cb=callback_active)
         if self.verbose:
-            rospy.loginfo('Goal sent')
-        self.LinearMoveClient.wait_for_result(
-            timeout=rospy.Duration(secs=self.mult // 1000 + 1))
-        
+            rospy.loginfo('Move goal sent')
+        result = self.HorizontalMoveClient.wait_for_result(timeout=rospy.Duration(secs=5))
         if self.verbose:
-            rospy.loginfo('Result got')
+            rospy.loginfo(f'Move result got {result}')
+        if 'wait' in scene:
+            rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
+            rospy.sleep(scene['wait'])
 
     def execute_dive_goal(self, scene):
         """
@@ -129,6 +134,19 @@ class AUVControl:
         self.DiveClient.wait_for_result(timeout=rospy.Duration(secs=5))
         if self.verbose:
             rospy.loginfo('Result got')
+
+
+    def execute_stop_goal(self):
+        self.execute_move_goal({
+            'march': 0.0,
+            'lag': 0.0,
+            'yaw': 0,
+        })
+        # self.execute_dive_goal({
+        #     'depth': 0.0,
+        # })
+        rospy.loginfo('Everything stopped!')
+
 
     def execute_rotate_goal(self, scene):
         """
@@ -165,134 +183,134 @@ class AUVControl:
         if self.verbose:
             rospy.loginfo('Result got')
 
-    def rotate(self, yaw_deg: float):
-        """Rotates the vehicle. Blocking call.
-
-        :param yaw_deg: Angle to rotate in degrees, positive is for counterclockwise, negative - for clockwise.
-        """
-
-        goal = self._create_rotate_goal(yaw_deg=yaw_deg)
-        self._exec_action(self.RotateClient, goal)
-
-    def march(self, duration_ms: int, velocity: float, stopping_event: PureEvent = None):
-        """Moves the vehicle by march. Blocking call. Action execution will be canceled if stopping_event is triggered.
-
-        :param duration_ms: Duration of movement in milliseconds.
-        :param velocity:  Velocity of movement, from 0.0 to 1.0, positive to move forward, negative - to backward movement.
-        :param stopping_event: Event that stops movement.
-        """
-
-        goal = self._create_march_goal(duration_ms, velocity)
-        return self._exec_action(self.LinearMoveClient, goal, stopping_event)
-
-    def lag(self, duration_ms: int, velocity: float, stopping_event: PureEvent = None):
-        """Moves the vehicle by lag. Blocking call. Action execution will be canceled if stopping_event is triggered.
-
-        :param duration_ms: Duration of the movement in milliseconds.
-        :param velocity: Velocity of movement, from 0.0 to 1.0, positive to move right, negative - to move left (from vehicle point of view).
-        :param stopping_event: Event that stops movement.
-        """
-
-        goal = self._create_lag_goal(duration_ms, velocity)
-        return self._exec_action(self.LinearMoveClient, goal, stopping_event)
-
-    def dive(self, depth_cm: int):
-        """Dives the vehicle. Blocking call.
-
-        :param depth_cm: Depth of diving in centimeters, must be positive.
-        """
-
-        goal = DiveGoal(depth=depth_cm)
-        self.DiveClient.send_goal(goal)
-        self.DiveClient.wait_for_result()
-
-    def stop(self):
-        """Stops the vehicle. Blocking call.
-        """
-
-        goal = self._create_stop_goal()
-        self.LinearMoveClient.send_goal(goal)
-        self.LinearMoveClient.wait_for_result()
-
-    @staticmethod
-    def _create_rotate_goal(yaw_deg: float):
-        """Constructs action goal for rotation action server. This is a private method.
-
-        :param yaw_deg: Angle to rotate in degrees, positive is for counterclockwise, negative - for clockwise.
-        :return: Action goal.
-        """
-        return RotateGoal(yaw=yaw_deg)
-
-    @staticmethod
-    def _create_march_goal(duration_ms: int, velocity: float):
-        """Constructs action goal for linear movement server to move by march. This is a private method.
-
-        :param duration_ms: Duration of movement in milliseconds.
-        :param velocity:  Velocity of movement, from 0.0 to 1.0, positive to move forward, negative - to backward movement.
-        :return: Action goal.
-        """
-
-        direction = LinearMoveGoal.DIRECTION_MARCH_FORWARD if velocity >= 0 \
-            else LinearMoveGoal.DIRECTION_MARCH_BACKWARDS
-        goal = LinearMoveGoal(direction=direction, duration=duration_ms,
-                              velocity=abs(velocity))
-        return goal
-
-    @staticmethod
-    def _create_lag_goal(duration_ms: int, velocity: float):
-        """Constructs action goal for linear movement server to move by lag. This is a private method.
-
-        :param duration_ms: Duration of the movement in milliseconds.
-        :param velocity: Velocity of movement, from 0.0 to 1.0, positive to move right, negative - to move left (from vehicle point of view).
-        :return: Action goal.
-        """
-
-        direction = LinearMoveGoal.DIRECTION_LAG_RIGHT if velocity >= 0 \
-            else LinearMoveGoal.DIRECTION_LAG_LEFT
-        goal = LinearMoveGoal(direction=direction, duration=duration_ms,
-                              velocity=abs(velocity))
-        return goal
-
-    @staticmethod
-    def _create_stop_goal():
-        """Constructs action goal to stop any movement. This is a private method.
-
-        :return: Action goal.
-        """
-
-        return LinearMoveGoal(
-            direction=LinearMoveGoal.DIRECTION_STOP, duration=0, velocity=0)
-
-    @staticmethod
-    def _exec_action(action_client: SimpleActionClient, goal, stopping_event: PureEvent = None):
-        """Executes goal with specified action client and optional event that stops action execution when triggered.
-        This is a private method.
-
-        :param action_client: Action client to use.
-        :param goal: Action goal to execute.
-        :param stopping_event: Optional event that stops goal execution when triggered.
-        :return: None if stopping_event is None. True if goal execution is stopped because of triggered stopping_event,
-        False otherwise.
-        """
-        if stopping_event is None:
-            action_client.send_goal(goal)
-            action_client.wait_for_result()
-            return
-
-        stopping_event.start_listening()
-        action_client.send_goal(goal,
-                                active_cb=None,
-                                feedback_cb=None,
-                                done_cb=None)
-
-        check_rate = rospy.Rate(100)
-
-        while True:
-            goal_state = action_client.get_state()
-            if goal_state == SimpleGoalState.DONE:
-                stopping_event.stop_listening()
-                return False
-            if stopping_event.is_triggered():
-                action_client.cancel_goal()
-                return True
-            check_rate.sleep()
+    #def rotate(self, yaw_deg: float):
+    #    """Rotates the vehicle. Blocking call.
+    #
+    #    :param yaw_deg: Angle to rotate in degrees, positive is for counterclockwise, negative - for clockwise.
+    # #    """
+    #
+    #     goal = self._create_rotate_goal(yaw_deg=yaw_deg)
+    #     self._exec_action(self.RotateClient, goal)
+    #
+    # def march(self, duration_ms: int, velocity: float, stopping_event: PureEvent = None):
+    #     """Moves the vehicle by march. Blocking call. Action execution will be canceled if stopping_event is triggered.
+    #
+    #     :param duration_ms: Duration of movement in milliseconds.
+    #     :param velocity:  Velocity of movement, from 0.0 to 1.0, positive to move forward, negative - to backward movement.
+    #     :param stopping_event: Event that stops movement.
+    #     """
+    #
+    #     goal = self._create_march_goal(duration_ms, velocity)
+    #     return self._exec_action(self.LinearMoveClient, goal, stopping_event)
+    #
+    # def lag(self, duration_ms: int, velocity: float, stopping_event: PureEvent = None):
+    #     """Moves the vehicle by lag. Blocking call. Action execution will be canceled if stopping_event is triggered.
+    #
+    #     :param duration_ms: Duration of the movement in milliseconds.
+    #     :param velocity: Velocity of movement, from 0.0 to 1.0, positive to move right, negative - to move left (from vehicle point of view).
+    #     :param stopping_event: Event that stops movement.
+    #     """
+    #
+    #     goal = self._create_lag_goal(duration_ms, velocity)
+    #     return self._exec_action(self.LinearMoveClient, goal, stopping_event)
+    #
+    # def dive(self, depth_cm: int):
+    #     """Dives the vehicle. Blocking call.
+    #
+    #     :param depth_cm: Depth of diving in centimeters, must be positive.
+    #     """
+    #
+    #     goal = DiveGoal(depth=depth_cm)
+    #     self.DiveClient.send_goal(goal)
+    #     self.DiveClient.wait_for_result()
+    #
+    # def stop(self):
+    #     """Stops the vehicle. Blocking call.
+    #     """
+    #
+    #     goal = self._create_stop_goal()
+    #     self.LinearMoveClient.send_goal(goal)
+    #     self.LinearMoveClient.wait_for_result()
+    #
+    # @staticmethod
+    # def _create_rotate_goal(yaw_deg: float):
+    #     """Constructs action goal for rotation action server. This is a private method.
+    #
+    #     :param yaw_deg: Angle to rotate in degrees, positive is for counterclockwise, negative - for clockwise.
+    #     :return: Action goal.
+    #     """
+    #     return RotateGoal(yaw=yaw_deg)
+    #
+    # @staticmethod
+    # def _create_march_goal(duration_ms: int, velocity: float):
+    #     """Constructs action goal for linear movement server to move by march. This is a private method.
+    #
+    #     :param duration_ms: Duration of movement in milliseconds.
+    #     :param velocity:  Velocity of movement, from 0.0 to 1.0, positive to move forward, negative - to backward movement.
+    #     :return: Action goal.
+    #     """
+    #
+    #     direction = LinearMoveGoal.DIRECTION_MARCH_FORWARD if velocity >= 0 \
+    #         else LinearMoveGoal.DIRECTION_MARCH_BACKWARDS
+    #     goal = LinearMoveGoal(direction=direction, duration=duration_ms,
+    #                           velocity=abs(velocity))
+    #     return goal
+    #
+    # @staticmethod
+    # def _create_lag_goal(duration_ms: int, velocity: float):
+    #     """Constructs action goal for linear movement server to move by lag. This is a private method.
+    #
+    #     :param duration_ms: Duration of the movement in milliseconds.
+    #     :param velocity: Velocity of movement, from 0.0 to 1.0, positive to move right, negative - to move left (from vehicle point of view).
+    #     :return: Action goal.
+    #     """
+    #
+    #     direction = LinearMoveGoal.DIRECTION_LAG_RIGHT if velocity >= 0 \
+    #         else LinearMoveGoal.DIRECTION_LAG_LEFT
+    #     goal = LinearMoveGoal(direction=direction, duration=duration_ms,
+    #                           velocity=abs(velocity))
+    #     return goal
+    #
+    # @staticmethod
+    # def _create_stop_goal():
+    #     """Constructs action goal to stop any movement. This is a private method.
+    #
+    #     :return: Action goal.
+    #     """
+    #
+    #     return LinearMoveGoal(
+    #         direction=LinearMoveGoal.DIRECTION_STOP, duration=0, velocity=0)
+    #
+    # @staticmethod
+    # def _exec_action(action_client: SimpleActionClient, goal, stopping_event: PureEvent = None):
+    #     """Executes goal with specified action client and optional event that stops action execution when triggered.
+    #     This is a private method.
+    #
+    #     :param action_client: Action client to use.
+    #     :param goal: Action goal to execute.
+    #     :param stopping_event: Optional event that stops goal execution when triggered.
+    #     :return: None if stopping_event is None. True if goal execution is stopped because of triggered stopping_event,
+    #     False otherwise.
+    #     """
+    #     if stopping_event is None:
+    #         action_client.send_goal(goal)
+    #         action_client.wait_for_result()
+    #         return
+    #
+    #     stopping_event.start_listening()
+    #     action_client.send_goal(goal,
+    #                             active_cb=None,
+    #                             feedback_cb=None,
+    #                             done_cb=None)
+    #
+    #     check_rate = rospy.Rate(100)
+    #
+    #     while True:
+    #         goal_state = action_client.get_state()
+    #         if goal_state == SimpleGoalState.DONE:
+    #             stopping_event.stop_listening()
+    #             return False
+    #         if stopping_event.is_triggered():
+    #             action_client.cancel_goal()
+    #             return True
+    #         check_rate.sleep()

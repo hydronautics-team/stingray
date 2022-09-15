@@ -44,7 +44,7 @@ class AUVStateMachine(PureStateMachine):
 
         """
         state = self.state
-        rospy.loginfo(state)
+        rospy.loginfo(f"FSM: {self.name}\tSTATE: {self.state}")
         
         if self.name.upper() in state:
             state = state.replace(self.name.upper() + "_", "")
@@ -57,6 +57,8 @@ class AUVStateMachine(PureStateMachine):
 
         if rospy.is_shutdown():
             self.set_state(self.state_aborted)
+            self.auv.execute_stop_goal()
+
         elif state_keyword == 'custom':
             if 'subFSM' in scene:
                 if scene['subFSM']:
@@ -66,19 +68,27 @@ class AUVStateMachine(PureStateMachine):
                     scene['custom'](*scene['args'])
             else:
                 scene['custom'](*scene['args'])
+
         elif state_keyword == 'init':
             if 'time' in scene:
                 rospy.sleep(scene['time'])
-            elif 'preps' in scene:
+            if 'preps' in scene:
                 scene['preps'](*scene['args'])
+        
+        elif state_keyword == 'aborted':
+            if 'time' in scene:
+                rospy.sleep(scene['time'])
+            if 'preps' in scene:
+                scene['preps'](*scene['args'])
+
         elif state_keyword == 'move':
             if self.hardware:
                 scene['duration'] = scene['duration']*self.h_multiplier
             self.auv.execute_move_goal(scene)
-        elif state_keyword == 'rotate':
-            self.auv.execute_rotate_goal(scene)
+        
         elif state_keyword == 'dive':
             self.auv.execute_dive_goal(scene)
+
         elif state_keyword == 'condition':
             if 'subFSM' in scene:
                 if scene['subFSM']:
@@ -99,6 +109,5 @@ class AUVStateMachine(PureStateMachine):
         elif state_keyword == self.state_end:
             exit()
 
-        rospy.loginfo(
-            f"AUVStateMachine {self.name}: Doing the transition {next_trigger}")
+        rospy.loginfo(f"FSM: {self.name}\tTRANSITION: {next_trigger}")
         self.trigger(next_trigger)
