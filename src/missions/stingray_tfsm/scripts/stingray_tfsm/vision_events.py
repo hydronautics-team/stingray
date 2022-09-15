@@ -73,12 +73,17 @@ class ObjectDetectionEvent(TopicEvent):
         self._confidence = confidence
         if object_name == 'yellow_flare':
             self._confidence -= 0.3
+        self.error = 0
 
     def _trigger_fn(self, msg: ObjectsArray):
         obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
         for i, name in obj_to_num:
             if self._object_name == name:
                 if msg.objects[i].confidence >= self._confidence:
+                    triggered_object = msg.objects[i]
+                    bbox_size = triggered_object.bottom_right_x - triggered_object.top_left_x
+                    self.error = triggered_object.top_left_x + (bbox_size) // 2 - 400
+
                     return 1
         return 0
 
