@@ -75,6 +75,7 @@ class AUVControl:
 
         """
         self.yaw_angle = msg.data
+        rospy.loginfo(f"YAW {self.yaw_angle}")
         if self.verbose:
             rospy.loginfo(
                 f"Absolute angle got from machine is {msg.data}; It is set on higher level")
