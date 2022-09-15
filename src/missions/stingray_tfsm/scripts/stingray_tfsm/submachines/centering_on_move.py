@@ -20,7 +20,8 @@ class CenteringOnMoveSub(AUVMission):
             name (str): mission name
             camera (str): camera name
             target (str): object name
-            confirmation (int, optional): confirmation value of continuously detected object after which will be event triggered. Defaults to 2.
+            confirmation (int, optional): confirmation value of continuously detected object
+             after which will be event triggered. Defaults to 2.
             tolerance (int, optional): centering tolerance. Defaults to 14.
         """
         self.name = '_'+name

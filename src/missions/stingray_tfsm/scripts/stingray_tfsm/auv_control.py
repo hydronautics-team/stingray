@@ -53,7 +53,7 @@ class AUVControl:
                                                queue_size=10)
 
         self.HorizontalMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["horizontal"],
-                                                   HorizontalMoveAction)
+                                                       HorizontalMoveAction)
         self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
                                              DiveAction)
         self.HorizontalMoveClient.wait_for_server()
@@ -90,13 +90,12 @@ class AUVControl:
         :return: :
 
         """
-        if self.mult != 1:
-            actual_duration = scene['wait']*self.mult
-        else:
-            actual_duration = scene['wait']
-        goal = LinearMoveGoal(
-            scene['direction'], scene['velocity'], actual_duration)
-        self.LinearMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+        if 'wait' in scene:
+            if self.mult != 1:
+                actual_duration = scene['wait'] * self.mult
+            else:
+                actual_duration = scene['wait']
+
         check_yaw = False
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
@@ -104,14 +103,14 @@ class AUVControl:
         goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
 
         self.HorizontalMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                        active_cb=callback_active)
+                                            active_cb=callback_active)
         if self.verbose:
             rospy.loginfo('Move goal sent')
         result = self.HorizontalMoveClient.wait_for_result(timeout=rospy.Duration(secs=5))
         if self.verbose:
             rospy.loginfo(f'Move result got {result}')
         if 'wait' in scene:
-            rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
+            rospy.loginfo(f"Wait for {actual_duration} seconds ...")
             rospy.sleep(scene['wait'])
 
     def execute_dive_goal(self, scene):
@@ -135,7 +134,6 @@ class AUVControl:
         if self.verbose:
             rospy.loginfo('Result got')
 
-
     def execute_stop_goal(self):
         self.execute_move_goal({
             'march': 0.0,
@@ -146,7 +144,6 @@ class AUVControl:
         #     'depth': 0.0,
         # })
         rospy.loginfo('Everything stopped!')
-
 
     def execute_rotate_goal(self, scene):
         """
@@ -168,7 +165,6 @@ class AUVControl:
             rospy.loginfo("Absolute angle is {} now".format(
                 self.new_yaw))
 
-
         goal = RotateGoal(yaw=self.new_yaw)
         self.RotateClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                     active_cb=callback_active)
@@ -176,14 +172,14 @@ class AUVControl:
         if self.mult == 1:
             rospy.sleep(0.1)
         else:
-            rospy.sleep(angle//3/10 + 0.5)
+            rospy.sleep(angle // 3 / 10 + 0.5)
         if self.verbose:
             rospy.loginfo('Goal sent')
         self.RotateClient.wait_for_result(timeout=rospy.Duration(secs=5))
         if self.verbose:
             rospy.loginfo('Result got')
 
-    #def rotate(self, yaw_deg: float):
+    # def rotate(self, yaw_deg: float):
     #    """Rotates the vehicle. Blocking call.
     #
     #    :param yaw_deg: Angle to rotate in degrees, positive is for counterclockwise, negative - for clockwise.
