@@ -106,27 +106,3 @@ class CenteringOnMoveSub(AUVMission):
         self.gate_righter = ObjectOnRight(
             get_objects_topic(self.camera), self.target, self.confirmation, tolerance=self.tolerance * 0.01)
 
-    def check_machine(self):
-        if type(self.machine) is AUVStateMachine or \
-                type(self.machine) is PureStateMachine:
-            return 1
-        else:
-            print(type(self.machine))
-            raise TypeError("machine was not initialized")
-
-    def set_init_state(self,):
-        if self.check_machine():
-            self.machine.set_state(self.machine.state_init)
-
-    def set_state(self, state):
-        if self.check_machine():
-            self.machine.set_state(state)
-
-    def run(self):
-        if self.check_machine():
-            value = self.machine.run()
-            return value
-
-    def verbose(self, verbose):
-        if self.check_machine():
-            self.machine.verbose(verbose)

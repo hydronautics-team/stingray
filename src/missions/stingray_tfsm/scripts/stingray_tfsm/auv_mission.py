@@ -68,3 +68,10 @@ class AUVMission(PureMission):
         rospy.sleep(1)
         rospy.loginfo(
             f"IMU reset: {response.success}, message: {response.message} ")
+
+    def check_machine(self):
+        if type(self.machine) is AUVStateMachine:
+            return 1
+        else:
+            raise TypeError("AUVStateMachine was not initialized")
+    

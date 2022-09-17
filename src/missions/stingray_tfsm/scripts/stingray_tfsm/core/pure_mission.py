@@ -118,22 +118,34 @@ class PureMission(ABC):
         """
         The verbose function is used to set machine's extended output
 
-        :param self: Reference the class itself
         :param verbose: Determine whether to print the progress of the algorithm
         :return: None
 
         """
-        self.machine.set_verbose(verbose)
+        if self.check_machine():
+            self.machine.verbose(verbose)
 
     def run(self):
         """
         The run function is a relay to state machine's run function.
 
-        :param self: Reference the current instance of the class
         :return: True if machine finished its tasks successfully
 
         """
-        if self.machine is not None:
-            return self.machine.run()
+        if self.check_machine():
+            value = self.machine.run()
+            return value
+
+    def check_machine(self):
+        if type(self.machine) is PureStateMachine:
+            return 1
         else:
-            raise TypeError("FSM was not initialized")
+            raise TypeError("PureStateMachine was not initialized")
+
+    def set_init_state(self, ):
+        if self.check_machine():
+            self.machine.set_state(self.machine.state_init)
+
+    def set_state(self, state):
+        if self.check_machine():
+            self.machine.set_state(state)
