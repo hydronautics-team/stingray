@@ -55,7 +55,7 @@ class InitAUVMission(AUVMission):
         })
         self.machine.auv.execute_stop_goal()
         rospy.loginfo(
-            "FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK")
+            "FUUUUUUUUUUUUUUUUUUUUwUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUCK")
 
     def setup_scene(self):
         return {
