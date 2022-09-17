@@ -87,7 +87,7 @@ bool hardware_bridge::horizontalMoveCallback(stingray_communication_msgs::SetHor
         return true;
     }
     NODELET_INFO("Setting yaw to %d", horizontalMoveRequest.yaw);
-    requestMessage.yaw = horizontalMoveRequest.yaw;
+    requestMessage.yaw = static_cast<int16_t>(horizontalMoveRequest.yaw);
 
     isReady = true;
     horizontalMoveResponse.success = true;
@@ -134,11 +134,14 @@ bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStab
 
     NODELET_INFO("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);
+    NODELET_INFO("Setting pitch stabilization %d", stabilizationRequest.pitchStabilization);
+    setStabilizationState(requestMessage, SHORE_STABILIZE_PITCH_BIT, stabilizationRequest.pitchStabilization);
     NODELET_INFO("Setting yaw stabilization %d", stabilizationRequest.yawStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, stabilizationRequest.yawStabilization);
     NODELET_INFO("Setting lag stabilization %d", stabilizationRequest.lagStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, stabilizationRequest.lagStabilization);
     depthStabilizationEnabled = stabilizationRequest.depthStabilization;
+    pitchStabilizationEnabled = stabilizationRequest.pitchStabilization;
     yawStabilizationEnabled = stabilizationRequest.yawStabilization;
     lagStabilizationEnabled = stabilizationRequest.lagStabilization;
 

@@ -1,5 +1,6 @@
 # Request
 bool depthStabilization
+bool pitchStabilization
 bool yawStabilization
 bool lagStabilization
 ---

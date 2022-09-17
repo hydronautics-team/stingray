@@ -7,7 +7,7 @@ from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
 from stingray_object_detection_msgs.msg import ObjectsArray
 from stingray_communication_msgs.srv import SetStabilization
-from std_msgs.msg import Bool 
+from std_msgs.msg import Bool
 from stingray_object_detection.utils import get_objects_topic
 from stingray_resources.utils import load_config
 
@@ -41,7 +41,7 @@ class AUVMission(PureMission):
         rospy.loginfo(
             f"Object detection enabled: {response.success} for camera: {camera_topic} ")
 
-    def enable_stabilization(self, depthStabilization: bool = False, yawStabilization: bool = False, lagStabilization: bool = False):
+    def enable_stabilization(self, depthStabilization: bool = False, pitchStabilization: bool = False, yawStabilization: bool = False, lagStabilization: bool = False):
         """ method to enable object detection for specific camera
 
         Args:
@@ -51,7 +51,7 @@ class AUVMission(PureMission):
         rospy.wait_for_service(srv_name)
         set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)
         response = set_stabilization(
-            depthStabilization, yawStabilization, lagStabilization)
+            depthStabilization, pitchStabilization, yawStabilization, lagStabilization)
         rospy.loginfo(
             f"Stabilization enabled: {response.success}, message: {response.message} ")
 
@@ -74,4 +74,3 @@ class AUVMission(PureMission):
             return 1
         else:
             raise TypeError("AUVStateMachine was not initialized")
-    

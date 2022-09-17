@@ -67,6 +67,7 @@ private:
 
     bool isReady = false; // isTopicUpdated flag
     bool depthStabilizationEnabled = false;
+    bool pitchStabilizationEnabled = false;
     bool yawStabilizationEnabled = false;
     bool lagStabilizationEnabled = false;
 
