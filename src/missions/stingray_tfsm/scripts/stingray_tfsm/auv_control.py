@@ -1,9 +1,10 @@
-import rospy
 from actionlib import SimpleActionClient, SimpleGoalState
 from stingray_movement_msgs.msg import HorizontalMoveAction, DiveAction, HorizontalMoveGoal, DiveGoal
 from std_msgs.msg import Int32
 from stingray_resources.utils import load_config
-from stingray_tfsm.core.pure_events import PureEvent
+from stingray_devices_msgs.msg import UpDownAction, UpDownGoal
+import rospy
+
 
 """@package docstring
 Contains class for controlling AUV in missions.
@@ -52,12 +53,14 @@ class AUVControl:
                                                callback=self.yaw_topic_callback,
                                                queue_size=10)
 
-        self.HorizontalMoveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["horizontal"],
-                                                       HorizontalMoveAction)
-        self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"],
-                                             DiveAction)
+        self.HorizontalMoveClient = SimpleActionClient(
+            self.ros_config["actions"]["movement"]["horizontal"], HorizontalMoveAction)
+        self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"], DiveAction)
+        self.DevicesClient = SimpleActionClient(self.ros_config["actions"]["updown"], UpDownAction)
+
         self.HorizontalMoveClient.wait_for_server()
         self.DiveClient.wait_for_server()
+        self.DevicesClient.wait_for_server()
 
     @property
     def yaw(self):
@@ -78,6 +81,44 @@ class AUVControl:
         if self.verbose:
             rospy.loginfo(
                 f"Absolute angle got from machine is {msg.data}; It is set on higher level")
+
+    def execute_lifter_goal(self, scene):
+        device_id = 1  # Lifter_id
+        if 'lift' in scene:
+            velocity = 1
+        elif 'lower' in scene:
+            velocity = -1
+        else:
+            velocity = 0
+
+        pause_common = 3
+        if 'wait' in scene:
+            pause_optional = scene['wait']
+        else:
+            pause_optional = 0
+
+        goal = UpDownGoal(device=device_id, velocity=velocity, pause_common=pause_common, pause_optional=pause_optional)
+
+        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
+        self.DevicesClient.wait_for_server()
+        rospy.sleep(pause_common + pause_optional)
+
+    def execute_dropper_goal(self, *args, **kwargs):
+        device_id = 2  # Lifter_id
+        velocity = 0
+
+        pause_common = 1
+        pause_optional = 0
+
+        goal = UpDownGoal(device=device_id, velocity=velocity, pause_common=pause_common, pause_optional=pause_optional)
+
+        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
+        self.DevicesClient.wait_for_server()
+        rospy.sleep(pause_common)
+
+
 
     def execute_move_goal(self, scene):
         """
