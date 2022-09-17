@@ -76,6 +76,7 @@ class AUVStateMachine(PureStateMachine):
                 scene['preps'](*scene['args'])
         
         elif state_keyword == 'aborted':
+            self.execute_stop_goal()
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             if 'preps' in scene:
@@ -107,6 +108,7 @@ class AUVStateMachine(PureStateMachine):
                     rospy.loginfo("DEBUG: Current condition results False")
                 next_trigger = 'condition_f'
         elif state_keyword == self.state_end:
+            self.execute_stop_goal()
             exit()
 
         rospy.loginfo(f"FSM: {self.name}\tTRANSITION: {next_trigger}")
