@@ -141,6 +141,8 @@ class AUVControl:
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
 
+        rospy.loginfo(f"self.yaw: {self.yaw}")
+        rospy.loginfo(f"self.yaw + scene['yaw']: {self.yaw + scene['yaw']}")
         goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
 
         self.HorizontalMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,

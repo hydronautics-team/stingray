@@ -121,13 +121,13 @@ class CenteringAngleSub(AUVMission):
                 'march': 0.0,
                 'lag': 0,
                 'wait': 0.1,
-                'yaw': -self.d_angle
+                'yaw': self.d_angle
             },
             'move_clock' + self.name: {
                 'march': 0.0,
                 'lag': 0,
                 'wait': 0.1,
-                'yaw': self.d_angle
+                'yaw': -self.d_angle
             }
         }
 

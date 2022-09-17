@@ -37,7 +37,7 @@ class ReachSub(AUVMission):
         self.centering_submachine = CenteringAngleSub(
             name + "_centering", camera, target, tolerance=self.tolerance, confirmation=self.confirmation)
 
-        self.rotate_dir = 1 if rotate == "left" else -1
+        self.rotate_dir = -1 if rotate == "left" else 1
         self.target = target
         if avoid:
             self.avoid = True

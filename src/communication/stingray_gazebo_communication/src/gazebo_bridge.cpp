@@ -89,9 +89,7 @@ bool horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Requ
         updateModelState([request](gazebo_msgs::ModelState &modelState)
                          {
       double desiredYaw = -request.yaw % 360;
-    //   ROS_INFO("desiredYaw gazebo %f", desiredYaw);
       double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
-    //   ROS_INFO("newYaw gazebo %f", newYaw);
       modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
     }
     catch (std::runtime_error &e)
