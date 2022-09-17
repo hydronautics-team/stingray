@@ -128,23 +128,6 @@ target_link_libraries(basic_movement ${catkin_LIBRARIES})
 add_dependencies(basic_movement ${stingray_communication_msgs_EXPORTED_TARGETS}
                  ${stingray_movement_msgs_EXPORTED_TARGETS})
 
-add_executable(
-  movement_patterns
-  include/common/AsyncTimer.h
-  src/common/AsyncTimer.cpp
-  include/common/AbstractMovementActionServer.h
-  include/patterns/AlignServer.h
-  src/patterns/AlignServer.cpp
-  include/patterns/AlignLowLevelServer.h
-  src/patterns/AlignLowLevelServer.cpp
-  include/patterns/TackServer.h
-  src/patterns/TackServer.cpp
-  src/movement_patterns.cpp)
-
-target_link_libraries(movement_patterns ${catkin_LIBRARIES})
-add_dependencies(
-  movement_patterns ${stingray_communication_msgs_EXPORTED_TARGETS}
-  ${stingray_movement_msgs_EXPORTED_TARGETS})
 
 # Rename C++ executable without prefix The above recommended prefix causes long
 # target names, the following renames the target back to the shorter version for
@@ -184,7 +167,6 @@ add_dependencies(
 
 # Mark cpp header files for installation install(DIRECTORY
 # include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-# FILES_MATCHING PATTERN "*.h" PATTERN ".svn" EXCLUDE )
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES # myfile1 # myfile2 DESTINATION

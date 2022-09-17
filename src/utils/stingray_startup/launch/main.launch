@@ -42,7 +42,8 @@
 
     <!-- Movement nodes -->
     <node pkg="stingray_movement" type="basic_movement" name="basic_movement" output="$(arg ROS_OUTPUT)" respawn="true" />
-    <!-- <node pkg="stingray_movement" type="movement_patterns" name="movement_patterns" output="$(arg ROS_OUTPUT)" respawn="true" /> -->
+    <!-- Devices node -->
+    <node pkg="stingray_devices" type="updown_device" name="stingray_devices" output="$(arg ROS_OUTPUT)" respawn="true" />
 
     <!-- Qr code launcher -->
     <group if="$(arg QR_LAUNCH)">

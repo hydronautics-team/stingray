@@ -11,6 +11,7 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <map>
 
 #include <stingray_communication_msgs/SetInt32.h>
 #include <stingray_communication_msgs/SetStabilization.h>
@@ -26,6 +27,8 @@ static const json simulation_config = json::parse(std::ifstream(ros::package::ge
 
 std_msgs::Int32 depthMessage;
 std_msgs::Int32 yawMessage;
+std_msgs::Int32 pingerBucketMessage;
+std_msgs::Int32 pingerFlareMessage;
 geometry_msgs::Twist currentTwist;
 bool depthStabilizationEnabled = false;
 bool yawStabilizationEnabled = true;
@@ -142,6 +145,100 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
     return true;
 }
 
+/**
+ * This method allows you to determine the angles to the pinger
+ * @param pinger pinger name
+ * @param yaw corner robot now
+ * @return {@code pair} Angle by xy and z to pinger
+ */
+std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &pinger, const float &yaw = 0) {
+    auto f90 = [](float corner) {
+        if (corner > 0) {
+            corner -= 90;
+        } else if (corner < -0) {
+            corner += 90;
+        }
+        return corner;
+    };
+    gazebo_msgs::GetModelState modelState;  // get robot position
+    modelState.request.model_name = simulation_config["model_name"];
+    bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
+    if (!result || !modelState.response.success)
+    {
+        throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
+    }
+    gazebo_msgs::GetModelState pingerModelState;  // get pinger position
+    pingerModelState.request.model_name = simulation_config[pinger];
+    bool result1 = ros::service::call(ros_config["services"]["gazebo_get_state"], pingerModelState);
+    if (!result1 || !pingerModelState.response.success)
+    {
+        throw std::runtime_error("Failed to obtain state in Gazebo: " + pingerModelState.response.status_message);
+    }
+
+    double path_x = pingerModelState.response.pose.position.x - modelState.response.pose.position.x;
+    double path_y = pingerModelState.response.pose.position.y - modelState.response.pose.position.y;
+    double path_z = modelState.response.pose.position.z - pingerModelState.response.pose.position.z;
+
+    double r_xy = std::sqrt(path_x*path_x + path_y*path_y);
+    std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
+    float corner_XY_data = std::atan(path_y/path_x) * 180 / M_PI;
+    /*
+     * I'm not sure if the angle of rotation of the device should be added or subtracted
+     * */
+    corner_XY.data = f90(corner_XY_data) + yaw;  // ???
+    float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
+    corner_Z.data = -corner_Z_data;
+
+    /*
+     * For tests
+     * */
+//    ROS_INFO("XY %f", corner_XY_data);
+//    ROS_INFO("Z %f", corner_Z_data);
+
+    std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
+    return df;
+}
+
+/**
+ * Rotates vehicle on specified yaw angle
+ * @param request Service request with yaw angle in degrees
+ * @param response Service response
+ * @return {@code true} if service call didn't fail
+ */
+bool yawCallback(stingray_communication_msgs::SetInt32::Request &request,
+                 stingray_communication_msgs::SetInt32::Response &response)
+{
+    /*
+     * Here we simulate enabled yaw stabilization: we just pass desired yaw angle
+     * for Gazebo like it is low-level control system that stabilizes this angle.
+     */
+
+    if (!yawStabilizationEnabled)
+    {
+        response.success = false;
+        response.message = "Yaw stabilization is not enabled";
+        return true;
+    }
+
+    try
+    {
+        updateModelState([request](gazebo_msgs::ModelState &modelState)
+                         {
+      double desiredYaw = request.value % 360;
+      double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
+      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
+    }
+    catch (std::runtime_error &e)
+    {
+        response.success = false;
+        response.message = "Failed to set depth in Gazebo: " + std::string(e.what());
+        return true;
+    }
+
+    response.success = true;
+    return true;
+}
+
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response)
 {
     response.success = true;
@@ -174,6 +271,8 @@ int main(int argc, char **argv)
 
     ros::Publisher depthPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["depth"], 20);
     ros::Publisher yawPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["yaw"], 20);
+    ros::Publisher pingerBucketPublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger_buckets"], 20);
+    ros::Publisher pingerFlarePublisher = nodeHandle.advertise<std_msgs::Int32>(ros_config["topics"]["pinger_flare"], 20);
     ros::Publisher velocityPublisher = nodeHandle.advertise<geometry_msgs::Twist>(ros_config["topics"]["gazebo_velocity"], 20);
 
     ros::ServiceServer horizontalMoveService = nodeHandle.advertiseService(ros_config["services"]["set_horizontal_move"], horizontalMoveCallback);
@@ -210,11 +309,16 @@ int main(int argc, char **argv)
                 yaw_postprocessed += 360;
             }
             yawMessage.data = yaw_postprocessed;
-            // ROS_INFO("Yaw gazebo %f", yaw_postprocessed);
+            auto df_pinger_bucket = pingerStatus("pinger_buckets_model_name", yaw_postprocessed);
+            auto df_pinger_flare = pingerStatus("pinger_flare_model_name", yaw_postprocessed);
+            pingerBucketMessage = df_pinger_bucket.first;
+            pingerFlareMessage = df_pinger_flare.first;
         }
 
         depthPublisher.publish(depthMessage);
         yawPublisher.publish(yawMessage);
+        pingerBucketPublisher.publish(pingerBucketMessage);
+        pingerFlarePublisher.publish(pingerFlareMessage);
 
         velocityPublisher.publish(currentTwist);
 

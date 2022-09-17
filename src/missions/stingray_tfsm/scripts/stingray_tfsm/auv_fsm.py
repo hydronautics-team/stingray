@@ -4,9 +4,18 @@ from stingray_tfsm.auv_control import AUVControl
 from std_msgs.msg import Int32
 import rospy
 
+HARDWARE_MULTIPLIER = 3
+
 
 class AUVStateMachine(PureStateMachine):
-    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None, verbose=False):
+    def __init__(self,
+                 name: str,
+                 states: tuple = (),
+                 transitions: list = [],
+                 scene: dict = dict(),
+                 path=None,
+                 verbose=False,
+                 hardware=False):
         """ State machine for AUV
 
         :param name:str=(): Define the name of the machine
@@ -17,7 +26,10 @@ class AUVStateMachine(PureStateMachine):
         :param verbose=True: Print out the state of the robot as it moves through its states
 
         """
-        self.auv = AUVControl()
+
+        self.hardware = hardware
+        self.multiplier = HARDWARE_MULTIPLIER if self.hardware else 1
+        self.auv = AUVControl(verbose, multiplier=self.multiplier)
 
         super().__init__(name, states, transitions, scene, path)
 
@@ -64,12 +76,15 @@ class AUVStateMachine(PureStateMachine):
                 scene['preps'](*scene['args'])
         
         elif state_keyword == 'aborted':
+            self.execute_stop_goal()
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             if 'preps' in scene:
                 scene['preps'](*scene['args'])
 
         elif state_keyword == 'move':
+            if self.hardware:
+                scene['duration'] = scene['duration']*self.h_multiplier
             self.auv.execute_move_goal(scene)
         
         elif state_keyword == 'dive':
@@ -93,6 +108,7 @@ class AUVStateMachine(PureStateMachine):
                     rospy.loginfo("DEBUG: Current condition results False")
                 next_trigger = 'condition_f'
         elif state_keyword == self.state_end:
+            self.execute_stop_goal()
             exit()
 
         rospy.loginfo(f"FSM: {self.name}\tTRANSITION: {next_trigger}")

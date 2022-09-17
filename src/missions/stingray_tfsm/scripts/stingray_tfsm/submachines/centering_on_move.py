@@ -20,7 +20,8 @@ class CenteringOnMoveSub(AUVMission):
             name (str): mission name
             camera (str): camera name
             target (str): object name
-            confirmation (int, optional): confirmation value of continuously detected object after which will be event triggered. Defaults to 2.
+            confirmation (int, optional): confirmation value of continuously detected object
+             after which will be event triggered. Defaults to 2.
             tolerance (int, optional): centering tolerance. Defaults to 14.
         """
         self.name = '_'+name
@@ -39,6 +40,7 @@ class CenteringOnMoveSub(AUVMission):
         states = ('condition_detected',
                   'condition_lefter', 'condition_righter',
                   'move_rotate_clock', 'move_rotate_anti',
+                  'move_stop'
                   )
         states = tuple(i + self.name for i in states)
         return states
@@ -54,7 +56,7 @@ class CenteringOnMoveSub(AUVMission):
             ['condition_f', 'condition_lefter' + self.name, 'condition_righter' + self.name],
             ['condition_s', 'condition_lefter' + self.name, 'move_rotate_anti' + self.name],
 
-            ['condition_f', 'condition_righter' + self.name, 'condition_lefter' + self.name],
+            ['condition_f', 'condition_righter' + self.name, 'condition_detected' + self.name],
             ['condition_s', 'condition_righter' + self.name, 'move_rotate_clock' + self.name],
         ]
 
