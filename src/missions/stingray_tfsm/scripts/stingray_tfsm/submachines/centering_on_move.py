@@ -12,7 +12,7 @@ class CenteringOnMoveSub(AUVMission):
                  camera: str,
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 6,
+                 tolerance: int = 29,
                  angle: int = 15):
         """ Submission for centering on object in camera
 
@@ -40,6 +40,7 @@ class CenteringOnMoveSub(AUVMission):
         states = ('condition_detected',
                   'condition_lefter', 'condition_righter',
                   'move_rotate_clock', 'move_rotate_anti',
+                  'move_stop'
                   )
         states = tuple(i + self.name for i in states)
         return states
@@ -55,7 +56,7 @@ class CenteringOnMoveSub(AUVMission):
             ['condition_f', 'condition_lefter' + self.name, 'condition_righter' + self.name],
             ['condition_s', 'condition_lefter' + self.name, 'move_rotate_anti' + self.name],
 
-            ['condition_f', 'condition_righter' + self.name, 'condition_lefter' + self.name],
+            ['condition_f', 'condition_righter' + self.name, 'condition_detected' + self.name],
             ['condition_s', 'condition_righter' + self.name, 'move_rotate_clock' + self.name],
         ]
 

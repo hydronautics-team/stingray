@@ -44,24 +44,24 @@ class CenteringAngleSub(AUVMission):
     def setup_states(self):
         states = ('condition_detected',
                   'condition_lefter', 'condition_righter',
-                  'rotate_clock', 'rotate_anti',
+                  'move_clock', 'move_anti',
                   )
         states = tuple(i + self.name for i in states)
         return states
 
     def setup_transitions(self):
         return [
-                   [self.machine.transition_start, [self.machine.state_init, 'rotate_clock' + self.name,
-                                                    'rotate_anti' + self.name], 'condition_detected' + self.name],
+                   [self.machine.transition_start, [self.machine.state_init, 'move_clock' + self.name,
+                                                    'move_anti' + self.name], 'condition_detected' + self.name],
 
                    ['condition_f', 'condition_detected' + self.name, self.machine.state_aborted],
                    ['condition_s', 'condition_detected' + self.name, 'condition_lefter' + self.name],
 
                    ['condition_f', 'condition_lefter' + self.name, 'condition_righter' + self.name],
-                   ['condition_s', 'condition_lefter' + self.name, 'rotate_anti' + self.name],
+                   ['condition_s', 'condition_lefter' + self.name, 'move_anti' + self.name],
 
                    ['condition_f', 'condition_righter' + self.name, self.machine.state_end],
-                   ['condition_s', 'condition_righter' + self.name, 'rotate_clock' + self.name],
+                   ['condition_s', 'condition_righter' + self.name, 'move_clock' + self.name],
                ]
 
     def setup_events(self):
@@ -91,10 +91,18 @@ class CenteringAngleSub(AUVMission):
             self.previous = 'lefter'
         return value
 
+    def stabilize(self):
+        self.reset_freeze()
+        self.machine.auv.execute_move_goal({
+                    'march': 0.0,
+                    'lag': 0.0,
+                    'yaw': 0,
+                })
+
     def setup_scene(self):
         return {
             self.machine.state_init: {
-                'preps': self.reset_freeze,
+                'preps': self.stabilize,
                 'args': ()
             },
             'condition_detected' + self.name: {
@@ -109,11 +117,17 @@ class CenteringAngleSub(AUVMission):
                 'condition': self.conditioned_handler,
                 'args': (self.gate_lefter,)
             },
-            'rotate_anti' + self.name: {
-                'angle': -self.d_angle
+            'move_anti' + self.name: {
+                'march': 0.0,
+                'lag': 0,
+                'wait': 0.1,
+                'yaw': -self.d_angle
             },
-            'rotate_clock' + self.name: {
-                'angle': self.d_angle
+            'move_clock' + self.name: {
+                'march': 0.0,
+                'lag': 0,
+                'wait': 0.1,
+                'yaw': self.d_angle
             }
         }
 

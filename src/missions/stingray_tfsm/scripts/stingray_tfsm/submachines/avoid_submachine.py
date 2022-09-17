@@ -34,7 +34,7 @@ class AvoidSub(AUVMission):
 
     def avoid_event_handler(self, event, *args, **kwargs):
         event.start_listening()
-        rospy.sleep(0.5)
+        rospy.sleep(1)
         if event.is_triggered():
             rospy.loginfo("DEBUG: Threat detected")
             event.stop_listening()
@@ -71,6 +71,14 @@ class AvoidSub(AUVMission):
                ]
         return transitions
 
+    def stabilize(self):
+        self.enable_object_detection(self.camera, True)
+        self.machine.auv.execute_move_goal({
+                    'march': 0.0,
+                    'lag': 0.0,
+                    'yaw': 0,
+                })
+
     def setup_scene(self):
         assession_scene = dict()
         for i in range(len(self.avoid)):
@@ -82,13 +90,14 @@ class AvoidSub(AUVMission):
             })
         scene = {
             self.machine.state_init: {
-                'preps': self.enable_object_detection,
-                "args": (self.camera, True),
+                'preps': self.stabilize,
+                "args": (),
             },
             'move_lag' + self.name: {
-                'direction': 1 if self.lag_dir == 'left' else 2,
-                'velocity': 0.5,
-                'duration': 1000
+                'march': 0,
+                'lag': 0.25 if self.lag_dir == 'left' else -0.25,
+                'yaw': 0,
+                'wait': 0.1
             },
         }
         scene.update(assession_scene)

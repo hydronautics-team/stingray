@@ -20,7 +20,7 @@ class ReachSub(AUVMission):
                  tolerance: int = 6,
                  vision: bool = True,
                  acoustics: bool = False,
-                 speed: int = 1500,
+                 speed: int = 0.5,
                  ):
         if target == 'yellow_flare':
             tolerance = 3
@@ -47,7 +47,7 @@ class ReachSub(AUVMission):
 
     def setup_states(self):
         states = ('condition_visible', 'move_march',
-                  'rotate_search', 'condition_centering',
+                  'move_search', 'condition_centering',
                   'custom_avoid', 'move_lag', 'condition_in_front'
                   )
         states = tuple(i + self.name for i in states)
@@ -56,45 +56,33 @@ class ReachSub(AUVMission):
     def setup_transitions(self):
         if self.avoid:
             partial_transitions = [
-                [self.machine.transition_start, [
-                    self.machine.state_init, ], 'custom_avoid' + self.name],
+                [self.machine.transition_start, [self.machine.state_init, ], 'custom_avoid' + self.name],
 
-                ['avoid' + self.name, 'custom_avoid' +
-                 self.name, 'condition_visible' + self.name],
+                ['avoid' + self.name, 'custom_avoid' + self.name, 'condition_visible' + self.name],
 
-                ['condition_f', 'condition_in_front' +
-                 self.name, 'custom_avoid' + self.name],
+                ['condition_f', 'condition_in_front' + self.name, 'custom_avoid' + self.name],
             ]
         else:
             partial_transitions = [
-                [self.machine.transition_start, [self.machine.state_init, ],
-                 'condition_visible' + self.name],
+                [self.machine.transition_start, [self.machine.state_init, ], 'condition_visible' + self.name],
 
-                ['condition_f', 'condition_in_front' +
-                    self.name, 'condition_visible' + self.name],
+                ['condition_f', 'condition_in_front' + self.name, 'condition_visible' + self.name],
             ]
         transitions = partial_transitions + [
 
 
-            ['condition_f', 'condition_visible' +
-                self.name, 'rotate_search' + self.name],
-            ['condition_s', 'condition_visible' + self.name,
-             'condition_centering' + self.name],
+            ['condition_f', 'condition_visible' + self.name, 'move_search' + self.name],
+            ['condition_s', 'condition_visible' + self.name, 'condition_centering' + self.name],
 
-            ['search' + self.name, 'rotate_search' +
-             self.name, 'condition_visible' + self.name],
+            ['search' + self.name, 'move_search' + self.name, 'condition_visible' + self.name],
 
-            ['condition_f', 'condition_centering' +
-             self.name, 'condition_visible' + self.name],
-            ['condition_s', 'condition_centering' +
-             self.name, 'move_march' + self.name],
+            ['condition_f', 'condition_centering' + self.name, 'condition_visible' + self.name],
+            ['condition_s', 'condition_centering' + self.name, 'move_march' + self.name],
 
-            ['next' + self.name, 'move_march' + self.name,
-             'condition_in_front' + self.name],
+            ['next' + self.name, 'move_march' + self.name, 'condition_in_front' + self.name],
 
 
-            ['condition_s', 'condition_in_front' +
-             self.name, self.machine.state_end],
+            ['condition_s', 'condition_in_front' + self.name, self.machine.state_end],
         ]
         return transitions
 
@@ -117,8 +105,11 @@ class ReachSub(AUVMission):
                 'condition': self.arrival_handler,
                 'args': ()
             },
-            'rotate_search' + self.name: {
-                'angle': 5 * self.rotate_dir
+            'move_search' + self.name: {
+                'march': 0.0,
+                'lag': 0,
+                'yaw': 5 * self.rotate_dir,
+                'wait': 0.3,
             },
             'condition_centering' + self.name: {
                 'subFSM': True,
@@ -126,9 +117,10 @@ class ReachSub(AUVMission):
                 'args': ()
             },
             'move_march' + self.name: {
-                'direction': 3,
-                'velocity': 0.4,
-                'duration': self.speed
+                'march': 0.6,
+                'lag': 0.0,
+                'yaw': 0,
+                'wait': self.speed
             },
             'custom_avoid' + self.name: {
                 'subFSM': True,
