@@ -52,7 +52,7 @@ class AUVControl:
         self.yaw_subscriber = rospy.Subscriber(self.ros_config["topics"]["yaw"],
                                                Int32,
                                                callback=self.yaw_topic_callback,
-                                               queue_size=10)
+                                               queue_size=1)
 
         self.HorizontalMoveClient = SimpleActionClient(
             self.ros_config["actions"]["movement"]["horizontal"], HorizontalMoveAction)
@@ -78,9 +78,10 @@ class AUVControl:
         :return: None
 
         """
+        self.yaw_angle = msg.data
         if not self.inited:
-            self.yaw_angle = msg.data
-            rospy.loginfo(f"self.yaw_angle: {self.yaw_angle}")
+            rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
+        rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
         if self.verbose:
             rospy.loginfo(
                 f"Absolute angle got from machine is {msg.data}; It is set on higher level")
@@ -134,6 +135,7 @@ class AUVControl:
         :return: :
 
         """
+
         if 'wait' in scene:
             if self.mult != 1:
                 actual_duration = scene['wait'] * self.mult
@@ -145,6 +147,7 @@ class AUVControl:
             check_yaw = scene['check_yaw']
 
         rospy.loginfo(f"self.yaw: {self.yaw}")
+        rospy.loginfo(f"SET YAW: {scene['yaw']}")
         rospy.loginfo(f"self.yaw + scene['yaw']: {self.yaw + scene['yaw']}")
         goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
 
