@@ -2,6 +2,7 @@
 from abc import abstractmethod
 from stingray_tfsm.core.pure_missions_controller import PureMissionsController
 from stingray_tfsm.missions.init_auv_mission import InitAUVMission
+from stingray_tfsm.missions.end_auv_mission import EndAUVMission
 
 
 class AUVMissionsController(PureMissionsController):
@@ -25,9 +26,20 @@ class AUVMissionsController(PureMissionsController):
 
         super().__init__()
 
-    def setup_missions(self):
+    def add_init_mission(self):
         init_mission = InitAUVMission(
             InitAUVMission.__name__,
+            self.depth_stabilization,
+            self.pitch_stabilization,
+            self.yaw_stabilization,
+            self.lag_stabilization,
+            self.reset_imu,
+        )
+        self.add_mission(init_mission)
+    
+    def add_end_mission(self):
+        init_mission = EndAUVMission(
+            EndAUVMission.__name__,
             self.depth_stabilization,
             self.pitch_stabilization,
             self.yaw_stabilization,
