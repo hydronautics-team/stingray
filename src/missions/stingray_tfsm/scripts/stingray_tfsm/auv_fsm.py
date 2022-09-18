@@ -10,12 +10,14 @@ HARDWARE_MULTIPLIER = 3
 class AUVStateMachine(PureStateMachine):
     def __init__(self,
                  name: str,
+                 auv: AUVControl,
                  states: tuple = (),
                  transitions: list = [],
                  scene: dict = dict(),
                  path=None,
                  verbose=False,
-                 hardware=False):
+                 hardware=False,
+                 ):
         """ State machine for AUV
 
         :param name:str=(): Define the name of the machine
@@ -29,7 +31,7 @@ class AUVStateMachine(PureStateMachine):
 
         self.hardware = hardware
         self.multiplier = HARDWARE_MULTIPLIER if self.hardware else 1
-        self.auv = AUVControl(verbose, multiplier=self.multiplier)
+        self.auv = auv
 
         super().__init__(name, states, transitions, scene, path)
 

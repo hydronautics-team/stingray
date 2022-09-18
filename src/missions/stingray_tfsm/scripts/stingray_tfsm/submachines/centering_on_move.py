@@ -3,6 +3,7 @@ from stingray_tfsm.auv_mission import AUVMission
 from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_tfsm.core.pure_fsm import PureStateMachine
 from stingray_tfsm.vision_events import ObjectDetectionEvent, ObjectOnRight, ObjectOnLeft
+from stingray_tfsm.auv_control import AUVControl
 import rospy
 
 class CenteringOnMoveSub(AUVMission):
@@ -10,6 +11,7 @@ class CenteringOnMoveSub(AUVMission):
 
     def __init__(self, name: str,
                  camera: str,
+                 auv: AUVControl,
                  target: str,
                  confirmation: int = 2,
                  tolerance: int = 20,
@@ -36,7 +38,7 @@ class CenteringOnMoveSub(AUVMission):
         self.gate_detected = None
         self.gate_lefter = None
         self.gate_righter = None
-        super().__init__(name)
+        super().__init__(name, auv)
 
     def setup_states(self):
         states = ('condition_centering', 'custom_stop')

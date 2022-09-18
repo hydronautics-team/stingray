@@ -10,21 +10,22 @@ from stingray_communication_msgs.srv import SetStabilization
 from std_msgs.msg import Bool
 from stingray_object_detection.utils import get_objects_topic
 from stingray_resources.utils import load_config
-
+from stingray_tfsm.auv_control import AUVControl
 
 class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
     FSM_CLASS = AUVStateMachine
 
     @abstractmethod
-    def __init__(self, name: str):
+    def __init__(self, name: str, auv: AUVControl):
         """ Abstract class to implement missions for AUV with useful methods
 
         Args:
             name (str): mission name
         """
         self.ros_config = load_config("ros.json")
-        super().__init__(name)
+        self.machine = AUVStateMachine(name, auv)
+        super().__init__(name, self.machine)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera

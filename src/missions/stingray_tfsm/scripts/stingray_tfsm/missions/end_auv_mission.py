@@ -1,4 +1,5 @@
 from stingray_tfsm.auv_mission import AUVMission
+from stingray_tfsm.auv_control import AUVControl
 import rospy
 
 
@@ -7,6 +8,7 @@ class EndAUVMission(AUVMission):
 
     def __init__(self,
                  name: str,
+                 auv: AUVControl,
                  ):
         """ Submission for robot initialization
 
@@ -14,7 +16,7 @@ class EndAUVMission(AUVMission):
             name (str): mission name
         """
 
-        super().__init__(name)
+        super().__init__(name, auv)
 
     def setup_states(self):
         return []

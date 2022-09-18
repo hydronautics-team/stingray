@@ -44,6 +44,7 @@ class AUVControl:
         self.verbose = verbose
         self.mult = multiplier
         self.yaw_angle = 0
+        self.inited = False
         # configs
         self.ros_config = load_config("ros.json")
         self.control_config = load_config("control.json")
@@ -77,7 +78,9 @@ class AUVControl:
         :return: None
 
         """
-        self.yaw_angle = msg.data
+        if not self.inited:
+            self.yaw_angle = msg.data
+            rospy.loginfo(f"self.yaw_angle: {self.yaw_angle}")
         if self.verbose:
             rospy.loginfo(
                 f"Absolute angle got from machine is {msg.data}; It is set on higher level")

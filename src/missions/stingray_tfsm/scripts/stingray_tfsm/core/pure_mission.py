@@ -16,7 +16,7 @@ class PureMission(ABC):
     FSM_CLASS = PureStateMachine
 
     @abstractmethod
-    def __init__(self, name: str):
+    def __init__(self, name: str, machine: PureStateMachine = None):
         """ Abstract class with default transitions, states and basic methods to implement mission
 
         Args: 
@@ -24,7 +24,8 @@ class PureMission(ABC):
         """
         self.name = name
         """ mission name """
-        self.machine: PureStateMachine = None
+        if machine is None:
+            self.machine: PureStateMachine = None
         """ the PureStateMachine object """
 
         self._reset()
@@ -48,7 +49,8 @@ class PureMission(ABC):
 
         """
         self.setup_events()
-        self.machine = self.FSM_CLASS(self.name)
+        if self.machine is None:
+            self.machine = self.FSM_CLASS(self.name)
         self.machine.add_states(self.setup_states())
         self.machine.add_transitions(self.setup_transitions())
         self.machine.add_default_transitions()

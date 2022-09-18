@@ -1,4 +1,5 @@
 from stingray_tfsm.auv_mission import AUVMission
+from stingray_tfsm.auv_control import AUVControl
 import rospy
 
 
@@ -7,6 +8,7 @@ class InitAUVMission(AUVMission):
 
     def __init__(self,
                  name: str,
+                 auv: AUVControl,
                  depth_stabilization: bool = False,
                  pitch_stabilization: bool = False,
                  yaw_stabilization: bool = False,
@@ -29,7 +31,7 @@ class InitAUVMission(AUVMission):
         self.lag_stabilization = lag_stabilization
         self.reset_imu = reset_imu
 
-        super().__init__(name)
+        super().__init__(name, auv)
 
     def setup_states(self):
         return []
@@ -45,32 +47,29 @@ class InitAUVMission(AUVMission):
             'yaw': 0,
             'wait': 0.1
         })
+        self.machine.auv.inited = True
         # init indication
-        self.machine.auv.execute_move_goal({
-            'march': 0.0,
-            'lag': 0.5,
-            'yaw': 0,
-            'wait': 0.5
-        })
-        self.machine.auv.execute_stop_goal()
+        # self.machine.auv.execute_move_goal({
+        #     'march': 0.0,
+        #     'lag': 0.5,
+        #     'yaw': 0,
+        #     'wait': 0.5
+        # })
+        # self.machine.auv.execute_stop_goal()
         rospy.loginfo('Sleep before missions')
-        rospy.sleep(10)
+        # rospy.sleep(10)
         
         if self.reset_imu:
             rospy.loginfo('Reset IMU')
             self.enable_reset_imu()
-        # get current yaw
-        self.machine.auv.execute_move_goal({
-            'march': 0.0,
-            'lag': 0.0,
-            'yaw': 0,
-        })
         self.enable_stabilization(
             self.depth_stabilization, self.pitch_stabilization, self.yaw_stabilization, self.lag_stabilization)
 
         self.machine.auv.execute_dive_goal({
             'depth': 100,
         })
+        rospy.sleep(5)
+
 
         
 
