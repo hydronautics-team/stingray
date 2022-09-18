@@ -7,25 +7,27 @@ from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
 from stingray_object_detection_msgs.msg import ObjectsArray
 from stingray_communication_msgs.srv import SetStabilization
-from std_msgs.msg import Bool
+from std_srvs.srv import SetBool
 from stingray_object_detection.utils import get_objects_topic
 from stingray_resources.utils import load_config
 from stingray_tfsm.auv_control import AUVControl
 
+
 class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
-    FSM_CLASS = AUVStateMachine
-
     @abstractmethod
-    def __init__(self, name: str, auv: AUVControl):
+    def __init__(self, name: str,
+                 auv: AUVControl = None,
+                 verbose: bool = False
+                 ):
         """ Abstract class to implement missions for AUV with useful methods
 
         Args:
             name (str): mission name
         """
         self.ros_config = load_config("ros.json")
-        self.machine = AUVStateMachine(name, auv)
-        super().__init__(name, self.machine)
+        self.machine = AUVStateMachine(name, auv, verbose=verbose)
+        super().__init__(name, self.machine, verbose)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera
@@ -64,8 +66,8 @@ class AUVMission(PureMission):
         """
         srv_name = self.ros_config["services"]["set_imu_enabled"]
         rospy.wait_for_service(srv_name)
-        set_imu_enabled = rospy.ServiceProxy(srv_name, Bool)
-        response = set_imu_enabled(True)
+        set_imu = rospy.ServiceProxy(srv_name, SetBool)
+        response = set_imu(True)
         rospy.sleep(1)
         rospy.loginfo(
             f"IMU reset: {response.success}, message: {response.message} ")

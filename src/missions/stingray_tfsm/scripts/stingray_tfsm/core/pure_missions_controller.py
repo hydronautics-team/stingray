@@ -9,9 +9,10 @@ class PureMissionsController(ABC):
     """ Class for controlling missions """
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self, verbose: bool = False):
         """ Class for controlling missions.
         """
+        self.verbose = verbose
         self.machine: PureStateMachine = None
         self.last_mission = None
         """ pure state machine """
@@ -28,7 +29,8 @@ class PureMissionsController(ABC):
             self.__class__.__name__)
         self.setup_missions()
         self._arrange_finish()
-        rospy.loginfo("Missions setup done")
+        if self.verbose:
+            rospy.loginfo("Missions setup done")
 
     def _arrange_finish(self):
         if self.last_mission is None:
@@ -64,7 +66,8 @@ class PureMissionsController(ABC):
                  self.last_mission, mission.name],
             ])
         self.last_mission = mission.name
-        rospy.loginfo(f'Added mission: {self.last_mission}')
+        if self.verbose:
+            rospy.loginfo(f'Added mission: {self.last_mission}')
 
         if mission_transitions:
             self.machine.add_transitions(mission_transitions)
@@ -76,7 +79,8 @@ class PureMissionsController(ABC):
             mission_transitions (List): custom transitions
         """
         self.machine.add_transitions(mission_transitions)
-        rospy.loginfo(f'Added transitions: {mission_transitions}')
+        if self.verbose:
+            rospy.loginfo(f'Added transitions: {mission_transitions}')
 
     @abstractmethod
     def setup_missions(self):

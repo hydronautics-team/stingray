@@ -13,10 +13,12 @@ Inspired by TimeEscaper
 class PureMission(ABC):
     """ Abstract class with default transitions, states and basic methods to implement mission """
 
-    FSM_CLASS = PureStateMachine
-
     @abstractmethod
-    def __init__(self, name: str, machine: PureStateMachine = None):
+    def __init__(self,
+                 name: str,
+                 machine: PureStateMachine = None,
+                 verbose: bool = False
+                 ):
         """ Abstract class with default transitions, states and basic methods to implement mission
 
         Args: 
@@ -24,9 +26,9 @@ class PureMission(ABC):
         """
         self.name = name
         """ mission name """
-        if machine is None:
-            self.machine: PureStateMachine = None
+        self.machine: PureStateMachine = machine
         """ the PureStateMachine object """
+        self.verbose = verbose
 
         self._reset()
 
@@ -50,7 +52,7 @@ class PureMission(ABC):
         """
         self.setup_events()
         if self.machine is None:
-            self.machine = self.FSM_CLASS(self.name)
+            self.machine = PureStateMachine(self.name, verbose=self.verbose)
         self.machine.add_states(self.setup_states())
         self.machine.add_transitions(self.setup_transitions())
         self.machine.add_default_transitions()
@@ -115,17 +117,6 @@ class PureMission(ABC):
         value = event.is_triggered()
         event.stop_listening()
         return value
-
-    def verbose(self, verbose):
-        """
-        The verbose function is used to set machine's extended output
-
-        :param verbose: Determine whether to print the progress of the algorithm
-        :return: None
-
-        """
-        if self.check_machine():
-            self.machine.verbose(verbose)
 
     def run(self):
         """

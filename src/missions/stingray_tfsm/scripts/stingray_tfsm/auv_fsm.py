@@ -47,7 +47,7 @@ class AUVStateMachine(PureStateMachine):
         """
         state = self.state
         rospy.loginfo(f"FSM: {self.name}\tSTATE: {self.state}")
-        
+
         if self.name.upper() in state:
             state = state.replace(self.name.upper() + "_", "")
 
@@ -76,9 +76,9 @@ class AUVStateMachine(PureStateMachine):
                 rospy.sleep(scene['time'])
             if 'preps' in scene:
                 scene['preps'](*scene['args'])
-        
+
         elif state_keyword == 'aborted':
-            self.execute_stop_goal()
+            self.auv.execute_stop_goal()
             if 'time' in scene:
                 rospy.sleep(scene['time'])
             if 'preps' in scene:
@@ -88,7 +88,7 @@ class AUVStateMachine(PureStateMachine):
             if self.hardware:
                 scene['duration'] = scene['duration']*self.h_multiplier
             self.auv.execute_move_goal(scene)
-        
+
         elif state_keyword == 'dive':
             self.auv.execute_dive_goal(scene)
 
@@ -110,7 +110,7 @@ class AUVStateMachine(PureStateMachine):
                     rospy.loginfo("DEBUG: Current condition results False")
                 next_trigger = 'condition_f'
         elif state_keyword == self.state_end:
-            self.execute_stop_goal()
+            self.auv.execute_stop_goal()
             exit()
 
         rospy.loginfo(f"FSM: {self.name}\tTRANSITION: {next_trigger}")

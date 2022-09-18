@@ -43,48 +43,20 @@ class AUVControl:
         """
         self.verbose = verbose
         self.mult = multiplier
-        self.yaw_angle = 0
-        self.inited = False
         # configs
         self.ros_config = load_config("ros.json")
         self.control_config = load_config("control.json")
 
-        self.yaw_subscriber = rospy.Subscriber(self.ros_config["topics"]["yaw"],
-                                               Int32,
-                                               callback=self.yaw_topic_callback,
-                                               queue_size=1)
-
         self.HorizontalMoveClient = SimpleActionClient(
             self.ros_config["actions"]["movement"]["horizontal"], HorizontalMoveAction)
-        self.DiveClient = SimpleActionClient(self.ros_config["actions"]["movement"]["dive"], DiveAction)
-        self.DevicesClient = SimpleActionClient(self.ros_config["actions"]["updown"], UpDownAction)
+        self.DiveClient = SimpleActionClient(
+            self.ros_config["actions"]["movement"]["dive"], DiveAction)
+        self.DevicesClient = SimpleActionClient(
+            self.ros_config["actions"]["updown"], UpDownAction)
 
         self.HorizontalMoveClient.wait_for_server()
         self.DiveClient.wait_for_server()
         self.DevicesClient.wait_for_server()
-
-    @property
-    def yaw(self):
-        return self.yaw_angle
-
-    def yaw_topic_callback(self, msg):
-        """
-        The yaw_topic_callback function is a callback function that is called every time the yaw_topic publishes a message.
-        The yaw_topic is the topic that publishes the current angle of rotation of the drone.
-        This function sets self.yaw to this value, which will be used in other functions.
-
-        :param self: Access the variables and methods inside a class
-        :param msg: Store the data from the topic
-        :return: None
-
-        """
-        self.yaw_angle = msg.data
-        if not self.inited:
-            rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
-        rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
-        if self.verbose:
-            rospy.loginfo(
-                f"Absolute angle got from machine is {msg.data}; It is set on higher level")
 
     def execute_lifter_goal(self, scene):
         device_id = 1  # Lifter_id
@@ -101,7 +73,8 @@ class AUVControl:
         else:
             pause_optional = 0
 
-        goal = UpDownGoal(device=device_id, velocity=velocity, pause_common=pause_common, pause_optional=pause_optional)
+        goal = UpDownGoal(device=device_id, velocity=velocity,
+                          pause_common=pause_common, pause_optional=pause_optional)
 
         self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                      active_cb=callback_active)
@@ -115,14 +88,13 @@ class AUVControl:
         pause_common = 1
         pause_optional = 0
 
-        goal = UpDownGoal(device=device_id, velocity=velocity, pause_common=pause_common, pause_optional=pause_optional)
+        goal = UpDownGoal(device=device_id, velocity=velocity,
+                          pause_common=pause_common, pause_optional=pause_optional)
 
         self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                      active_cb=callback_active)
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common)
-
-
 
     def execute_move_goal(self, scene):
         """
@@ -146,16 +118,16 @@ class AUVControl:
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
 
-        rospy.loginfo(f"self.yaw: {self.yaw}")
-        rospy.loginfo(f"SET YAW: {scene['yaw']}")
-        rospy.loginfo(f"self.yaw + scene['yaw']: {self.yaw + scene['yaw']}")
-        goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
+        rospy.loginfo(f"Setting yaw delta: {scene['yaw']}")
+        goal = HorizontalMoveGoal(
+            scene['march'], scene['lag'], scene['yaw'], check_yaw)
 
         self.HorizontalMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                             active_cb=callback_active)
         if self.verbose:
             rospy.loginfo('Move goal sent')
-        result = self.HorizontalMoveClient.wait_for_result(timeout=rospy.Duration(secs=5))
+        result = self.HorizontalMoveClient.wait_for_result(
+            timeout=rospy.Duration(secs=5))
         if self.verbose:
             rospy.loginfo(f'Move result got {result}')
         if 'wait' in scene:

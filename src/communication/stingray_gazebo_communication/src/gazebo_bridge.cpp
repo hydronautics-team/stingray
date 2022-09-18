@@ -27,6 +27,7 @@ static const json simulation_config = json::parse(std::ifstream(ros::package::ge
 
 std_msgs::Int32 depthMessage;
 std_msgs::Int32 yawMessage;
+int currentYaw;
 std_msgs::Int32 pingerBucketMessage;
 std_msgs::Int32 pingerFlareMessage;
 geometry_msgs::Twist currentTwist;
@@ -89,7 +90,7 @@ bool horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Requ
         updateModelState([request](gazebo_msgs::ModelState &modelState)
                          {
       double desiredYaw = -request.yaw % 360;
-      double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
+      double newYaw = currentYaw + simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
       modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
     }
     catch (std::runtime_error &e)
@@ -239,6 +240,7 @@ bool yawCallback(stingray_communication_msgs::SetInt32::Request &request,
 
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response)
 {
+    ROS_INFO("Setting SHORE_STABILIZE_IMU_BIT to %d", request.data);
     response.success = true;
     return true;
 }
@@ -246,6 +248,8 @@ bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Respons
 bool stabilizationCallback(stingray_communication_msgs::SetStabilization::Request &request,
                            stingray_communication_msgs::SetStabilization::Response &response)
 {
+    ROS_INFO("Setting depth stabilization %d", request.depthStabilization);
+    ROS_INFO("Setting yaw stabilization %d", request.yawStabilization);
     depthStabilizationEnabled = request.depthStabilization;
     yawStabilizationEnabled = request.yawStabilization;
 
@@ -306,7 +310,8 @@ int main(int argc, char **argv)
             {
                 yaw_postprocessed += 360;
             }
-            yawMessage.data = yaw_postprocessed;
+            currentYaw = static_cast<int16_t>(yaw_postprocessed);
+            yawMessage.data = currentYaw;
             auto df_pinger_bucket = pingerStatus("pinger_buckets_model_name", yaw_postprocessed);
             auto df_pinger_flare = pingerStatus("pinger_flare_model_name", yaw_postprocessed);
             pingerBucketMessage = df_pinger_bucket.first;
