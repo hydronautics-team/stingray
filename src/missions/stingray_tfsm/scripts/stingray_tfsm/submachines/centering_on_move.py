@@ -48,7 +48,7 @@ class CenteringOnMoveSub(AUVMission):
             [self.machine.transition_start, [self.machine.state_init], 'condition_centering' + self.name],
 
             ['condition_f', 'condition_centering' + self.name, 'condition_centering' + self.name],
-            ['condition_s', 'condition_centering' + self.name, 'custom_stop' + self.name],
+            ['condition_s', 'condition_centering' + self.name, self.machine.state_end],
 
             [self.machine.transition_end, 'custom_stop' + self.name, self.machine.state_end],
         ]
