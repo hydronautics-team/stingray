@@ -39,7 +39,7 @@ class CenteringOnMoveSub(AUVMission):
         super().__init__(name)
 
     def setup_states(self):
-        states = ('condition_centering')
+        states = ('condition_centering', 'custom_stop')
         states = tuple(i + self.name for i in states)
         return states
 
@@ -48,7 +48,9 @@ class CenteringOnMoveSub(AUVMission):
             [self.machine.transition_start, [self.machine.state_init], 'condition_centering' + self.name],
 
             ['condition_f', 'condition_centering' + self.name, 'condition_centering' + self.name],
-            ['condition_s', 'condition_centering' + self.name, self.machine.state_end],
+            ['condition_s', 'condition_centering' + self.name, 'custom_stop' + self.name],
+
+            [self.machine.transition_end, 'custom_stop' + self.name, self.machine.state_end],
         ]
 
     def prep(self):
@@ -96,6 +98,10 @@ class CenteringOnMoveSub(AUVMission):
             },
             'condition_centering' + self.name: {
                 'condition': self.run_centering,
+                'args': ()
+            },
+            'custom_stop' + self.name: {
+                'custom': self.machine.auv.execute_stop_goal,
                 'args': ()
             },
         }
