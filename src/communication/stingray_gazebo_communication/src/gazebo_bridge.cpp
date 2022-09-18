@@ -27,7 +27,7 @@ static const json simulation_config = json::parse(std::ifstream(ros::package::ge
 
 std_msgs::Int32 depthMessage;
 std_msgs::Int32 yawMessage;
-int currentYaw;
+double currentYaw;
 std_msgs::Int32 pingerBucketMessage;
 std_msgs::Int32 pingerFlareMessage;
 geometry_msgs::Twist currentTwist;
@@ -89,8 +89,13 @@ bool horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Requ
     {
         updateModelState([request](gazebo_msgs::ModelState &modelState)
                          {
-      double desiredYaw = -request.yaw % 360;
-      double newYaw = currentYaw + simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
+      double desiredYaw = -request.yaw;
+      ROS_INFO("currentYaw %f", currentYaw);
+      ROS_INFO("desiredYaw %f", desiredYaw);
+      currentYaw += desiredYaw;
+      ROS_INFO("currentYaw %f", currentYaw);
+      double newYaw = currentYaw  *  M_PI / 180.0 + simulation_config["initial_yaw"].get<double>();
+      ROS_INFO("newYaw %f", newYaw);
       modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
     }
     catch (std::runtime_error &e)
@@ -150,23 +155,28 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
  * @param yaw corner robot now
  * @return {@code pair} Angle by xy and z to pinger
  */
-std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &pinger, const float &yaw = 0) {
-    auto f90 = [](float corner) {
-        if (corner > 0) {
+std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &pinger, const float &yaw = 0)
+{
+    auto f90 = [](float corner)
+    {
+        if (corner > 0)
+        {
             corner -= 90;
-        } else if (corner < -0) {
+        }
+        else if (corner < -0)
+        {
             corner += 90;
         }
         return corner;
     };
-    gazebo_msgs::GetModelState modelState;  // get robot position
+    gazebo_msgs::GetModelState modelState; // get robot position
     modelState.request.model_name = simulation_config["model_name"];
     bool result = ros::service::call(ros_config["services"]["gazebo_get_state"], modelState);
     if (!result || !modelState.response.success)
     {
         throw std::runtime_error("Failed to obtain state in Gazebo: " + modelState.response.status_message);
     }
-    gazebo_msgs::GetModelState pingerModelState;  // get pinger position
+    gazebo_msgs::GetModelState pingerModelState; // get pinger position
     pingerModelState.request.model_name = simulation_config[pinger];
     bool result1 = ros::service::call(ros_config["services"]["gazebo_get_state"], pingerModelState);
     if (!result1 || !pingerModelState.response.success)
@@ -178,64 +188,25 @@ std::pair<std_msgs::Int32, std_msgs::Int32> pingerStatus(const std::string &ping
     double path_y = pingerModelState.response.pose.position.y - modelState.response.pose.position.y;
     double path_z = modelState.response.pose.position.z - pingerModelState.response.pose.position.z;
 
-    double r_xy = std::sqrt(path_x*path_x + path_y*path_y);
-    std_msgs::Int32 corner_XY; std_msgs::Int32 corner_Z;
-    float corner_XY_data = std::atan(path_y/path_x) * 180 / M_PI;
+    double r_xy = std::sqrt(path_x * path_x + path_y * path_y);
+    std_msgs::Int32 corner_XY;
+    std_msgs::Int32 corner_Z;
+    float corner_XY_data = std::atan(path_y / path_x) * 180 / M_PI;
     /*
      * I'm not sure if the angle of rotation of the device should be added or subtracted
      * */
-    corner_XY.data = f90(corner_XY_data) + yaw;  // ???
-    float corner_Z_data = std::atan(path_z/r_xy) * 180 / M_PI;
+    corner_XY.data = f90(corner_XY_data) + yaw; // ???
+    float corner_Z_data = std::atan(path_z / r_xy) * 180 / M_PI;
     corner_Z.data = -corner_Z_data;
 
     /*
      * For tests
      * */
-//    ROS_INFO("XY %f", corner_XY_data);
-//    ROS_INFO("Z %f", corner_Z_data);
+    //    ROS_INFO("XY %f", corner_XY_data);
+    //    ROS_INFO("Z %f", corner_Z_data);
 
     std::pair<std_msgs::Int32, std_msgs::Int32> df(corner_XY, corner_Z);
     return df;
-}
-
-/**
- * Rotates vehicle on specified yaw angle
- * @param request Service request with yaw angle in degrees
- * @param response Service response
- * @return {@code true} if service call didn't fail
- */
-bool yawCallback(stingray_communication_msgs::SetInt32::Request &request,
-                 stingray_communication_msgs::SetInt32::Response &response)
-{
-    /*
-     * Here we simulate enabled yaw stabilization: we just pass desired yaw angle
-     * for Gazebo like it is low-level control system that stabilizes this angle.
-     */
-
-    if (!yawStabilizationEnabled)
-    {
-        response.success = false;
-        response.message = "Yaw stabilization is not enabled";
-        return true;
-    }
-
-    try
-    {
-        updateModelState([request](gazebo_msgs::ModelState &modelState)
-                         {
-      double desiredYaw = request.value % 360;
-      double newYaw = simulation_config["initial_yaw"].get<double>() + desiredYaw * M_PI / 180.0;
-      modelState.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(simulation_config["initial_roll"].get<double>(), simulation_config["initial_pitch"].get<double>(), newYaw); });
-    }
-    catch (std::runtime_error &e)
-    {
-        response.success = false;
-        response.message = "Failed to set depth in Gazebo: " + std::string(e.what());
-        return true;
-    }
-
-    response.success = true;
-    return true;
 }
 
 bool imuCallback(std_srvs::SetBool::Request &request, std_srvs::SetBool::Response &response)
@@ -252,6 +223,8 @@ bool stabilizationCallback(stingray_communication_msgs::SetStabilization::Reques
     ROS_INFO("Setting yaw stabilization %d", request.yawStabilization);
     depthStabilizationEnabled = request.depthStabilization;
     yawStabilizationEnabled = request.yawStabilization;
+    currentYaw = yawMessage.data;
+
 
     response.success = true;
     return true;
@@ -310,8 +283,7 @@ int main(int argc, char **argv)
             {
                 yaw_postprocessed += 360;
             }
-            currentYaw = static_cast<int16_t>(yaw_postprocessed);
-            yawMessage.data = currentYaw;
+            yawMessage.data = static_cast<int16_t>(yaw_postprocessed);
             auto df_pinger_bucket = pingerStatus("pinger_buckets_model_name", yaw_postprocessed);
             auto df_pinger_flare = pingerStatus("pinger_flare_model_name", yaw_postprocessed);
             pingerBucketMessage = df_pinger_bucket.first;
