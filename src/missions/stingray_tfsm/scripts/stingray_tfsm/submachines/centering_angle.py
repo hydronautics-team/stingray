@@ -12,8 +12,8 @@ class CenteringAngleSub(AUVMission):
                  camera: str,
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 6,
-                 angle: int = 5):
+                 tolerance: int = 9,
+                 angle: int = 8):
         """ Submission for centering on object in camera
 
         Args:

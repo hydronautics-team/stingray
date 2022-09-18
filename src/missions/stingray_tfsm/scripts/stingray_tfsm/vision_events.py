@@ -104,6 +104,13 @@ class ObjectDetectionEvent(TopicEvent):
         self._confidence = confidence
         self.current_center = None
         self.relative_shift = 0
+        self.current_object = None
+    
+    def is_big(self):
+        if height(self.current_object) / 480 > 0.5:
+            return True
+        else:
+            return False
 
     def get_track(self):
         return self.current_center
@@ -111,6 +118,7 @@ class ObjectDetectionEvent(TopicEvent):
     def _trigger_fn(self, msg: ObjectsArray):
         _obj = get_best_object(msg.objects, self._object_name, self._confidence)
         if _obj:
+            self.current_object = _obj
             if self.current_center is not None:
                 self.relative_shift, self.current_center =\
                     get_closest_to_memorized(msg.objects, self._object_name, self.current_center + self.relative_shift)

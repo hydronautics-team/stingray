@@ -95,9 +95,9 @@ class AvoidSub(AUVMission):
             },
             'move_lag' + self.name: {
                 'march': 0,
-                'lag': 0.25 if self.lag_dir == 'left' else -0.25,
+                'lag': 0.5 if self.lag_dir == 'left' else -0.5,
                 'yaw': 0,
-                'wait': 0.1
+                'wait': 1
             },
         }
         scene.update(assession_scene)

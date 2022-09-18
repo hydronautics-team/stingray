@@ -38,6 +38,24 @@ class InitAUVMission(AUVMission):
         return []
 
     def initialize_auv(self):
+        # get current yaw
+        self.machine.auv.execute_move_goal({
+            'march': 0.0,
+            'lag': 0.0,
+            'yaw': 0,
+            'wait': 0.1
+        })
+        # init indication
+        self.machine.auv.execute_move_goal({
+            'march': 0.0,
+            'lag': 0.5,
+            'yaw': 0,
+            'wait': 0.5
+        })
+        self.machine.auv.execute_stop_goal()
+        rospy.loginfo('Sleep before missions')
+        rospy.sleep(10)
+        
         if self.reset_imu:
             rospy.loginfo('Reset IMU')
             self.enable_reset_imu()
@@ -51,19 +69,10 @@ class InitAUVMission(AUVMission):
             self.depth_stabilization, self.pitch_stabilization, self.yaw_stabilization, self.lag_stabilization)
 
         self.machine.auv.execute_dive_goal({
-            'depth': 1000,
+            'depth': 100,
         })
 
-        # init indication
-        self.machine.auv.execute_move_goal({
-            'march': 0.0,
-            'lag': 0.2,
-            'yaw': 0,
-            'wait': 0.1
-        })
-        self.machine.auv.execute_stop_goal()
-        # rospy.loginfo('Sleep before missions')
-        # rospy.sleep(5)
+        
 
     def setup_scene(self):
         return {
