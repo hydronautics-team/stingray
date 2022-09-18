@@ -31,8 +31,6 @@ class AUVControl:
     """
 
     # TODO: Errors handling
-    # TODO: Devices support
-
     def __init__(self, verbose=False, multiplier=1):
         """ Class for controlling AUV in missions.
 
@@ -78,13 +76,11 @@ class AUVControl:
         :return: None
 
         """
-        self.yaw_angle = msg.data
-        if not self.inited:
-            rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
-        rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
+
         if self.verbose:
-            rospy.loginfo(
-                f"Absolute angle got from machine is {msg.data}; It is set on higher level")
+            if not self.inited:
+                rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
+            rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
 
     def execute_lifter_goal(self, scene):
         device_id = 1  # Lifter_id
@@ -122,8 +118,6 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common)
 
-
-
     def execute_move_goal(self, scene):
         """
         The execute_move_goal function sends a goal to the HorizontalMoveClient action server.
@@ -146,9 +140,10 @@ class AUVControl:
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
 
-        rospy.loginfo(f"self.yaw: {self.yaw}")
-        rospy.loginfo(f"SET YAW: {scene['yaw']}")
-        rospy.loginfo(f"self.yaw + scene['yaw']: {self.yaw + scene['yaw']}")
+        if self.verbose:
+            rospy.loginfo(f"self.yaw: {self.yaw}")
+            rospy.loginfo(f"SET YAW: {scene['yaw']}")
+            rospy.loginfo(f"self.yaw + scene['yaw']: {self.yaw + scene['yaw']}")
         goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
 
         self.HorizontalMoveClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
