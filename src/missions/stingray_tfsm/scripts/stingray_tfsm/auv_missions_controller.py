@@ -12,7 +12,6 @@ class AUVMissionsController(PureMissionsController):
     @abstractmethod
     def __init__(self,
                  camera: str,
-                 auv: AUVControl,
                  depth_stabilization: bool = False,
                  pitch_stabilization: bool = False,
                  yaw_stabilization: bool = False,
@@ -27,7 +26,8 @@ class AUVMissionsController(PureMissionsController):
         self.yaw_stabilization = yaw_stabilization
         self.lag_stabilization = lag_stabilization
         self.reset_imu = reset_imu
-        self.auv = auv
+
+        self.auv = AUVControl()
 
         super().__init__()
 

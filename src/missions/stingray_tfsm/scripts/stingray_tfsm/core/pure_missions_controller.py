@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 from stingray_tfsm.core.pure_mission import PureMission
 from stingray_tfsm.core.pure_fsm import PureStateMachine
@@ -14,6 +13,7 @@ class PureMissionsController(ABC):
         """
         self.machine: PureStateMachine = None
         self.last_mission = None
+        self.verbose = False
         """ pure state machine """
         self._reset()
 
@@ -51,6 +51,7 @@ class PureMissionsController(ABC):
             mission (PureMission): mission object which name is the state in control fsm
             mission_transitions (List): transitions for this mission
         """
+        mission.set_verbose(self.verbose)
         self.machine.add_states(mission.name, on_enter=mission.run)
         if self.last_mission is None:
             self.add_mission_transitions([

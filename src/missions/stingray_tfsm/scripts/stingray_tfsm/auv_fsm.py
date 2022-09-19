@@ -8,7 +8,6 @@ HARDWARE_MULTIPLIER = 3
 class AUVStateMachine(PureStateMachine):
     def __init__(self,
                  name: str,
-                 auv: AUVControl,
                  states: tuple = (),
                  transitions: list = [],
                  scene: dict = dict(),
@@ -26,12 +25,17 @@ class AUVStateMachine(PureStateMachine):
         :param verbose=True: Print out the state of the robot as it moves through its states
 
         """
-
+        self.verbose = verbose
         self.hardware = not simulation
         self.multiplier = HARDWARE_MULTIPLIER if self.hardware else 1
-        self.auv = auv
+
+        self.auv = AUVControl(verbose=verbose)
 
         super().__init__(name, states, transitions, scene, path)
+
+    def set_verbose(self, verbose):
+        self.verbose = verbose
+        self.auv.set_verbose(verbose)
 
     def next_step(self):
         """

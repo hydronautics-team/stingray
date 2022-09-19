@@ -25,6 +25,7 @@ def callback_feedback(feedback):
 
 
 class AUVControl:
+    #  TODO make this a singleton to avoid multiple instances
     """Class for controlling AUV in missions.
 
     The class is actually a unified wrap over actions and services calls.
@@ -60,6 +61,15 @@ class AUVControl:
         self.HorizontalMoveClient.wait_for_server()
         self.DiveClient.wait_for_server()
         self.DevicesClient.wait_for_server()
+
+    def set_verbose(self, verbose):
+        """
+        The verbose function is used to set machine's extended output
+        :param verbose: Determine whether to print the progress of the algorithm
+        :return: None
+
+        """
+        self.verbose = verbose
 
     @property
     def yaw(self):

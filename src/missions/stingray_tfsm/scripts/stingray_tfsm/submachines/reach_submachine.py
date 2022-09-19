@@ -1,10 +1,8 @@
-from stingray_tfsm.submachines.centering_angle import CenteringAngleSub
+from stingray_tfsm.submachines.centering_angular import CenteringAngleSub
 from stingray_tfsm.submachines.avoid_submachine import AvoidSub
 from stingray_object_detection.utils import get_objects_topic
-from stingray_tfsm.vision_events import ObjectDetectionEvent, ObjectIsCloseEvent
+from stingray_tfsm.vision_events import ObjectDetectionEvent
 from stingray_tfsm.auv_mission import AUVMission
-from stingray_tfsm.auv_fsm import AUVStateMachine
-from stingray_tfsm.core.pure_fsm import PureStateMachine
 import rospy
 
 
@@ -17,7 +15,7 @@ class ReachSub(AUVMission):
                  rotate='left',
                  lag='left',
                  confirmation: int = 2,
-                 tolerance: int = 6,
+                 tolerance: int = 8,
                  vision: bool = True,
                  acoustics: bool = False,
                  speed: int = 0.5,
@@ -39,11 +37,12 @@ class ReachSub(AUVMission):
 
         self.rotate_dir = -1 if rotate == "left" else 1
         self.target = target
+
         if avoid:
             self.avoid = True
             self.avoid_submachine = AvoidSub(
-                name + "_avoid", camera, avoid, lag)
-        super().__init__(name)
+                name + "_avoid", camera, avoid, lag,)
+        super().__init__(name,)
 
     def setup_states(self):
         states = ('condition_visible', 'move_march',
@@ -106,10 +105,10 @@ class ReachSub(AUVMission):
                 'args': ()
             },
             'move_search' + self.name: {
-                'march': 0.0,
+                'march': 0.2,
                 'lag': 0,
-                'yaw': 5 * self.rotate_dir,
-                'wait': 0.3,
+                'yaw': 7 * self.rotate_dir,
+                'wait': 0.5,
             },
             'condition_centering' + self.name: {
                 'subFSM': True,

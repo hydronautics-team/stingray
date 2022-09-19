@@ -2,7 +2,8 @@ from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 
 
-DEFAULT_RANGE = 640
+DEFAULT_RANGE_W = 800
+DEFAULT_RANGE_H = 800
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_CONFIDENCE = 0.65
 
@@ -26,8 +27,12 @@ def calculate_proximity(tlx, brx, tly, bry, mrange):
     return proximity
 
 
-def calculate_center(_obj):
+def calculate_center_x(_obj):
     return (_obj.top_left_x + _obj.bottom_right_x) // 2
+
+
+def calculate_center_y(_obj):
+    return (_obj.top_left_y + _obj.bottom_right_y) // 2
 
 
 def very_close(tlx, brx, tly, bry, mrange, target, *args, **kwargs):
@@ -69,7 +74,7 @@ def get_closest_to_memorized(objects, target_name, memorized):
     obj_to_asses = []
     for obj in objects:
         if obj.name == target_name:
-            pos = calculate_center(obj)
+            pos = calculate_center_x(obj)
             c = pos - memorized
             direction = 1 if c >= 0 else -1
             c = abs(c)
@@ -79,13 +84,20 @@ def get_closest_to_memorized(objects, target_name, memorized):
     return result[0]*result[1], result[2]
 
 
+def is_big(_obj, border_h=DEFAULT_RANGE_H):
+    if height(_obj) / border_h > 0.5:
+        return True
+    else:
+        return False
+
+
 # todo unite all this mess into one class in order to check events analyzing only one message for all cases
 class ObjectDetectionEvent(TopicEvent):
     """An event that is triggered when specific object is detected in object detection topic.
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None, confidence=DEFAULT_CONFIDENCE):
+                 n_triggers: int = 1, queue_size=None, tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
@@ -100,10 +112,18 @@ class ObjectDetectionEvent(TopicEvent):
                          n_triggers=n_triggers,
                          trigger_reset=True,
                          queue_size=queue_size)
-        self._object_name = object_name
+        self._target_object = object_name
         self._confidence = confidence
-        self.current_center = None
-        self.relative_shift = 0
+        self._tolerance = tolerance
+
+        self.current_center_x = None
+        self.relative_shift_x = 0
+        self.current_center_y = None
+        self.relative_shift_y = 0
+
+        self.current_width = None
+        self.current_height = None
+
         self.current_object = None
     
     def is_big(self):
@@ -113,17 +133,68 @@ class ObjectDetectionEvent(TopicEvent):
             return False
 
     def get_track(self):
-        return self.current_center
+        return self.current_center_x
+
+    def get_better_track_x(self):
+        return self.current_center_x, self.relative_shift_x
+
+    def get_better_track_y(self):
+        return self.current_center_y, self.relative_shift_y
+
+    def get_x_offset(self):
+        return DEFAULT_RANGE_W // 2 - self.current_center_x
+
+    def get_y_offset(self):
+        return DEFAULT_RANGE_H // 2 - self.current_center_y
+
+    def righter(self):
+        if self.get_x_offset() / DEFAULT_RANGE_W >= self._tolerance:
+            return 1
+        else:
+            return 0
+
+    def lefter(self):
+        if self.get_x_offset() / DEFAULT_RANGE_W <= -self._tolerance:
+            return 1
+        else:
+            return 0
+
+    def higher(self):
+        if self.get_y_offset() / DEFAULT_RANGE_H * 100 >= self._tolerance:
+            return 1
+        else:
+            return 0
+
+    def lower(self):
+        if self.get_y_offset() / DEFAULT_RANGE_H * 100 <= -self._tolerance:
+            return 1
+        else:
+            return 0
+
+    def is_close(self):
+        pass
+
+    def is_ortho(self):
+        if 1 - self._tolerance <= self.current_width/self.current_height <= 1 + self._tolerance:
+            print(f"{self._target_object} is orthogonal to AUV")
+            return 1
+        else:
+            print(f"{self._target_object} is NOT orthogonal to AUV")
+            return 0
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(msg.objects, self._object_name, self._confidence)
+        _obj = get_best_object(msg.objects, self._target_object, self._confidence)
         if _obj:
             self.current_object = _obj
-            if self.current_center is not None:
-                self.relative_shift, self.current_center =\
-                    get_closest_to_memorized(msg.objects, self._object_name, self.current_center + self.relative_shift)
+            if self.current_center_x is not None:
+                self.relative_shift_x, self.current_center_x =\
+                    get_closest_to_memorized(msg.objects, self._target_object,
+                                             self.current_center_x + self.relative_shift_x)
             else:
-                self.relative_shift, self.current_center = 0,  calculate_center(_obj)
+                self.relative_shift_x, self.current_center_x = 0, calculate_center_x(_obj)
+            self.current_center_y = calculate_center_y(_obj)
+            self.current_width = width(_obj)
+            self.current_height = height(_obj)
             return 1
         return 0
 
@@ -133,7 +204,7 @@ class ObjectIsCloseEvent(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 2, queue_size=None, _range=DEFAULT_RANGE,
+                 n_triggers: int = 2, queue_size=None, _range=DEFAULT_RANGE_W,
                  tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
         :param topic_name: Object detection topic name.
@@ -173,7 +244,7 @@ class ObjectOnRight(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
+                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE_W,
                  tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
         :param topic_name: Object detection topic name.
@@ -220,7 +291,7 @@ class ObjectOnLeft(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
+                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE_W,
                  tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
         :param topic_name: Object detection topic name.
@@ -261,44 +332,3 @@ class ObjectOnLeft(TopicEvent):
         else:
             return 0
 
-
-class ObjectOrtho(TopicEvent):
-    """An event that is triggered when specific object is detected in object detection topic.
-    """
-
-    def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None, _range=DEFAULT_RANGE,
-                 tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
-        """The constructor.
-        :param topic_name: Object detection topic name.
-        :param object_name: Name of the object class of interest.
-        :param n_triggers: Number of sequential detections to define object as detected. Used to cope with
-        false-positive detections. Counter is zeroed after each non-detections.
-        :param queue_size: Queue size for topic (as queue_size parameter in rospy.Subscriber).
-        """
-
-        super().__init__(topic_name=topic_name,
-                         topic_type=ObjectsArray,
-                         trigger_fn=self._trigger_fn,
-                         n_triggers=n_triggers,
-                         trigger_reset=True,
-                         queue_size=queue_size)
-        self._object_name = object_name
-        self._range = _range
-        self._tolerance = tolerance
-        self._confidence = confidence
-        if object_name == 'yellow_flare':
-            self._confidence -= 0.3
-
-    def _trigger_fn(self, msg: ObjectsArray):
-        obj_to_num = list(enumerate([obj.name for obj in msg.objects]))
-        for i, name in obj_to_num:
-            if self._object_name == name:
-                if msg.objects[i].confidence >= self._confidence:
-                    _obj = msg.objects[i]
-                    x_side = _obj.top_left_x + _obj.bottom_right_x
-                    y_side = _obj.top_left_y + _obj.bottom_right_y
-                    print()
-                    if x_side / y_side > self._tolerance:
-                        return 1
-        return 0
