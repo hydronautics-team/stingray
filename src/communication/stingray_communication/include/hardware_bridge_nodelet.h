@@ -1,4 +1,4 @@
-#ifndef STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
+    #ifndef STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
 #define STINGRAY_COMMUNICATION_HARDWARE_BRIDGE_NODELET_H
 
 #include <ros/ros.h>
@@ -70,6 +70,9 @@ private:
     bool pitchStabilizationEnabled = false;
     bool yawStabilizationEnabled = false;
     bool lagStabilizationEnabled = false;
+
+    int currentYaw;
+    int currentDepth;
 
     // get json config
     json ros_config;

@@ -6,7 +6,14 @@ import rospy
 
 
 class PureStateMachine:
-    def __init__(self, name: str, states: tuple = (), transitions: list = [], scene: dict = {}, path=None):
+    def __init__(self,
+                 name: str,
+                 states: tuple = (),
+                 transitions: list = [],
+                 scene: dict = {},
+                 path=None,
+                 verbose: bool = False
+                 ):
         """ Base state machine class
 
         :param name:str=(): Define the name of the machine
@@ -24,6 +31,8 @@ class PureStateMachine:
         """ FSM transitions """
         self.scene = scene
         """ FSM scene args """
+
+        self.verbose = verbose
 
         self.state_init = self.name.upper() + "_INIT"
         """ default init FSM state"""
@@ -57,7 +66,6 @@ class PureStateMachine:
         self.machine = Machine(model=self, states=self.states, transitions=self.transitions,
                                initial=self.state_init, auto_transitions=False)
         """ pytransitions state machine """
-        self.verbose = True
 
     @staticmethod
     def callback_wrapper(userdata: dict = None, external_cb=None):
@@ -119,21 +127,6 @@ class PureStateMachine:
                     tr_list.append(literal_eval(line))
         return states, tr_list
 
-    def set_verbose(self, verbose):
-        """
-        The set_verbose function is used to set the verbose attribute of FSM_simple class.
-        It is typically called to allow callers to control whether or not
-        detailed output is printed by that module.
-
-        :param verbose: Determine whether the function will print out a message
-        :return: The value of the verbose parameter
-
-        """
-        if verbose:
-            self.verbose = True
-        else:
-            self.verbose = False
-
     def describe(self):
         """
         The describe function draws a state diagram of machine
@@ -185,7 +178,7 @@ class PureStateMachine:
 
     def add_scene(self, scene):
         self.scene.update(scene)
-    
+
     @staticmethod
     def construct_name(submachine_name: str, parent_name: str) -> str:
         """ Construct hierarchical mission name
@@ -198,4 +191,3 @@ class PureStateMachine:
             str: Mission name
         """
         return parent_name + "_" + submachine_name
-

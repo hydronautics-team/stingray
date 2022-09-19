@@ -50,13 +50,11 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
     bool ok = responseMessage.parseVector(received_vector);
     if (ok)
     {
-        // NODELET_INFO("Received depth: %f", responseMessage.depth);
         depthMessage.data = static_cast<int>(responseMessage.depth); // Convert metres to centimetres
-        // depthMessage.data = std::abs(static_cast<int>(responseMessage.depth * 100.0f)); // Convert metres to centimetres
+        NODELET_INFO("Received depth: %f", responseMessage.depth);
         // TODO: Test yaw obtaining
         yawMessage.data = static_cast<int>(responseMessage.yaw);
-        // yawMessage.data = static_cast<int>(responseMessage.yaw * 100.0f);
-        // NODELET_INFO("Received yaw: %f", responseMessage.yaw);
+        NODELET_INFO("Received yaw: %f", responseMessage.yaw);
     }
     else
         NODELET_ERROR("Wrong checksum");
@@ -86,8 +84,9 @@ bool hardware_bridge::horizontalMoveCallback(stingray_communication_msgs::SetHor
         horizontalMoveResponse.message = "Yaw stabilization is not enabled";
         return true;
     }
-    NODELET_INFO("Setting yaw to %d", horizontalMoveRequest.yaw);
-    requestMessage.yaw = static_cast<int16_t>(horizontalMoveRequest.yaw);
+    currentYaw += horizontalMoveRequest.yaw;
+    NODELET_INFO("Setting yaw to %d", currentYaw);
+    requestMessage.yaw = static_cast<int16_t>(currentYaw);
 
     isReady = true;
     horizontalMoveResponse.success = true;
@@ -103,7 +102,7 @@ bool hardware_bridge::depthCallback(stingray_communication_msgs::SetInt32::Reque
         depthResponse.message = "Depth stabilization is not enabled";
         return true;
     }
-    NODELET_INFO ("Setting depth to %d", depthRequest.value);
+    NODELET_INFO("Setting depth to %d", depthRequest.value);
     requestMessage.depth = (static_cast<int16_t>(depthRequest.value)); // For low-level stabilization purposes
     NODELET_DEBUG("Sending to STM32 depth value: %d", requestMessage.depth);
 
@@ -128,9 +127,13 @@ bool hardware_bridge::stabilizationCallback(stingray_communication_msgs::SetStab
                                             stingray_communication_msgs::SetStabilization::Response &stabilizationResponse)
 {
     // set current yaw
-    requestMessage.yaw = responseMessage.yaw;
+    currentYaw = responseMessage.yaw;
+    requestMessage.yaw = currentYaw;
+    NODELET_INFO("Setting initial yaw: %f", currentYaw);
     // set current depth
-    requestMessage.depth = responseMessage.depth;
+    currentDepth = responseMessage.depth;
+    requestMessage.depth = currentDepth;
+    NODELET_INFO("Setting initial depth: %f", currentDepth);
 
     NODELET_INFO("Setting depth stabilization %d", stabilizationRequest.depthStabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, stabilizationRequest.depthStabilization);

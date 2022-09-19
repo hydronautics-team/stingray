@@ -8,7 +8,6 @@ class InitAUVMission(AUVMission):
 
     def __init__(self,
                  name: str,
-                 camera: str,
                  auv: AUVControl,
                  depth_stabilization: bool = False,
                  pitch_stabilization: bool = False,
@@ -26,7 +25,6 @@ class InitAUVMission(AUVMission):
             lag_stabilization (bool, optional): flag to enable lag stabilization. Defaults to False.
             reset_imu (bool, optional): flag to enable IMU reset on start. Defaults to False.
         """
-        self.camera = camera
         self.depth_stabilization = depth_stabilization
         self.pitch_stabilization = pitch_stabilization
         self.yaw_stabilization = yaw_stabilization
@@ -42,53 +40,37 @@ class InitAUVMission(AUVMission):
         return []
 
     def initialize_auv(self):
-        # self.enable_object_detection(self.camera, True)
         # get current yaw
-        # self.machine.auv.execute_move_goal({
-        #     'march': 0.0,
-        #     'lag': 0.0,
-        #     'yaw': 0,
-        #     'wait': 1
-        # })
-        # init indication
-        # self.machine.auv.execute_move_goal({
-        #     'march': 0.0,
-        #     'lag': 0.5,
-        #     'yaw': 0,
-        #     'wait': 0.5
-        # })
-        # self.machine.auv.execute_stop_goal()
-        rospy.loginfo('Sleep before missions')
-        rospy.sleep(1)
-        
+        self.machine.auv.execute_move_goal({
+            'march': 0.0,
+            'lag': 0.0,
+            'yaw': 0,
+            'wait': 1
+        })
+
         if self.reset_imu:
-            rospy.loginfo('Reset IMU')
+            rospy.loginfo('Resetting IMU')
             self.enable_reset_imu()
-        # rospy.sleep(5)
-        # self.machine.auv.execute_move_goal({
-        #     'march': 0.0,
-        #     'lag': 0.7,
-        #     'yaw': 0,
-        #     'wait': 0.2
-        # })
-        # self.machine.auv.execute_stop_goal()
-        # rospy.sleep(5)
+        rospy.sleep(1)
+
+        # init indication
+        self.machine.auv.execute_move_goal({
+            'march': 0.5,
+            'lag': 0.0,
+            'yaw': 0,
+            'wait': 0.5
+        })
+        self.machine.auv.execute_stop_goal()
+        rospy.loginfo('Sleep before missions')
+        rospy.sleep(5)
 
         self.enable_stabilization(
             self.depth_stabilization, self.pitch_stabilization, self.yaw_stabilization, self.lag_stabilization)
-        # rospy.sleep(5)
 
-        self.enable_object_detection(self.camera, True)
-
-
-        self.machine.auv.inited = True
         self.machine.auv.execute_dive_goal({
             'depth': 100,
         })
-
-
-
-        
+        rospy.sleep(5)
 
     def setup_scene(self):
         return {

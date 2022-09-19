@@ -7,7 +7,7 @@ from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
 from stingray_object_detection_msgs.msg import ObjectsArray
 from stingray_communication_msgs.srv import SetStabilization
-from std_msgs.msg import Bool
+from std_srvs.srv import SetBool
 from stingray_object_detection.utils import get_objects_topic
 from stingray_resources.utils import load_config
 from stingray_tfsm.auv_control import AUVControl
@@ -15,19 +15,19 @@ from stingray_tfsm.auv_control import AUVControl
 
 class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
-    FSM_CLASS = AUVStateMachine
-
     @abstractmethod
-    def __init__(self, name: str, auv: AUVControl, simulation: bool = True):
+    def __init__(self, name: str,
+                 auv: AUVControl = None,
+                 verbose: bool = False
+                 ):
         """ Abstract class to implement missions for AUV with useful methods
 
         Args:
             name (str): mission name
         """
         self.ros_config = load_config("ros.json")
-        self.simulation = simulation
-        self.machine = AUVStateMachine(name, auv, simulation=simulation)
-        super().__init__(name, self.machine)
+        self.machine = AUVStateMachine(name, auv, verbose=verbose)
+        super().__init__(name, self.machine, verbose)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera
@@ -48,35 +48,29 @@ class AUVMission(PureMission):
         """ method to enable object detection for specific camera
 
         Args:
-        camera_topic (str): camera topic name
+            camera_topic (str): camera topic name
         """
-        if not self.simulation:
-            srv_name = self.ros_config["services"]["set_stabilization_enabled"]
-            rospy.wait_for_service(srv_name)
-            set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)
-            response = set_stabilization(
-                depthStabilization, pitchStabilization, yawStabilization, lagStabilization)
-            rospy.loginfo(
-                f"Stabilization enabled: {response.success}, message: {response.message} ")
-        else:
-            rospy.loginfo("no stabilization needed in simulator")
+        srv_name = self.ros_config["services"]["set_stabilization_enabled"]
+        rospy.wait_for_service(srv_name)
+        set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)
+        response = set_stabilization(
+            depthStabilization, pitchStabilization, yawStabilization, lagStabilization)
+        rospy.loginfo(
+            f"Stabilization enabled: {response.success}, message: {response.message} ")
 
     def enable_reset_imu(self):
-        """
-        method to enable object detection for specific camera
+        """ method to enable object detection for specific camera
+
         Args:
-        camera_topic (str): camera topic name
+            camera_topic (str): camera topic name
         """
-        if not self.simulation:
-            srv_name = self.ros_config["services"]["set_imu_enabled"]
-            rospy.wait_for_service(srv_name)
-            set_imu_enabled = rospy.ServiceProxy(srv_name, Bool)
-            response = set_imu_enabled(True)
-            rospy.sleep(1)
-            rospy.loginfo(
-                f"IMU reset: {response.success}, message: {response.message} ")
-        else:
-            rospy.loginfo("no imu reset needed in simulator")
+        srv_name = self.ros_config["services"]["set_imu_enabled"]
+        rospy.wait_for_service(srv_name)
+        set_imu = rospy.ServiceProxy(srv_name, SetBool)
+        response = set_imu(True)
+        rospy.sleep(1)
+        rospy.loginfo(
+            f"IMU reset: {response.success}, message: {response.message} ")
 
     def check_machine(self):
         if type(self.machine) is AUVStateMachine:

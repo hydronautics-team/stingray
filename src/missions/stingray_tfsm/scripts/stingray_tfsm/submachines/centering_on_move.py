@@ -6,12 +6,13 @@ from stingray_tfsm.vision_events import ObjectDetectionEvent, ObjectOnRight, Obj
 from stingray_tfsm.auv_control import AUVControl
 import rospy
 
+
 class CenteringOnMoveSub(AUVMission):
     """ Submission for centering on object in camera """
 
     def __init__(self, name: str,
-                 camera: str,
                  auv: AUVControl,
+                 camera: str,
                  target: str,
                  confirmation: int = 2,
                  tolerance: int = 20,
@@ -38,6 +39,7 @@ class CenteringOnMoveSub(AUVMission):
         self.gate_detected = None
         self.gate_lefter = None
         self.gate_righter = None
+
         super().__init__(name, auv)
 
     def setup_states(self):
@@ -47,33 +49,25 @@ class CenteringOnMoveSub(AUVMission):
 
     def setup_transitions(self):
         return [
-            [self.machine.transition_start, [self.machine.state_init], 'condition_centering' + self.name],
+            [self.machine.transition_start, [self.machine.state_init],
+                'condition_centering' + self.name],
 
-            ['condition_f', 'condition_centering' + self.name, 'condition_centering' + self.name],
-            ['condition_s', 'condition_centering' + self.name, self.machine.state_end],
+            ['condition_f', 'condition_centering' +
+                self.name, 'condition_centering' + self.name],
+            ['condition_s', 'condition_centering' +
+                self.name, self.machine.state_end],
 
-            [self.machine.transition_end, 'custom_stop' + self.name, self.machine.state_end],
+            [self.machine.transition_end, 'custom_stop' +
+                self.name, self.machine.state_end],
         ]
-
-    def prep(self):
-        pass
-        # self.enable_object_detection(self.camera, True)
-        # self.machine.auv.execute_dive_goal({
-        #             'depth': 1100,
-        #         })
-        # self.machine.auv.execute_move_goal({
-        #     'march': 1.0,
-        #     'lag': 0.0,
-        #     'yaw': 0,
-        #     'wait': 5,
-        # })
 
     def run_centering(self):
         if self.event_handler(self.gate_detected):
-            rospy.loginfo(f'self.gate_detected.is_big() {self.gate_detected.is_big()}')
+            rospy.loginfo(
+                f'self.gate_detected.is_big() {self.gate_detected.is_big()}')
             if self.gate_detected.is_big():
                 return True
-            
+
             current_center = self.gate_detected.get_track()
             error = current_center - 320
             rospy.loginfo(f'current_center {current_center}')
@@ -83,20 +77,18 @@ class CenteringOnMoveSub(AUVMission):
 
             if abs(error) > self.tolerance:
                 self.machine.auv.execute_move_goal({
-                    'march': 1.0,
+                    'march': 0.6,
                     'lag': 0.0,
                     'yaw': coef,
-                    'wait': 5,
+                    'wait': 4,
                 })
 
-            return False 
+            return False
 
-        
     def setup_scene(self):
         return {
             self.machine.state_init: {
-                'preps': self.prep,
-                "args": (),
+                'time': 0.1,
             },
             'condition_centering' + self.name: {
                 'condition': self.run_centering,
