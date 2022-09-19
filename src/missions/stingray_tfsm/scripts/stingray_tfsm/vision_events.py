@@ -125,6 +125,10 @@ class ObjectDetectionEvent(TopicEvent):
         self.current_height = None
 
         self.current_object = None
+        if self._target_object == 'red_bowl' or\
+                self._target_object == 'yellow_flare' or\
+                self._target_object == 'blue_bowl':
+            self._confidence -= 0.3
     
     def is_big(self):
         if height(self.current_object) / 480 > 0.5:
@@ -148,13 +152,13 @@ class ObjectDetectionEvent(TopicEvent):
         return DEFAULT_RANGE_H // 2 - self.current_center_y
 
     def righter(self):
-        if self.get_x_offset() / DEFAULT_RANGE_W >= self._tolerance:
+        if self.get_x_offset() / DEFAULT_RANGE_W >= 0:
             return 1
         else:
             return 0
 
     def lefter(self):
-        if self.get_x_offset() / DEFAULT_RANGE_W <= -self._tolerance:
+        if self.get_x_offset() / DEFAULT_RANGE_W <= - 0:
             return 1
         else:
             return 0
