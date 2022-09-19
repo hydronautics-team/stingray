@@ -70,6 +70,7 @@ class InitAUVMission(AUVMission):
         self.machine.auv.execute_dive_goal({
             'depth': 100,
         })
+        rospy.sleep(5)
 
     def setup_scene(self):
         return {

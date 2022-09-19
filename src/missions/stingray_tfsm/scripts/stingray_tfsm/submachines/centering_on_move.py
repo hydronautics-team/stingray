@@ -77,10 +77,10 @@ class CenteringOnMoveSub(AUVMission):
 
             if abs(error) > self.tolerance:
                 self.machine.auv.execute_move_goal({
-                    'march': 0.5,
+                    'march': 0.6,
                     'lag': 0.0,
                     'yaw': coef,
-                    'wait': 2,
+                    'wait': 4,
                 })
 
             return False
