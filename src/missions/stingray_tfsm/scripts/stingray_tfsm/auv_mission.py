@@ -3,6 +3,7 @@
 from abc import abstractmethod
 import rospy
 from stingray_tfsm.core.pure_mission import PureMission
+from stingray_tfsm.core.pure_events import PureEvent
 from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
 from stingray_object_detection_msgs.msg import ObjectsArray
@@ -48,21 +49,22 @@ class AUVMission(PureMission):
         """ method to enable object detection for specific camera
 
         Args:
-            camera_topic (str): camera topic name
+        camera_topic (str): camera topic name
         """
         srv_name = self.ros_config["services"]["set_stabilization_enabled"]
         rospy.wait_for_service(srv_name)
         set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)
         response = set_stabilization(
-            depthStabilization, pitchStabilization, yawStabilization, lagStabilization)
+            False, pitchStabilization, yawStabilization, lagStabilization)
         rospy.loginfo(
             f"Stabilization enabled: {response.success}, message: {response.message} ")
 
-    def enable_reset_imu(self):
-        """ method to enable object detection for specific camera
 
+    def enable_reset_imu(self):
+        """
+        method to enable object detection for specific camera
         Args:
-            camera_topic (str): camera topic name
+        camera_topic (str): camera topic name
         """
         srv_name = self.ros_config["services"]["set_imu_enabled"]
         rospy.wait_for_service(srv_name)
@@ -77,3 +79,22 @@ class AUVMission(PureMission):
             return 1
         else:
             raise TypeError("AUVStateMachine was not initialized")
+
+    @staticmethod
+    def event_handler(event: PureEvent, wait: float = 0.5, *args, **kwargs):
+        """
+        The event_handler function is a function that is called when the event is triggered.
+        It returns True or False depending on whether the event was triggered or not.
+
+        :param wait:
+        :param event: Pass the event that is being handled
+        :return: True if the event is triggered and false if it is not
+
+        """
+        if wait is None:
+            wait = 0
+        event.start_listening()
+        rospy.sleep(wait)
+        value = event.is_triggered()
+        event.stop_listening()
+        return value

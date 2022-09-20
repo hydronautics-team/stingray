@@ -25,14 +25,13 @@ def callback_feedback(feedback):
 
 
 class AUVControl:
+    #  TODO make this a singleton to avoid multiple instances
     """Class for controlling AUV in missions.
 
     The class is actually a unified wrap over actions and services calls.
     """
 
     # TODO: Errors handling
-    # TODO: Devices support
-
     def __init__(self, verbose=False, multiplier=1):
         """ Class for controlling AUV in missions.
 
@@ -57,6 +56,29 @@ class AUVControl:
         self.HorizontalMoveClient.wait_for_server()
         self.DiveClient.wait_for_server()
         self.DevicesClient.wait_for_server()
+
+    @property
+    def yaw(self):
+        return self.yaw_angle
+
+    def yaw_topic_callback(self, msg):
+        """
+        The yaw_topic_callback function is a callback function that is called every time the yaw_topic publishes a message.
+        The yaw_topic is the topic that publishes the current angle of rotation of the drone.
+        This function sets self.yaw to this value, which will be used in other functions.
+
+        :param self: Access the variables and methods inside a class
+        :param msg: Store the data from the topic
+        :return: None
+
+        """
+        self.yaw_angle = msg.data
+        if not self.inited:
+            rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
+        rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
+        if self.verbose:
+            rospy.loginfo(
+                f"Absolute angle got from machine is {msg.data}; It is set on higher level")
 
     def execute_lifter_goal(self, scene):
         device_id = 1  # Lifter_id
