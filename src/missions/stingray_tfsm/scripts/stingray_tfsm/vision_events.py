@@ -2,8 +2,8 @@ from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 
 
-DEFAULT_RANGE_W = 800
-DEFAULT_RANGE_H = 800
+DEFAULT_RANGE_W = 640
+DEFAULT_RANGE_H = 480
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_CONFIDENCE = 0.65
 
@@ -97,7 +97,7 @@ class ObjectDetectionEvent(TopicEvent):
     """
 
     def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size=None, tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
+                 n_triggers: int = 1, queue_size: int = 10, tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
         """The constructor.
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
@@ -146,10 +146,10 @@ class ObjectDetectionEvent(TopicEvent):
         return self.current_center_y, self.relative_shift_y
 
     def get_x_offset(self):
-        return DEFAULT_RANGE_W // 2 - self.current_center_x
+        return self.current_center_x - DEFAULT_RANGE_W // 2
 
     def get_y_offset(self):
-        return DEFAULT_RANGE_H // 2 - self.current_center_y
+        return self.current_center_y - DEFAULT_RANGE_H // 2
 
     def righter(self):
         if self.get_x_offset() / DEFAULT_RANGE_W >= 0:

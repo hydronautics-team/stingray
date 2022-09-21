@@ -53,7 +53,6 @@ class PureMissionsController(ABC):
             mission (PureMission): mission object which name is the state in control fsm
             mission_transitions (List): transitions for this mission
         """
-        mission.set_verbose(self.verbose)
         self.machine.add_states(mission.name, on_enter=mission.run)
         if self.last_mission is None:
             self.add_mission_transitions([

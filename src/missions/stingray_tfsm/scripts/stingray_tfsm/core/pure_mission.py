@@ -101,23 +101,6 @@ class PureMission(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def event_handler(event: PureEvent, *args, **kwargs):
-        """
-        The event_handler function is a function that is called when the event is triggered.
-        It returns True or False depending on whether the event was triggered or not.
-
-        :param wait:
-        :param event: Pass the event that is being handled
-        :return: True if the event is triggered and false if it is not
-
-        """
-        event.start_listening()
-
-        value = event.is_triggered()
-        event.stop_listening()
-        return value
-
     def run(self):
         """
         The run function is a relay to state machine's run function.

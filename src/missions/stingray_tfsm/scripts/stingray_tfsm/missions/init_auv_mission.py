@@ -14,6 +14,7 @@ class InitAUVMission(AUVMission):
                  yaw_stabilization: bool = False,
                  lag_stabilization: bool = False,
                  reset_imu: bool = False,
+                 verbose: bool = False
                  ):
         """ Submission for robot initialization
 
@@ -31,7 +32,7 @@ class InitAUVMission(AUVMission):
         self.lag_stabilization = lag_stabilization
         self.reset_imu = reset_imu
 
-        super().__init__(name, auv)
+        super().__init__(name, auv, verbose)
 
     def setup_states(self):
         return []

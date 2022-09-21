@@ -25,14 +25,10 @@ class ReachOnMoveSub(AUVMission):
                  speed: int = 0.5,
                  verbose: bool = False,
                  ):
-        if target == 'yellow_flare':
-            tolerance = 3
-            confirmation = 1
-        self.name = '_'+name
+        self.name = name
         self.camera = camera
         self.target = target
         self.speed = speed
-        self.previous_center = (-1, -1)
         self.tolerance = tolerance
         self.confirmation = confirmation
 

@@ -2,18 +2,16 @@ from stingray_tfsm.core.pure_fsm import PureStateMachine
 from stingray_tfsm.auv_control import AUVControl
 import rospy
 
-HARDWARE_MULTIPLIER = 3
-
 
 class AUVStateMachine(PureStateMachine):
     def __init__(self,
                  name: str,
+                 auv: AUVControl,
                  states: tuple = (),
                  transitions: list = [],
                  scene: dict = dict(),
                  path=None,
                  verbose=False,
-                 simulation=False,
                  ):
         """ State machine for AUV
 
@@ -26,10 +24,7 @@ class AUVStateMachine(PureStateMachine):
 
         """
         self.verbose = verbose
-        self.hardware = not simulation
-        self.multiplier = HARDWARE_MULTIPLIER if self.hardware else 1
-
-        self.auv = AUVControl(verbose=verbose)
+        self.auv = auv
 
         super().__init__(name, states, transitions, scene, path)
 
@@ -87,8 +82,6 @@ class AUVStateMachine(PureStateMachine):
                 scene['preps'](*scene['args'])
 
         elif state_keyword == 'move':
-            if self.hardware:
-                scene['wait'] = scene['wait']*self.h_multiplier
             self.auv.execute_move_goal(scene)
 
         elif state_keyword == 'dive':
