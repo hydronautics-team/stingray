@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 from stingray_tfsm.core.pure_mission import PureMission
 from stingray_tfsm.core.pure_fsm import PureStateMachine
@@ -15,6 +14,7 @@ class PureMissionsController(ABC):
         self.verbose = verbose
         self.machine: PureStateMachine = None
         self.last_mission = None
+        self.verbose = False
         """ pure state machine """
         self._reset()
 

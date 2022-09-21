@@ -3,6 +3,7 @@
 from abc import abstractmethod
 import rospy
 from stingray_tfsm.core.pure_mission import PureMission
+from stingray_tfsm.core.pure_events import PureEvent
 from stingray_tfsm.auv_fsm import AUVStateMachine
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection
 from stingray_object_detection_msgs.msg import ObjectsArray
@@ -16,17 +17,16 @@ from stingray_tfsm.auv_control import AUVControl
 class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
     @abstractmethod
-    def __init__(self, name: str,
-                 auv: AUVControl = None,
-                 verbose: bool = False
-                 ):
+    def __init__(self, name: str, auv: AUVControl = None,
+                 simulation: bool = True, verbose:bool=False):
         """ Abstract class to implement missions for AUV with useful methods
 
         Args:
             name (str): mission name
         """
         self.ros_config = load_config("ros.json")
-        self.machine = AUVStateMachine(name, auv, verbose=verbose)
+        self.simulation = simulation
+        self.machine = AUVStateMachine(name, auv, verbose=verbose, simulation=simulation)
         super().__init__(name, self.machine, verbose)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
@@ -64,6 +64,16 @@ class AUVMission(PureMission):
         Args:
             camera_topic (str): camera topic name
         """
+        if not self.simulation:
+            srv_name = self.ros_config["services"]["set_imu_enabled"]
+            rospy.wait_for_service(srv_name)
+            set_imu_enabled = rospy.ServiceProxy(srv_name, SetBool)
+            response = set_imu_enabled(True)
+            rospy.sleep(1)
+            rospy.loginfo(
+                f"IMU reset: {response.success}, message: {response.message} ")
+        else:
+            rospy.loginfo("no imu reset needed in simulator")
         srv_name = self.ros_config["services"]["set_imu_enabled"]
         rospy.wait_for_service(srv_name)
         set_imu = rospy.ServiceProxy(srv_name, SetBool)
@@ -77,3 +87,22 @@ class AUVMission(PureMission):
             return 1
         else:
             raise TypeError("AUVStateMachine was not initialized")
+
+    @staticmethod
+    def event_handler(event: PureEvent, wait: float = 0.5, *args, **kwargs):
+        """
+        The event_handler function is a function that is called when the event is triggered.
+        It returns True or False depending on whether the event was triggered or not.
+
+        :param wait:
+        :param event: Pass the event that is being handled
+        :return: True if the event is triggered and false if it is not
+
+        """
+        if wait is None:
+            wait = 0
+        event.start_listening()
+        rospy.sleep(wait)
+        value = event.is_triggered()
+        event.stop_listening()
+        return value

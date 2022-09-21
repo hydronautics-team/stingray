@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 from stingray_tfsm.core.pure_fsm import PureStateMachine
 from stingray_tfsm.core.pure_events import PureEvent, TopicEvent
-import rospy
 
 """
 Contains an abstract class for creating missions. It should unify the ROS state machine and required events.
@@ -95,28 +94,12 @@ class PureMission(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def setup_events(self):
+    def setup_events(self, *args, **kwargs):
         """
         The setup_events function sets up the events for a specific topic and object.
         It is called by the setup_events function in the Topic class, which sets up events for all topics and objects.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def event_handler(event: PureEvent):
-        """
-        The event_handler function is a function that is called when the event is triggered.
-        It returns True or False depending on whether the event was triggered or not.
-
-        :param event: Pass the event that is being handled
-        :return: True if the event is triggered and false if it is not
-
-        """
-        event.start_listening()
-        rospy.sleep(0.5)
-        value = event.is_triggered()
-        event.stop_listening()
-        return value
 
     def run(self):
         """

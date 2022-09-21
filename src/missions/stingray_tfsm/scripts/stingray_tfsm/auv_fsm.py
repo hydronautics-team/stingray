@@ -2,8 +2,6 @@ from stingray_tfsm.core.pure_fsm import PureStateMachine
 from stingray_tfsm.auv_control import AUVControl
 import rospy
 
-HARDWARE_MULTIPLIER = 3
-
 
 class AUVStateMachine(PureStateMachine):
     def __init__(self,
@@ -14,7 +12,6 @@ class AUVStateMachine(PureStateMachine):
                  scene: dict = dict(),
                  path=None,
                  verbose=False,
-                 simulation=False,
                  ):
         """ State machine for AUV
 
@@ -26,12 +23,14 @@ class AUVStateMachine(PureStateMachine):
         :param verbose=True: Print out the state of the robot as it moves through its states
 
         """
-
-        self.hardware = not simulation
-        self.multiplier = HARDWARE_MULTIPLIER if self.hardware else 1
+        self.verbose = verbose
         self.auv = auv
 
         super().__init__(name, states, transitions, scene, path)
+
+    def set_verbose(self, verbose):
+        self.verbose = verbose
+        self.auv.set_verbose(verbose)
 
     def next_step(self):
         """
@@ -83,8 +82,6 @@ class AUVStateMachine(PureStateMachine):
                 scene['preps'](*scene['args'])
 
         elif state_keyword == 'move':
-            if self.hardware:
-                scene['wait'] = scene['wait']*self.h_multiplier
             self.auv.execute_move_goal(scene)
 
         elif state_keyword == 'dive':

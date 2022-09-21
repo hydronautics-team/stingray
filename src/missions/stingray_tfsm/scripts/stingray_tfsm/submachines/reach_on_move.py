@@ -1,8 +1,9 @@
-from stingray_tfsm.submachines.centering_angular import CenteringAngleSub
+from stingray_tfsm.submachines.centering_on_move import CenteringOnMoveSub
 from stingray_tfsm.submachines.avoid_submachine import AvoidSub
 from stingray_object_detection.utils import get_objects_topic
 from stingray_tfsm.vision_events import ObjectDetectionEvent
 from stingray_tfsm.auv_mission import AUVMission
+from stingray_tfsm.core.pure_fsm import PureStateMachine
 import rospy
 
 
@@ -11,7 +12,7 @@ class ReachSub(AUVMission):
                  name: str,
                  camera: str,
                  target: str,
-                 avoid: list = [],
+                 avoid: dict = {},
                  rotate='left',
                  lag='left',
                  confirmation: int = 2,
@@ -19,29 +20,26 @@ class ReachSub(AUVMission):
                  vision: bool = True,
                  acoustics: bool = False,
                  speed: int = 0.5,
+                 confidence: float = 0.5,
                  ):
-        if target == 'yellow_flare':
-            tolerance = 3
-            confirmation = 1
-        self.name = '_'+name
+        self.name = name
         self.camera = camera
         self.target = target
         self.speed = speed
-        self.previous_center = (-1, -1)
         self.tolerance = tolerance
         self.confirmation = confirmation
+        self.confidence = confidence
 
         self.target_detection_event = None
-        self.centering_submachine = CenteringAngleSub(
-            name + "_centering", camera, target, tolerance=self.tolerance, confirmation=self.confirmation)
+        self.centering_target_submachine = CenteringOnMoveSub(PureStateMachine.construct_name(
+            'Centering', name), camera, target, tolerance=self.tolerance, confirmation=self.confirmation, confidence=self.confidence)
 
         self.rotate_dir = -1 if rotate == "left" else 1
         self.target = target
 
         if avoid:
             self.avoid = True
-            self.avoid_submachine = AvoidSub(
-                name + "_avoid", camera, avoid, lag,)
+            self.avoid_submachine = AvoidSub(PureStateMachine.construct_name("Avoid"), camera, avoid, lag,)
         super().__init__(name,)
 
     def setup_states(self):
@@ -55,33 +53,45 @@ class ReachSub(AUVMission):
     def setup_transitions(self):
         if self.avoid:
             partial_transitions = [
-                [self.machine.transition_start, [self.machine.state_init, ], 'custom_avoid' + self.name],
+                [self.machine.transition_start, [
+                    self.machine.state_init, ], 'custom_avoid' + self.name],
 
-                ['avoid' + self.name, 'custom_avoid' + self.name, 'condition_visible' + self.name],
+                ['avoid' + self.name, 'custom_avoid' +
+                    self.name, 'condition_visible' + self.name],
 
-                ['condition_f', 'condition_in_front' + self.name, 'custom_avoid' + self.name],
+                ['condition_f', 'condition_in_front' +
+                    self.name, 'custom_avoid' + self.name],
             ]
         else:
             partial_transitions = [
-                [self.machine.transition_start, [self.machine.state_init, ], 'condition_visible' + self.name],
+                [self.machine.transition_start, [self.machine.state_init, ],
+                    'condition_visible' + self.name],
 
-                ['condition_f', 'condition_in_front' + self.name, 'condition_visible' + self.name],
+                ['condition_f', 'condition_in_front' +
+                    self.name, 'condition_visible' + self.name],
             ]
         transitions = partial_transitions + [
 
 
-            ['condition_f', 'condition_visible' + self.name, 'move_search' + self.name],
-            ['condition_s', 'condition_visible' + self.name, 'condition_centering' + self.name],
+            ['condition_f', 'condition_visible' +
+                self.name, 'move_search' + self.name],
+            ['condition_s', 'condition_visible' + self.name,
+                'condition_centering' + self.name],
 
-            ['search' + self.name, 'move_search' + self.name, 'condition_visible' + self.name],
+            ['search' + self.name, 'move_search' +
+                self.name, 'condition_visible' + self.name],
 
-            ['condition_f', 'condition_centering' + self.name, 'condition_visible' + self.name],
-            ['condition_s', 'condition_centering' + self.name, 'move_march' + self.name],
+            ['condition_f', 'condition_centering' +
+                self.name, 'condition_visible' + self.name],
+            ['condition_s', 'condition_centering' +
+                self.name, 'move_march' + self.name],
 
-            ['next' + self.name, 'move_march' + self.name, 'condition_in_front' + self.name],
+            ['next' + self.name, 'move_march' + self.name,
+                'condition_in_front' + self.name],
 
 
-            ['condition_s', 'condition_in_front' + self.name, self.machine.state_end],
+            ['condition_s', 'condition_in_front' +
+                self.name, self.machine.state_end],
         ]
         return transitions
 
@@ -144,7 +154,8 @@ class ReachSub(AUVMission):
         rospy.sleep(0.5)
         if self.target_detection_event.is_triggered():
             rospy.loginfo(f"DEBUG: target detected by event")
-            rospy.loginfo(f"***\nDEBUG: target detected at {self.target_detection_event.get_track()}\n***")
+            rospy.loginfo(
+                f"***\nDEBUG: target detected at {self.target_detection_event.get_track()}\n***")
             self.target_detection_event.stop_listening()
             return 1
         else:
@@ -155,4 +166,3 @@ class ReachSub(AUVMission):
     def arrival_handler(self):
         rospy.sleep(1)
         return not self.target_event_handler()
-

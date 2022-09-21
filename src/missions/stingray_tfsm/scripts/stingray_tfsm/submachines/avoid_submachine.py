@@ -1,8 +1,6 @@
 from stingray_object_detection.utils import get_objects_topic
 from stingray_tfsm.vision_events import ObjectDetectionEvent, ObjectIsCloseEvent
 from stingray_tfsm.auv_mission import AUVMission
-from stingray_tfsm.auv_fsm import AUVStateMachine
-from stingray_tfsm.core.pure_fsm import PureStateMachine
 import rospy
 
 
@@ -22,6 +20,7 @@ class AvoidSub(AUVMission):
         self.confirmation = confirmation
         self.tolerance = tolerance
         self.avoid_states = tuple(f'condition_avoid_{i}' + self.name for i in self.avoid)
+
         if not self.avoid_states:
             raise TypeError('empty avoidance list given')
         super().__init__(name)
@@ -73,7 +72,7 @@ class AvoidSub(AUVMission):
 
     def stabilize(self):
         self.enable_object_detection(self.camera, True)
-        self.machine.auv.execute_move_goal({
+        self.machine.auv.execute_move_goal(scene={
                     'march': 0.0,
                     'lag': 0.0,
                     'yaw': 0,
@@ -95,7 +94,7 @@ class AvoidSub(AUVMission):
             },
             'move_lag' + self.name: {
                 'march': 0,
-                'lag': 0.5 if self.lag_dir == 'left' else -0.5,
+                'lag': 0.1 if self.lag_dir == 'left' else -0.1,
                 'yaw': 0,
                 'wait': 1
             },

@@ -178,6 +178,19 @@ class PureStateMachine:
 
     def add_scene(self, scene):
         self.scene.update(scene)
+    
+    @staticmethod
+    def declare_state(state_name: str) -> str:
+        """ Construct hierarchical mission name
+
+        Args:
+            submachine_name (str): Submachine or child mission name
+            parent_name (str): Parent mission name
+
+        Returns:
+            str: Mission name
+        """
+        return parent_name + "_" + submachine_name
 
     @staticmethod
     def construct_name(submachine_name: str, parent_name: str) -> str:
