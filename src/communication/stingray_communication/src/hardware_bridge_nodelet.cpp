@@ -28,7 +28,7 @@ void hardware_bridge::onInit()
     imuService = nodeHandle.advertiseService(ros_config["services"]["set_imu_enabled"], &hardware_bridge::imuCallback, this);
     stabilizationService = nodeHandle.advertiseService(ros_config["services"]["set_stabilization_enabled"],
                                                        &hardware_bridge::stabilizationCallback, this);
-    deviceActionService = nodeHandle.advertiseService(ros_config["services"]["set_device"],
+    deviceActionService = nodeHandle.advertiseService(ros_config["services"]["updown"],
                                                       &hardware_bridge::deviceActionCallback, this);
     // Output message container
     outputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
