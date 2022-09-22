@@ -127,7 +127,7 @@ class CenteringWithAvoidSub(AUVMission):
             'march': self.speed,
             'lag': 0.7 * self.lag_dir,
             'yaw': 0,
-            'wait': 6,
+            'wait': 4,
         })
         rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
         self.machine.auv.execute_move_goal({
