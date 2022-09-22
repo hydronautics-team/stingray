@@ -15,7 +15,7 @@ class CenteringWithAvoidSub(AUVMission):
                  camera: str,
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 20,
+                 tolerance: int = 10,
                  confidence: float = 0.3,
                  avoid: str = None,
                  avoid_confirmation: int = 2,
@@ -50,7 +50,7 @@ class CenteringWithAvoidSub(AUVMission):
         super().__init__(name, auv, verbose)
 
     def setup_states(self):
-        states = ('condition_centering')
+        states = ('condition_centering',)
         states = tuple(i + self.name for i in states)
         return states
 
@@ -84,24 +84,11 @@ class CenteringWithAvoidSub(AUVMission):
                 })
 
             return False
-    
-    def do_avoid(self):
-        if self.avoid is not None:
-            self.event_handler(self.avoid_detected, 0.5)
-            if self.avoid_detected.is_triggered() and self.avoid_detected.is_big():
-                rospy.loginfo('MINUS LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-                self.machine.auv.execute_move_goal({
-                    'march': 0.3,
-                    'lag': -0.7,
+
+        self.machine.auv.execute_move_goal({
+                    'march': 1.0,
+                    'lag': 0.0,
                     'yaw': 0,
-                    'wait': 6,
-                })
-                rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-                self.machine.auv.execute_move_goal({
-                    'march': 0.3,
-                    'lag': 0.7,
-                    'yaw': 0,
-                    'wait': 3,
                 })
         
     def prerun(self):
