@@ -15,13 +15,12 @@ class SearchSub(AUVMission):
                  target: str,
                  avoid: list = [],
                  rotate='left',
-                 lag='left',
                  confirmation: int = 2,
                  tolerance: int = 8,
                  confidence: float = 0.3,
                  vision: bool = True,
                  acoustics: bool = False,
-                 speed: int = 0.5,
+                 speed: float = 0.5,
                  ):
         self.name = name
         self.camera = camera
