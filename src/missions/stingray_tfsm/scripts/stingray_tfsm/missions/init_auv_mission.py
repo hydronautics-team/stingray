@@ -54,24 +54,22 @@ class InitAUVMission(AUVMission):
             self.enable_reset_imu()
         rospy.sleep(1)
 
+        self.enable_stabilization(
+            self.depth_stabilization, self.pitch_stabilization, self.yaw_stabilization, self.lag_stabilization)
+        
         # init indication
         self.machine.auv.execute_move_goal({
-            'march': 0.5,
+            'march': 0.2,
             'lag': 0.0,
             'yaw': 0,
-            'wait': 0.5
+            'wait': 0.7
         })
         self.machine.auv.execute_stop_goal()
         rospy.loginfo('Sleep before missions')
         rospy.sleep(5)
-
-        self.enable_stabilization(
-            self.depth_stabilization, self.pitch_stabilization, self.yaw_stabilization, self.lag_stabilization)
-
         self.machine.auv.execute_dive_goal({
             'depth': 100,
         })
-        rospy.sleep(5)
 
     def setup_scene(self):
         return {

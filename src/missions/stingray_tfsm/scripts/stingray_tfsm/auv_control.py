@@ -32,7 +32,7 @@ class AUVControl:
     """
 
     # TODO: Errors handling
-    def __init__(self, verbose=False, multiplier=1):
+    def __init__(self, verbose=False):
         """ Class for controlling AUV in missions.
 
         The class is actually a unified wrap over actions and services calls.
@@ -41,7 +41,6 @@ class AUVControl:
             verbose (bool, optional): More debug messages. Defaults to False.
         """
         self.verbose = verbose
-        self.mult = multiplier
         # configs
         self.ros_config = load_config("ros.json")
         self.control_config = load_config("control.json")
@@ -56,29 +55,6 @@ class AUVControl:
         self.HorizontalMoveClient.wait_for_server()
         self.DiveClient.wait_for_server()
         self.DevicesClient.wait_for_server()
-
-    @property
-    def yaw(self):
-        return self.yaw_angle
-
-    def yaw_topic_callback(self, msg):
-        """
-        The yaw_topic_callback function is a callback function that is called every time the yaw_topic publishes a message.
-        The yaw_topic is the topic that publishes the current angle of rotation of the drone.
-        This function sets self.yaw to this value, which will be used in other functions.
-
-        :param self: Access the variables and methods inside a class
-        :param msg: Store the data from the topic
-        :return: None
-
-        """
-        self.yaw_angle = msg.data
-        if not self.inited:
-            rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
-        rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
-        if self.verbose:
-            rospy.loginfo(
-                f"Absolute angle got from machine is {msg.data}; It is set on higher level")
 
     def execute_lifter_goal(self, scene):
         device_id = 1  # Lifter_id
@@ -103,9 +79,9 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common + pause_optional)
 
-    def execute_dropper_goal(self, *args, **kwargs):
-        device_id = 2  # Lifter_id
-        velocity = 0
+    def execute_dropper_goal(self, velocity=0):
+        rospy.loginfo(f'velociti in auv control {velocity}')
+        device_id = 3  # Lifter_id
 
         pause_common = 1
         pause_optional = 0
@@ -130,12 +106,6 @@ class AUVControl:
 
         """
 
-        if 'wait' in scene:
-            if self.mult != 1:
-                actual_duration = scene['wait'] * self.mult
-            else:
-                actual_duration = scene['wait']
-
         check_yaw = False
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
@@ -153,7 +123,7 @@ class AUVControl:
         if self.verbose:
             rospy.loginfo(f'Move result got {result}')
         if 'wait' in scene:
-            rospy.loginfo(f"Wait for {actual_duration} seconds ...")
+            rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
             rospy.sleep(scene['wait'])
 
     def execute_dive_goal(self, scene):
