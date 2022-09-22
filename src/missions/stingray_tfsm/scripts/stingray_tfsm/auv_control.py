@@ -60,13 +60,13 @@ class AUVControl:
     def execute_lifter_goal(self, scene):
         device_id = 2  # Lifter_id
         if 'lift' in scene:
-            velocity = 1
+            velocity = 100
         elif 'lower' in scene:
-            velocity = -1
+            velocity = -100
         else:
             velocity = 0
 
-        pause_common = 3
+        pause_common = 4
         if 'wait' in scene:
             pause_optional = scene['wait']
         else:
@@ -80,11 +80,11 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common + pause_optional)
 
-    def execute_dropper_goal(self, velocity=0):
+    def execute_dropper_goal(self):
         rospy.loginfo(f'velociti in auv control {velocity}')
-        device_id = 3  # dropper_id
+        device_id = 4  # dropper_id
 
-        pause_common = 1
+        pause_common = 3
         pause_optional = 0
 
         goal = UpDownGoal(device=device_id, velocity=velocity,
@@ -95,6 +95,16 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common)
 
+        goal = UpDownGoal(device=device_id, velocity=-velocity,
+                          pause_common=pause_common, pause_optional=pause_optional)
+
+        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
+        goal = UpDownGoal(device=device_id, velocity=0,
+                          pause_common=pause_common, pause_optional=pause_optional)
+
+        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
     def execute_move_goal(self, scene):
         """
         The execute_move_goal function sends a goal to the HorizontalMoveClient action server.
