@@ -23,7 +23,7 @@ class CenteringWithAvoidSub(AUVMission):
                  avoid_confidence: float = 0.3,
                  verbose: bool = False,
                  speed: float = 0.5,
-                 wait: int = 5,
+                 wait: int = 3,
                  lag='left',
                  ):
         """ Submission for centering on object in camera
