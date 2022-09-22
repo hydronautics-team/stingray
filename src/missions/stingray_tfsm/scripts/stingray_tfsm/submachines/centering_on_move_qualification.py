@@ -15,16 +15,13 @@ class CenteringWithAvoidSub(AUVMission):
                  camera: str,
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 20,
+                 tolerance: int = 10,
                  confidence: float = 0.3,
                  avoid: str = None,
                  avoid_confirmation: int = 2,
                  avoid_tolerance: int = 20,
                  avoid_confidence: float = 0.3,
                  verbose: bool = False,
-                 speed: float = 0.7,
-                 wait: int = 5,
-                 lag='left',
                  ):
         """ Submission for centering on object in camera
 
@@ -46,11 +43,6 @@ class CenteringWithAvoidSub(AUVMission):
         self.avoid_confirmation = avoid_confirmation
         self.avoid_tolerance = avoid_tolerance
         self.avoid_confidence = avoid_confidence
-        self.speed = speed
-        self.wait = wait
-
-        self.lag_dir = -1 if lag == "left" else 1
-
 
         self.target_detected = None
         self.avoid_detected = None
@@ -58,35 +50,17 @@ class CenteringWithAvoidSub(AUVMission):
         super().__init__(name, auv, verbose)
 
     def setup_states(self):
-        states = ('condition_detected', 'condition_centering',
-                  'custom_stop', 'custom_avoid')
+        states = ('condition_centering',)
         states = tuple(i + self.name for i in states)
         return states
 
     def setup_transitions(self):
         return [
-            [self.machine.transition_start, [self.machine.state_init],
-                'condition_detected' + self.name],
-
-            ['condition_f', 'condition_detected' + self.name, self.machine.state_aborted],
-            ['condition_s', 'condition_detected' + self.name, 'custom_avoid' + self.name],
-
-            ['do_avoid' + self.name, 'custom_avoid' + self.name, 'condition_centering' + self.name],
-
-            ['condition_f', 'condition_centering' +
-                self.name, 'condition_centering' + self.name],
-            ['condition_s', 'condition_centering' +
-                self.name, self.machine.state_end],
+            [self.machine.transition_start, [self.machine.state_init], 'condition_centering' + self.name],
+            
+            ['condition_f', 'condition_centering' + self.name, 'condition_centering' + self.name],
+            ['condition_s', 'condition_centering' + self.name, self.machine.state_end],
         ]
-
-    def run_detection(self):
-        self.event_handler(self.target_detected, 0.5)
-        if self.target_detected.is_triggered():
-            rospy.loginfo(
-                f'self.target_detected.is_big() {self.target_detected.is_big()}')
-            if self.target_detected.is_big():
-                return True
-            return False
 
     def run_centering(self):
         self.event_handler(self.target_detected, 0.5)
@@ -103,39 +77,20 @@ class CenteringWithAvoidSub(AUVMission):
 
             if abs(error) > self.tolerance:
                 self.machine.auv.execute_move_goal({
-                    'march': self.speed,
+                    'march': 1.0,
                     'lag': 0.0,
                     'yaw': coef,
-                    'wait': self.wait,
+                    'wait': 4,
                 })
 
             return False
 
         self.machine.auv.execute_move_goal({
-            'march': 1.0,
-            'lag': 0.0,
-            'yaw': 0,
-        })
-
-    def do_avoid(self):
-        if self.avoid is not None:
-            self.event_handler(self.avoid_detected, 0.5)
-            if self.avoid_detected.is_triggered() and self.avoid_detected.is_big():
-                rospy.loginfo('MINUS LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-                self.machine.auv.execute_move_goal({
-                    'march': 0.3,
-                    'lag': 0.7 * self.lag_dir,
+                    'march': 1.0,
+                    'lag': 0.0,
                     'yaw': 0,
-                    'wait': 6,
                 })
-                rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-                self.machine.auv.execute_move_goal({
-                    'march': 0.3,
-                    'lag': -0.7 * self.lag_dir,
-                    'yaw': 0,
-                    'wait': 3,
-                })
-
+        
     def prerun(self):
         pass
 
@@ -144,14 +99,6 @@ class CenteringWithAvoidSub(AUVMission):
             self.machine.state_init: {
                 'preps': self.prerun,
                 "args": (),
-            },
-            'condition_detected' + self.name: {
-                'condition': self.run_detection,
-                'args': ()
-            },
-            'custom_avoid' + self.name: {
-                'custom': self.do_avoid,
-                'args': ()
             },
             'condition_centering' + self.name: {
                 'condition': self.run_centering,

@@ -100,6 +100,7 @@ bool hardware_bridge::depthCallback(stingray_communication_msgs::SetInt32::Reque
     {
         depthResponse.success = false;
         depthResponse.message = "Depth stabilization is not enabled";
+        NODELET_INFO("Setting depth to %d", depthRequest.value);
         return true;
     }
     NODELET_INFO("Setting depth to %d", depthRequest.value);
