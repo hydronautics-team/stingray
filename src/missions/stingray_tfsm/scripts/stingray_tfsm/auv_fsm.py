@@ -12,6 +12,7 @@ class AUVStateMachine(PureStateMachine):
                  scene: dict = dict(),
                  path=None,
                  verbose=False,
+                 simulation=False,
                  ):
         """ State machine for AUV
 
@@ -24,7 +25,10 @@ class AUVStateMachine(PureStateMachine):
 
         """
         self.verbose = verbose
-        self.auv = auv
+        if auv is not None:
+            self.auv = auv
+        else:
+            self.auv = AUVControl(self.verbose)
 
         super().__init__(name, states, transitions, scene, path)
 

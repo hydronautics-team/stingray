@@ -44,7 +44,8 @@ class AUVMission(PureMission):
         rospy.loginfo(
             f"Object detection enabled: {response.success} for camera: {camera_topic} ")
 
-    def enable_stabilization(self, depthStabilization: bool = False, pitchStabilization: bool = False, yawStabilization: bool = False, lagStabilization: bool = False):
+    def enable_stabilization(self, depthStabilization: bool = False, pitchStabilization: bool = False,
+                             yawStabilization: bool = False, lagStabilization: bool = False):
         """ method to enable object detection for specific camera
 
         Args:

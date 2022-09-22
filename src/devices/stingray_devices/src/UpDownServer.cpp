@@ -15,8 +15,9 @@ void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr 
     stingray_devices_msgs::SetDeviceAction SetDeviceAction;
 
     SetDeviceAction.request.device = goal->device;
-    ROS_INFO("Lowering lifter with velocity: %f", goal->velocity);
-    SetDeviceAction.request.value = -goal->velocity;
+    ROS_INFO("Lowering %d", goal->device);
+    ROS_INFO("Lowering with velocity: %d", goal->velocity);
+    SetDeviceAction.request.value = goal->velocity;
     ros::service::call(deviceActionService, SetDeviceAction);
 
     ros::Duration(goal->pause_common).sleep();
@@ -28,7 +29,7 @@ void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr 
         ros::Duration(goal->pause_optional).sleep();
     }
     ROS_INFO("Lifting back...");
-    SetDeviceAction.request.value = goal->velocity;
+    SetDeviceAction.request.value = -goal->velocity;
     ros::service::call(deviceActionService, SetDeviceAction);
     ros::Duration(goal->pause_common).sleep();
 

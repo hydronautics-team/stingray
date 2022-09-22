@@ -1,7 +1,8 @@
 from stingray_tfsm.auv_mission import AUVMission
 from stingray_tfsm.vision_events import ObjectDetectionEvent
 from stingray_object_detection.utils import get_objects_topic
-from rospy import loginfo
+from rospy import loginfo, sleep
+from stingray_tfsm.auv_control import AUVControl
 
 
 class CenteringPlanarSub(AUVMission):
@@ -30,9 +31,10 @@ class CenteringPlanarSub(AUVMission):
         self.previous = 0  # or 1
         self.wobbles = 0
         self.give_up_threshold = 15
-        self.move_speed = 0.2
+        self.move_speed = 0.5
         self.x_offset = 0
         self.y_offset = 0
+        self.auv = AUVControl(verbose=False)  # govnocod
 
         self.gate_detected = None
         super().__init__(name)
@@ -42,7 +44,7 @@ class CenteringPlanarSub(AUVMission):
 
     def setup_states(self):
         states = ('condition_detected', 'condition_done',
-                  'move_lag', 'move_march'
+                  'custom_lag', 'custom_march'
                   )
         states = tuple(i + self.name for i in states)
         return states
@@ -52,10 +54,10 @@ class CenteringPlanarSub(AUVMission):
             [self.machine.transition_start, [self.machine.state_init], 'condition_detected' + self.name],
 
             ['condition_f', 'condition_detected' + self.name, self.machine.state_aborted],
-            ['condition_s', 'condition_detected' + self.name, 'move_march' + self.name],
+            ['condition_s', 'condition_detected' + self.name, 'custom_march' + self.name],
 
-            ['move', 'move_march' + self.name, 'move_lag'+ self.name],
-            ['check', 'move_lag' + self.name, 'condition_done'+ self.name],
+            ['move', 'custom_march' + self.name, 'custom_lag'+ self.name],
+            ['check', 'custom_lag' + self.name, 'condition_done'+ self.name],
 
             ['condition_f', 'condition_done' + self.name, 'condition_detected' + self.name],
             ['condition_s', 'condition_done' + self.name, self.machine.state_end],
@@ -77,14 +79,21 @@ class CenteringPlanarSub(AUVMission):
 
         return 1
 
+    def ya_ebu(self, scene):
+        self.auv.execute_move_goal(scene)
+
     def stabilize(self):
         self.reset_freeze()
         self.enable_object_detection(self.camera, True)
-        self.machine.auv.execute_move_goal({
+        self.auv.execute_move_goal({
             'march': 0.0,
             'lag': 0.0,
             'yaw': 0,
         })
+        loginfo("RESET THIS FUCKING DEPTH WHILE NOT TOO LATE")
+        sleep(3)
+        loginfo("LETZZ FUCKING GO")
+
 
     def check_done(self, event):
         if not self.event_handler(event, wait=0.5):
@@ -114,16 +123,22 @@ class CenteringPlanarSub(AUVMission):
                 'condition': self.check_done,
                 'args': (self.gate_detected,)
             },
-            'move_lag' + self.name: {
-                'march': 0.0,
-                'lag': self.move_speed if self.x_offset > 0 else -self.move_speed,
-                'wait': 0.25,
-                'yaw': 0
+            'custom_lag' + self.name: {
+                'custom': self.ya_ebu,
+                'args': ({
+                    'march': 0.0,
+                    'lag': self.move_speed if self.x_offset > 0 else -self.move_speed,
+                    'wait': 1,
+                    'yaw': 0
+                },)
             },
-            'move_march' + self.name: {
-                'march': self.move_speed if self.y_offset > 0 else -self.move_speed,
-                'lag': 0,
-                'wait': 0.25,
-                'yaw': 0
+            'custom_march' + self.name: {
+                'custom': self.ya_ebu,
+                'args': ({
+                    'march': self.move_speed if self.y_offset > 0 else -self.move_speed,
+                    'lag': 0,
+                    'wait': 1,
+                    'yaw': 0
+                },)
             },
         }
