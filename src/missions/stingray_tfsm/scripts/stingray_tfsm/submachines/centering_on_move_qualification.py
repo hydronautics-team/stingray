@@ -50,20 +50,15 @@ class CenteringWithAvoidSub(AUVMission):
         super().__init__(name, auv, verbose)
 
     def setup_states(self):
-        states = ('condition_detected', 'condition_centering', 'custom_stop', 'custom_avoid')
+        states = ('condition_centering')
         states = tuple(i + self.name for i in states)
         return states
 
     def setup_transitions(self):
         return [
-            [self.machine.transition_start, [self.machine.state_init], 'condition_detected' + self.name],
+            [self.machine.transition_start, [self.machine.state_init], 'condition_centering' + self.name],
             
-            ['condition_f', 'condition_detected' + self.name, self.machine.state_aborted],
-            ['condition_s', 'condition_detected' + self.name, 'custom_avoid' + self.name],
-            
-            ['do_avoid' + self.name, 'custom_avoid' + self.name, 'condition_centering' + self.name],
-
-            ['condition_f', 'condition_centering' + self.name, 'condition_detected' + self.name],
+            ['condition_f', 'condition_centering' + self.name, 'condition_centering' + self.name],
             ['condition_s', 'condition_centering' + self.name, self.machine.state_end],
         ]
 
@@ -82,7 +77,7 @@ class CenteringWithAvoidSub(AUVMission):
 
             if abs(error) > self.tolerance:
                 self.machine.auv.execute_move_goal({
-                    'march': 0.6,
+                    'march': 1.0,
                     'lag': 0.0,
                     'yaw': coef,
                     'wait': 4,
@@ -117,14 +112,6 @@ class CenteringWithAvoidSub(AUVMission):
             self.machine.state_init: {
                 'preps': self.prerun,
                 "args": (),
-            },
-            'condition_detected' + self.name: {
-                'condition': self.event_handler,
-                'args': (self.target_detected, 0.5)
-            },
-            'custom_avoid' + self.name: {
-                'custom': self.do_avoid,
-                'args': ()
             },
             'condition_centering' + self.name: {
                 'condition': self.run_centering,

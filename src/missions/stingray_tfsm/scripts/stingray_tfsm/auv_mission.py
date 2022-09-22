@@ -55,7 +55,7 @@ class AUVMission(PureMission):
         rospy.wait_for_service(srv_name)
         set_stabilization = rospy.ServiceProxy(srv_name, SetStabilization)
         response = set_stabilization(
-            False, pitchStabilization, yawStabilization, lagStabilization)
+            depthStabilization, pitchStabilization, yawStabilization, lagStabilization)
         rospy.loginfo(
             f"Stabilization enabled: {response.success}, message: {response.message} ")
 
