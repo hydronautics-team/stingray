@@ -22,6 +22,7 @@ class CenteringWithAvoidSub(AUVMission):
                  avoid_tolerance: int = 20,
                  avoid_confidence: float = 0.3,
                  verbose: bool = False,
+                 speed: float = 0.7,
                  ):
         """ Submission for centering on object in camera
 
@@ -43,6 +44,7 @@ class CenteringWithAvoidSub(AUVMission):
         self.avoid_confirmation = avoid_confirmation
         self.avoid_tolerance = avoid_tolerance
         self.avoid_confidence = avoid_confidence
+        self.speed = speed
 
         self.target_detected = None
         self.avoid_detected = None
@@ -82,7 +84,7 @@ class CenteringWithAvoidSub(AUVMission):
 
             if abs(error) > self.tolerance:
                 self.machine.auv.execute_move_goal({
-                    'march': 0.6,
+                    'march': self.speed,
                     'lag': 0.0,
                     'yaw': coef,
                     'wait': 4,
