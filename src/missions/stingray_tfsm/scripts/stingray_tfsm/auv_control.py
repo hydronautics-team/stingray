@@ -1,6 +1,5 @@
 from actionlib import SimpleActionClient, SimpleGoalState
 from stingray_movement_msgs.msg import HorizontalMoveAction, DiveAction, HorizontalMoveGoal, DiveGoal
-from std_msgs.msg import Int32
 from stingray_resources.utils import load_config
 from stingray_devices_msgs.msg import UpDownAction, UpDownGoal
 import rospy
@@ -58,31 +57,8 @@ class AUVControl:
         self.DiveClient.wait_for_server()
         self.DevicesClient.wait_for_server()
 
-    @property
-    def yaw(self):
-        return self.yaw_angle
-
-    def yaw_topic_callback(self, msg):
-        """
-        The yaw_topic_callback function is a callback function that is called every time the yaw_topic publishes a message.
-        The yaw_topic is the topic that publishes the current angle of rotation of the drone.
-        This function sets self.yaw to this value, which will be used in other functions.
-
-        :param self: Access the variables and methods inside a class
-        :param msg: Store the data from the topic
-        :return: None
-
-        """
-        self.yaw_angle = msg.data
-        if not self.inited:
-            rospy.loginfo(f"INITED YAW: {self.yaw_angle}")
-        rospy.loginfo(f"CURRENT YAW: {self.yaw_angle}")
-        if self.verbose:
-            rospy.loginfo(
-                f"Absolute angle got from machine is {msg.data}; It is set on higher level")
-
     def execute_lifter_goal(self, scene):
-        device_id = 1  # Lifter_id
+        device_id = 2  # Lifter_id
         if 'lift' in scene:
             velocity = 1
         elif 'lower' in scene:
@@ -104,9 +80,9 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common + pause_optional)
 
-    def execute_dropper_goal(self, *args, **kwargs):
-        device_id = 2  # Lifter_id
-        velocity = 0
+    def execute_dropper_goal(self, velocity=0):
+        rospy.loginfo(f'velociti in auv control {velocity}')
+        device_id = 3  # dropper_id
 
         pause_common = 1
         pause_optional = 0
@@ -131,23 +107,19 @@ class AUVControl:
 
         """
 
-        if 'wait' in scene:
-            if self.mult != 1:
-                actual_duration = scene['wait'] * self.mult
-            else:
-                actual_duration = scene['wait']
+        # if 'wait' in scene:
+        #     if self.mult != 1:
+        #         actual_duration = scene['wait'] * self.mult
+        #     else:
+        #         actual_duration = scene['wait']
 
         check_yaw = False
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
 
         if self.verbose:
-            rospy.loginfo(f"self.yaw: {self.yaw}")
-            rospy.loginfo(f"SET YAW: {scene['yaw']}")
-            rospy.loginfo(f"self.yaw + scene['yaw']: {self.yaw + scene['yaw']}")
-        goal = HorizontalMoveGoal(scene['march'], scene['lag'], self.yaw + scene['yaw'], check_yaw)
+            rospy.loginfo(f"Setting yaw delta: {scene['yaw']}")
 
-        rospy.loginfo(f"Setting yaw delta: {scene['yaw']}")
         goal = HorizontalMoveGoal(
             scene['march'], scene['lag'], scene['yaw'], check_yaw)
 
@@ -160,8 +132,24 @@ class AUVControl:
         if self.verbose:
             rospy.loginfo(f'Move result got {result}')
         if 'wait' in scene:
-            rospy.loginfo(f"Wait for {actual_duration} seconds ...")
+            rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
             rospy.sleep(scene['wait'])
+
+    def execute_FUCKING_RANDOM_GOAL(self):
+        force = 100
+        pause_common = 5
+        pause_optional = 0
+        for device_id in range(6):
+            rospy.loginfo(f"AGRESSIVLY SENDING {force} TO DEVICE {device_id}")
+            goal = UpDownGoal(device=device_id, velocity=force,
+                              pause_common=pause_common, pause_optional=pause_optional)
+
+            self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                         active_cb=callback_active)
+            rospy.sleep(pause_common)
+            self.DevicesClient.wait_for_server()
+            rospy.sleep(pause_common)
+
 
     def execute_dive_goal(self, scene):
         """
