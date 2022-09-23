@@ -110,7 +110,9 @@ class AUVControl:
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
 
-        rospy.loginfo(f"Setting yaw delta: {scene['yaw']}")
+        # rospy.loginfo(f"Setting yaw delta: {scene['yaw']}")
+        rospy.loginfo(f"scene['lag'] {scene['lag']}")
+
         goal = HorizontalMoveGoal(
             scene['march'], scene['lag'], scene['yaw'], check_yaw)
 
@@ -156,8 +158,5 @@ class AUVControl:
             'march': 0.0,
             'lag': 0.0,
             'yaw': 0,
-        })
-        self.execute_dive_goal({
-            'depth': 0,
         })
         rospy.loginfo('Everything stopped!')

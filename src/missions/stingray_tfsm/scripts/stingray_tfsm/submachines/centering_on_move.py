@@ -25,6 +25,7 @@ class CenteringWithAvoidSub(AUVMission):
                  speed: float = 0.5,
                  wait: int = 3,
                  lag='left',
+                 is_big_value: float = 0.5,
                  ):
         """ Submission for centering on object in camera
 
@@ -48,6 +49,7 @@ class CenteringWithAvoidSub(AUVMission):
         self.avoid_confidence = avoid_confidence
         self.speed = speed
         self.wait = wait
+        self.is_big_value = is_big_value
 
         self.lag_dir = -1 if lag == "left" else 1
 
@@ -86,8 +88,8 @@ class CenteringWithAvoidSub(AUVMission):
             self.event_handler(self.avoid_detected, 0.5)
             if self.avoid_detected.is_triggered():
                 rospy.loginfo(
-                    f'self.avoid_detected.is_big() {self.avoid_detected.is_big()}')
-                if self.avoid_detected.is_big():
+                    f'self.avoid_detected.is_big() {self.avoid_detected.is_big_h()}')
+                if self.avoid_detected.is_big_h():
                     self.do_avoid()
             else:
                 rospy.loginfo(f'avoid not detected')
@@ -96,8 +98,8 @@ class CenteringWithAvoidSub(AUVMission):
         self.event_handler(self.target_detected, 0.5)
         if self.target_detected.is_triggered():
             rospy.loginfo(
-                f'self.target_detected.is_big() {self.target_detected.is_big()}')
-            if self.target_detected.is_big():
+                f'self.target_detected.is_big() {self.target_detected.is_big_h()}')
+            if self.target_detected.is_big_h():
                 return True
 
             error = self.target_detected.get_x_offset()
@@ -129,13 +131,13 @@ class CenteringWithAvoidSub(AUVMission):
             'yaw': 0,
             'wait': 4,
         })
-        rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-        self.machine.auv.execute_move_goal({
-            'march': self.speed,
-            'lag': -0.7 * self.lag_dir,
-            'yaw': 0,
-            'wait': 3,
-        })
+        # rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
+        # self.machine.auv.execute_move_goal({
+        #     'march': self.speed,
+        #     'lag': -0.7 * self.lag_dir,
+        #     'yaw': 0,
+        #     'wait': 3,
+        # })
 
     def prerun(self):
         pass
@@ -158,7 +160,7 @@ class CenteringWithAvoidSub(AUVMission):
 
     def setup_events(self):
         self.target_detected = ObjectDetectionEvent(
-            get_objects_topic(self.camera), self.target, self.confirmation, confidence=self.confidence)
+            get_objects_topic(self.camera), self.target, self.confirmation, confidence=self.confidence, is_big_h_value=0.5)
         if self.avoid is not None:
             self.avoid_detected = ObjectDetectionEvent(
-                get_objects_topic(self.camera), self.avoid, self.avoid_confirmation, confidence=self.avoid_confidence)
+                get_objects_topic(self.camera), self.avoid, self.avoid_confirmation, confidence=self.avoid_confidence, is_big_h_value=0.3)

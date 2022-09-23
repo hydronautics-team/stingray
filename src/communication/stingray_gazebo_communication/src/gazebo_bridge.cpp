@@ -75,7 +75,8 @@ bool horizontalMoveCallback(stingray_communication_msgs::SetHorizontalMove::Requ
 
     // ROS_INFO("horizontalMoveCallback in gazebo bridge");
 
-    currentTwist.linear.x = request.lag;
+    currentTwist.linear.x = -request.lag;
+    ROS_INFO("request.lag %f", request.lag);
     currentTwist.linear.y = -request.march;
 
     if (!yawStabilizationEnabled)
@@ -136,7 +137,13 @@ bool depthCallback(stingray_communication_msgs::SetInt32::Request &request,
                          {
       /* In our simulator scale is 1.0 = 1 metre, and target depth is passed in centimetres.
        * Bias is needed due to simulator implementation details. */
-      modelState.pose.position.z = simulation_config["initial_depth"].get<double>() - request.value / 100.0; });
+      float initialDepth = simulation_config["initial_depth"].get<float>();
+      float depthDelta = request.value / 1000.0;
+      float fullDepth = initialDepth - depthDelta;
+      ROS_INFO("depth %f", depthDelta);
+      ROS_INFO("initial depth %f", initialDepth);
+      ROS_INFO("full depth %f", fullDepth);
+      modelState.pose.position.z = fullDepth; });
     }
     catch (std::runtime_error &e)
     {
