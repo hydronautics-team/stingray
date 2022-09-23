@@ -15,8 +15,8 @@ void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr 
     stingray_devices_msgs::SetDeviceAction SetDeviceAction;
 
     SetDeviceAction.request.device = goal->device;
-    ROS_INFO("Lowering %d", goal->device);
-    ROS_INFO("Lowering with velocity: %d", goal->velocity);
+    ROS_INFO("Activating %d device", goal->device);
+    ROS_INFO("Force sent: %d", goal->velocity);
     SetDeviceAction.request.value = goal->velocity;
     ros::service::call(deviceActionService, SetDeviceAction);
 

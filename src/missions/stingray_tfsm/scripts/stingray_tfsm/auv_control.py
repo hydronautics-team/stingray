@@ -57,7 +57,7 @@ class AUVControl:
         self.DiveClient.wait_for_server()
         self.DevicesClient.wait_for_server()
 
-    def execute_lifter_goal(self, scene):
+    def execute_lifter_goal(self, scene, *args, **kwargs):
         device_id = 2  # Lifter_id
         if 'lift' in scene:
             velocity = 100
@@ -80,10 +80,10 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common + pause_optional)
 
-    def execute_dropper_goal(self):
+    def execute_dropper_goal(self, *args, **kwargs):
         rospy.loginfo(f'velociti in auv control {velocity}')
         device_id = 4  # dropper_id
-
+        velocity = 100
         pause_common = 3
         pause_optional = 0
 
@@ -95,16 +95,10 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common)
 
-        goal = UpDownGoal(device=device_id, velocity=-velocity,
-                          pause_common=pause_common, pause_optional=pause_optional)
+        goal = UpDownGoal(device=device_id, velocity=0, pause_common=pause_common, pause_optional=pause_optional)
 
-        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                     active_cb=callback_active)
-        goal = UpDownGoal(device=device_id, velocity=0,
-                          pause_common=pause_common, pause_optional=pause_optional)
+        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,  active_cb=callback_active)
 
-        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                     active_cb=callback_active)
     def execute_move_goal(self, scene):
         """
         The execute_move_goal function sends a goal to the HorizontalMoveClient action server.
@@ -145,7 +139,7 @@ class AUVControl:
             rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
             rospy.sleep(scene['wait'])
 
-    def execute_FUCKING_RANDOM_GOAL(self):
+    def execute_FUCKING_RANDOM_GOAL(self, *args, **kwargs):
         force = 100
         pause_common = 5
         pause_optional = 0
