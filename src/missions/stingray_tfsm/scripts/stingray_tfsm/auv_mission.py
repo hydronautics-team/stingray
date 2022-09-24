@@ -17,16 +17,14 @@ from stingray_tfsm.auv_control import AUVControl
 class AUVMission(PureMission):
     """ Abstract class to implement missions for AUV with useful methods """
     @abstractmethod
-    def __init__(self, name: str, auv: AUVControl = None,
-                 simulation: bool = True, verbose:bool=False):
+    def __init__(self, name: str, auv: AUVControl = None, verbose:bool=False):
         """ Abstract class to implement missions for AUV with useful methods
 
         Args:
             name (str): mission name
         """
         self.ros_config = load_config("ros.json")
-        self.simulation = simulation
-        self.machine = AUVStateMachine(name, auv, verbose=verbose, simulation=simulation)
+        self.machine = AUVStateMachine(name, auv, verbose=verbose)
         super().__init__(name, self.machine, verbose)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
@@ -65,16 +63,6 @@ class AUVMission(PureMission):
         Args:
             camera_topic (str): camera topic name
         """
-        if not self.simulation:
-            srv_name = self.ros_config["services"]["set_imu_enabled"]
-            rospy.wait_for_service(srv_name)
-            set_imu_enabled = rospy.ServiceProxy(srv_name, SetBool)
-            response = set_imu_enabled(True)
-            rospy.sleep(1)
-            rospy.loginfo(
-                f"IMU reset: {response.success}, message: {response.message} ")
-        else:
-            rospy.loginfo("no imu reset needed in simulator")
         srv_name = self.ros_config["services"]["set_imu_enabled"]
         rospy.wait_for_service(srv_name)
         set_imu = rospy.ServiceProxy(srv_name, SetBool)

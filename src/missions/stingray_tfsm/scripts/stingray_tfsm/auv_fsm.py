@@ -12,7 +12,6 @@ class AUVStateMachine(PureStateMachine):
                  scene: dict = dict(),
                  path=None,
                  verbose=False,
-                 simulation=False,
                  ):
         """ State machine for AUV
 

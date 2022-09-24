@@ -15,7 +15,6 @@ class CenteringPlanarSub(AUVMission):
                  tolerance: int = 9,
                  auv: AUVControl = None,
                  lifter_offset_x=-20,
-                 simulation=False,
                  drop=True
                  ):
         """ Submission for centering on object in camera
@@ -43,7 +42,6 @@ class CenteringPlanarSub(AUVMission):
 
         else:
             self.lifter_offset_x = lifter_offset_x
-        self.simulation = simulation
         self.done = False
 
         if auv is None:
@@ -100,14 +98,8 @@ class CenteringPlanarSub(AUVMission):
             loginfo('dich happened')
             return 0
 
-        if self.simulation:
-            x_offset = event.get_y_offset()
-            y_offset = event.get_x_offset()
-
-            loginfo(f"it's simulator and image is not upright")
-        else:
-            x_offset = event.get_x_offset()
-            y_offset = event.get_y_offset()
+        x_offset = event.get_x_offset()
+        y_offset = event.get_y_offset()
 
         lag_dist = (x_offset + self.lifter_offset_x)
         self.lag_time = int(lag_dist * 0.02)
