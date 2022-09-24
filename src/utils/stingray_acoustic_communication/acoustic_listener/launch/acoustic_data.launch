@@ -1,0 +1,7 @@
+<launch>
+        <node pkg="acoustic_listener" type="acoustics_data.py" name="acoustic_data_publisher" output="screen" respawn="true">
+                <param name="topic_name"        value="acoustics_amplitude" />
+                <param name="com_port_name"     value="/dev/ttyUSB0" />
+                <param name="baudrate"          value="9600" />
+        </node>
+</launch>

@@ -1,0 +1,7 @@
+<launch>
+
+        <node pkg="acoustic_listener" type="acoustics_control.py" name="acoustics_controller" output="screen" respawn="true">
+                <param name="com_port_name"     value="/dev/ttyUSB0" />
+                <param name="baudrate"          value="9600" />
+        </node>
+</launch>
