@@ -15,7 +15,7 @@ class CenteringPlanarSub(AUVMission):
                  tolerance: int = 9,
                  auv: AUVControl = None,
                  dropper_offset_x=-150,
-                 simulation=True,
+                 simulation=False,
                  ):
         """ Submission for centering on object in camera
 
@@ -34,7 +34,7 @@ class CenteringPlanarSub(AUVMission):
         self.previous = 0  # or 1
         self.wobbles = 0
         self.give_up_threshold = 15
-        self.move_speed = 0.1
+        self.move_speed = 0.2
         self.lag_time = 0
         self.march_time = 0
         self.dropper_offset_x = dropper_offset_x
@@ -95,7 +95,7 @@ class CenteringPlanarSub(AUVMission):
             'yaw': 0,
         })
         loginfo("RESET THIS FUCKING DEPTH WHILE NOT TOO LATE")
-        sleep(5)
+        # sleep(5)
         loginfo("LETZZ FUCKING GO")
 
     def calculate_offsets(self, event):
@@ -114,8 +114,8 @@ class CenteringPlanarSub(AUVMission):
             self.march_time = int(event.get_x_offset() * 0.02)
             loginfo(f'shifts are {event.get_y_offset()}px right and {event.get_x_offset()}px forward')
         else:
-            self.lag_time = int(event.get_y_offset() * 0.02)
-            self.march_time = int(event.get_x_offset() * 0.02)
+            self.lag_time = int(event.get_x_offset() * 0.02)
+            self.march_time = int(event.get_y_offset() * 0.02)
 
         if self.target == 'red_bowl' or self.target == 'blue_bowl':
             if (event.get_y_offset() * 0.02)**2+(event.get_x_offset() * 0.02)**2 < 4:
