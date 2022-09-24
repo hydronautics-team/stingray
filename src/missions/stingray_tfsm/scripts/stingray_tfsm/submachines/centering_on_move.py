@@ -115,10 +115,16 @@ class CenteringWithAvoidSub(AUVMission):
     def run_centering(self):
         self.event_handler(self.target_detected, 0.5)
         if self.target_detected.is_triggered():
-            rospy.loginfo(
-                f'self.target_detected.is_big() {self.target_detected.is_big_h()}')
-            if self.target_detected.is_big_h():
-                return True
+            if self.is_big_method_avoid == 'width':
+                rospy.loginfo(
+                    f'self.target_detected.is_big() {self.target_detected.is_big_w()}')
+                if self.target_detected.is_big_w():
+                    return True
+            elif self.is_big_method_avoid == 'height':
+                rospy.loginfo(
+                    f'self.target_detected.is_big() {self.target_detected.is_big_h()}')
+                if self.target_detected.is_big_h():
+                    return True
 
             error = self.target_detected.get_x_offset()
             rospy.loginfo(f'error {error}')
@@ -147,14 +153,21 @@ class CenteringWithAvoidSub(AUVMission):
             'march': self.speed,
             'lag': 0.7 * self.lag_dir,
             'yaw': 0,
-            'wait': 4,
+            'wait': 3,
         })
+        # rospy.loginfo('MARCH')
+        # self.machine.auv.execute_move_goal({
+        #     'march': self.speed,
+        #     'lag': 0.0,
+        #     'yaw': 0,
+        #     'wait': 3,
+        # })
         rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
         self.machine.auv.execute_move_goal({
             'march': self.speed,
             'lag': -0.7 * self.lag_dir,
             'yaw': 0,
-            'wait': 3,
+            'wait': 2,
         })
 
     def prerun(self):
