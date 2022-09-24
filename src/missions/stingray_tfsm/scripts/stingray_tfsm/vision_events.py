@@ -1,6 +1,6 @@
 from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
-
+import rospy
 
 DEFAULT_RANGE_W = 800
 DEFAULT_RANGE_H = 800
@@ -96,8 +96,16 @@ class ObjectDetectionEvent(TopicEvent):
     """An event that is triggered when specific object is detected in object detection topic.
     """
 
-    def __init__(self, topic_name: str, object_name: str,
-                 n_triggers: int = 1, queue_size: int = 10, tolerance=DEFAULT_TOLERANCE, confidence=DEFAULT_CONFIDENCE):
+    def __init__(self,
+                 topic_name: str,
+                 object_name: str,
+                 n_triggers: int = 1,
+                 queue_size: int = 10,
+                 tolerance: float = 0.15,
+                 confidence: float = 0.65,
+                 is_big_w_value: float = 0.5,
+                 is_big_h_value: float = 0.5,
+                 ):
         """The constructor.
         :param topic_name: Object detection topic name.
         :param object_name: Name of the object class of interest.
@@ -115,6 +123,8 @@ class ObjectDetectionEvent(TopicEvent):
         self._target_object = object_name
         self._confidence = confidence
         self._tolerance = tolerance
+        self._is_big_w_value = is_big_w_value
+        self._is_big_h_value = is_big_h_value
 
         self.current_center_x = None
         self.relative_shift_x = 0
@@ -129,9 +139,17 @@ class ObjectDetectionEvent(TopicEvent):
                 self._target_object == 'yellow_flare' or\
                 self._target_object == 'blue_bowl':
             self._confidence -= 0.3
-    
-    def is_big(self):
-        if height(self.current_object) / 480 > 0.5:
+
+    def is_big_w(self):
+        rospy.loginfo(f'is_big_w: {width(self.current_object) / DEFAULT_RANGE_W}')
+        if width(self.current_object) / DEFAULT_RANGE_W > self._is_big_w_value:
+            return True
+        else:
+            return False
+
+    def is_big_h(self):
+        rospy.loginfo(f'is_big_h: {height(self.current_object) / DEFAULT_RANGE_H}')
+        if height(self.current_object) / DEFAULT_RANGE_H > self._is_big_h_value:
             return True
         else:
             return False
@@ -187,7 +205,8 @@ class ObjectDetectionEvent(TopicEvent):
             return 0
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(msg.objects, self._target_object, self._confidence)
+        _obj = get_best_object(
+            msg.objects, self._target_object, self._confidence)
         if _obj:
             self.current_object = _obj
             if self.current_center_x is not None:
@@ -195,7 +214,8 @@ class ObjectDetectionEvent(TopicEvent):
                     get_closest_to_memorized(msg.objects, self._target_object,
                                              self.current_center_x + self.relative_shift_x)
             else:
-                self.relative_shift_x, self.current_center_x = 0, calculate_center_x(_obj)
+                self.relative_shift_x, self.current_center_x = 0, calculate_center_x(
+                    _obj)
             self.current_center_y = calculate_center_y(_obj)
             self.current_width = width(_obj)
             self.current_height = height(_obj)
@@ -233,7 +253,8 @@ class ObjectIsCloseEvent(TopicEvent):
             self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(msg.objects, self._object_name, self._confidence)
+        _obj = get_best_object(
+            msg.objects, self._object_name, self._confidence)
         if not _obj:
             return 0
         return very_close(
@@ -273,7 +294,8 @@ class ObjectOnRight(TopicEvent):
             self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(msg.objects, self._object_name, self._confidence)
+        _obj = get_best_object(
+            msg.objects, self._object_name, self._confidence)
         if not _obj:
             return 0
 
@@ -320,7 +342,8 @@ class ObjectOnLeft(TopicEvent):
             self._confidence -= 0.3
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(msg.objects, self._object_name, self._confidence)
+        _obj = get_best_object(
+            msg.objects, self._object_name, self._confidence)
         if not _obj:
             return 0
         proximity_allowance = calculate_proximity(
@@ -335,4 +358,3 @@ class ObjectOnLeft(TopicEvent):
             return 1
         else:
             return 0
-

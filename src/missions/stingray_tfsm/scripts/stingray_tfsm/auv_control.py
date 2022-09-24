@@ -32,7 +32,7 @@ class AUVControl:
 
     # TODO: Errors handling
 
-    def __init__(self, verbose=False, multiplier=1):
+    def __init__(self, verbose=False, *args, **kwargs):
         """ Class for controlling AUV in missions.
 
         The class is actually a unified wrap over actions and services calls.
@@ -41,7 +41,6 @@ class AUVControl:
             verbose (bool, optional): More debug messages. Defaults to False.
         """
         self.verbose = verbose
-        self.mult = multiplier
         # configs
         self.ros_config = load_config("ros.json")
         self.control_config = load_config("control.json")
@@ -58,15 +57,15 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
 
     def execute_lifter_goal(self, scene, *args, **kwargs):
-        device_id = 2  # Lifter_id
+        device_id = 1  # Lifter_id
         if 'lift' in scene:
-            velocity = 100
+            velocity = -110
         elif 'lower' in scene:
-            velocity = -100
+            velocity = 110
         else:
             velocity = 0
 
-        pause_common = 4
+        pause_common = 1
         if 'wait' in scene:
             pause_optional = scene['wait']
         else:
@@ -81,23 +80,33 @@ class AUVControl:
         rospy.sleep(pause_common + pause_optional)
 
     def execute_dropper_goal(self, *args, **kwargs):
-        rospy.loginfo(f'velociti in auv control {velocity}')
         device_id = 4  # dropper_id
-        velocity = 100
-        pause_common = 3
+
+        pause_common = 1
         pause_optional = 0
 
-        goal = UpDownGoal(device=device_id, velocity=velocity,
+        open_goal = UpDownGoal(device=device_id, velocity=50,
                           pause_common=pause_common, pause_optional=pause_optional)
 
-        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
+        close_goal = UpDownGoal(device=device_id, velocity=100,
+                                pause_common=pause_common, pause_optional=pause_optional)
+
+        self.DevicesClient.send_goal(open_goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
+        rospy.sleep(pause_common)
+
+        self.DevicesClient.send_goal(close_goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
+        rospy.sleep(pause_common)
+
+        self.DevicesClient.send_goal(open_goal, done_cb=callback_done, feedback_cb=callback_feedback,
+                                     active_cb=callback_active)
+        rospy.sleep(pause_common)
+
+        self.DevicesClient.send_goal(close_goal, done_cb=callback_done, feedback_cb=callback_feedback,
                                      active_cb=callback_active)
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common)
-
-        goal = UpDownGoal(device=device_id, velocity=0, pause_common=pause_common, pause_optional=pause_optional)
-
-        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,  active_cb=callback_active)
 
     def execute_move_goal(self, scene):
         """
@@ -111,18 +120,13 @@ class AUVControl:
 
         """
 
-        # if 'wait' in scene:
-        #     if self.mult != 1:
-        #         actual_duration = scene['wait'] * self.mult
-        #     else:
-        #         actual_duration = scene['wait']
-
         check_yaw = False
         if 'check_yaw' in scene:
             check_yaw = scene['check_yaw']
 
         if self.verbose:
             rospy.loginfo(f"Setting yaw delta: {scene['yaw']}")
+            rospy.loginfo(f"scene['lag'] {scene['lag']}")
 
         goal = HorizontalMoveGoal(
             scene['march'], scene['lag'], scene['yaw'], check_yaw)
@@ -138,22 +142,6 @@ class AUVControl:
         if 'wait' in scene:
             rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
             rospy.sleep(scene['wait'])
-
-    def execute_FUCKING_RANDOM_GOAL(self, *args, **kwargs):
-        force = 100
-        pause_common = 5
-        pause_optional = 0
-        for device_id in range(6):
-            rospy.loginfo(f"AGRESSIVLY SENDING {force} TO DEVICE {device_id}")
-            goal = UpDownGoal(device=device_id, velocity=force,
-                              pause_common=pause_common, pause_optional=pause_optional)
-
-            self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                         active_cb=callback_active)
-            rospy.sleep(pause_common)
-            self.DevicesClient.wait_for_server()
-            rospy.sleep(pause_common)
-
 
     def execute_dive_goal(self, scene):
         """
@@ -185,8 +173,5 @@ class AUVControl:
             'march': 0.0,
             'lag': 0.0,
             'yaw': 0,
-        })
-        self.execute_dive_goal({
-            'depth': 0,
         })
         rospy.loginfo('Everything stopped!')
