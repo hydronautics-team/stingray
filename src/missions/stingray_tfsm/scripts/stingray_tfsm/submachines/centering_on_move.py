@@ -22,9 +22,10 @@ class CenteringWithAvoidSub(AUVMission):
                  avoid_tolerance: int = 20,
                  avoid_confidence: float = 0.3,
                  verbose: bool = False,
-                 speed: float = 0.7,
-                 wait: int = 5,
+                 speed: float = 0.5,
+                 wait: int = 3,
                  lag='left',
+                 is_big_value: float = 0.5,
                  ):
         """ Submission for centering on object in camera
 
@@ -48,6 +49,7 @@ class CenteringWithAvoidSub(AUVMission):
         self.avoid_confidence = avoid_confidence
         self.speed = speed
         self.wait = wait
+        self.is_big_value = is_big_value
 
         self.lag_dir = -1 if lag == "left" else 1
 
@@ -65,35 +67,39 @@ class CenteringWithAvoidSub(AUVMission):
 
     def setup_transitions(self):
         return [
-            [self.machine.transition_start, [self.machine.state_init],
-                'condition_detected' + self.name],
-
-            ['condition_f', 'condition_detected' + self.name, self.machine.state_aborted],
-            ['condition_s', 'condition_detected' + self.name, 'custom_avoid' + self.name],
+            [self.machine.transition_start, self.machine.state_init, 'custom_avoid' + self.name],
 
             ['do_avoid' + self.name, 'custom_avoid' + self.name, 'condition_centering' + self.name],
 
-            ['condition_f', 'condition_centering' +
-                self.name, 'condition_centering' + self.name],
-            ['condition_s', 'condition_centering' +
-                self.name, self.machine.state_end],
+            ['condition_f', 'condition_centering' + self.name, 'custom_avoid' + self.name],
+            ['condition_s', 'condition_centering' + self.name, self.machine.state_end],
         ]
 
     def run_detection(self):
         self.event_handler(self.target_detected, 0.5)
         if self.target_detected.is_triggered():
-            rospy.loginfo(
-                f'self.target_detected.is_big() {self.target_detected.is_big()}')
-            if self.target_detected.is_big():
-                return True
-            return False
+            rospy.loginfo(f'target_detected!')
+            return True
+        return False
+    
+    def run_avoid(self):
+        if self.avoid is not None:
+            rospy.loginfo(f'avoid')
+            self.event_handler(self.avoid_detected, 0.5)
+            if self.avoid_detected.is_triggered():
+                rospy.loginfo(
+                    f'self.avoid_detected.is_big() {self.avoid_detected.is_big_h()}')
+                if self.avoid_detected.is_big_h():
+                    self.do_avoid()
+            else:
+                rospy.loginfo(f'avoid not detected')
 
     def run_centering(self):
         self.event_handler(self.target_detected, 0.5)
         if self.target_detected.is_triggered():
             rospy.loginfo(
-                f'self.target_detected.is_big() {self.target_detected.is_big()}')
-            if self.target_detected.is_big():
+                f'self.target_detected.is_big() {self.target_detected.is_big_h()}')
+            if self.target_detected.is_big_h():
                 return True
 
             error = self.target_detected.get_x_offset()
@@ -112,29 +118,26 @@ class CenteringWithAvoidSub(AUVMission):
             return False
 
         self.machine.auv.execute_move_goal({
-            'march': 1.0,
-            'lag': 0.0,
-            'yaw': 0,
-        })
+                    'march': self.speed,
+                    'lag': 0.0,
+                    'yaw': 0,
+                })
 
     def do_avoid(self):
-        if self.avoid is not None:
-            self.event_handler(self.avoid_detected, 0.5)
-            if self.avoid_detected.is_triggered() and self.avoid_detected.is_big():
-                rospy.loginfo('MINUS LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-                self.machine.auv.execute_move_goal({
-                    'march': 0.3,
-                    'lag': 0.7 * self.lag_dir,
-                    'yaw': 0,
-                    'wait': 6,
-                })
-                rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-                self.machine.auv.execute_move_goal({
-                    'march': 0.3,
-                    'lag': -0.7 * self.lag_dir,
-                    'yaw': 0,
-                    'wait': 3,
-                })
+        rospy.loginfo('MINUS LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
+        self.machine.auv.execute_move_goal({
+            'march': self.speed,
+            'lag': 0.7 * self.lag_dir,
+            'yaw': 0,
+            'wait': 4,
+        })
+        # rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
+        # self.machine.auv.execute_move_goal({
+        #     'march': self.speed,
+        #     'lag': -0.7 * self.lag_dir,
+        #     'yaw': 0,
+        #     'wait': 3,
+        # })
 
     def prerun(self):
         pass
@@ -145,12 +148,8 @@ class CenteringWithAvoidSub(AUVMission):
                 'preps': self.prerun,
                 "args": (),
             },
-            'condition_detected' + self.name: {
-                'condition': self.run_detection,
-                'args': ()
-            },
             'custom_avoid' + self.name: {
-                'custom': self.do_avoid,
+                'custom': self.run_avoid,
                 'args': ()
             },
             'condition_centering' + self.name: {
@@ -161,7 +160,7 @@ class CenteringWithAvoidSub(AUVMission):
 
     def setup_events(self):
         self.target_detected = ObjectDetectionEvent(
-            get_objects_topic(self.camera), self.target, self.confirmation, confidence=self.confidence)
+            get_objects_topic(self.camera), self.target, self.confirmation, confidence=self.confidence, is_big_h_value=0.5)
         if self.avoid is not None:
             self.avoid_detected = ObjectDetectionEvent(
-                get_objects_topic(self.camera), self.avoid, self.avoid_confirmation, confidence=self.avoid_confidence)
+                get_objects_topic(self.camera), self.avoid, self.avoid_confirmation, confidence=self.avoid_confidence, is_big_h_value=0.3)

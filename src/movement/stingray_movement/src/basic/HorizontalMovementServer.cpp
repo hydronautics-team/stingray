@@ -13,17 +13,17 @@ void HorizontalMovementServer::goalCallback(const stingray_movement_msgs::Horizo
     ROS_INFO("Yaw: %i", goal->yaw);
 
     stingray_communication_msgs::SetHorizontalMove serviceCall;
-    if (goal->march < 0.0 || goal->march > 1.0)
+    if (goal->march < -1.0 || goal->march > 1.0)
     {
         actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(),
-                                "March value must be between 0.0 and 1.0");
+                                "March value must be between -1.0 and 1.0");
         return;
     }
 
-    if (goal->lag < 0.0 || goal->lag > 1.0)
+    if (goal->lag < -1.0 || goal->lag > 1.0)
     {
         actionServer.setAborted(stingray_movement_msgs::HorizontalMoveResult(),
-                                "Lag value must be between 0.0 and 1.0");
+                                "Lag value must be between -1.0 and 1.0");
         return;
     }
 
