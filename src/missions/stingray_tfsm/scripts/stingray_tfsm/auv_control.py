@@ -8,7 +8,8 @@ import rospy
 """@package docstring
 Contains class for controlling AUV in missions.
 """
-
+# TODO rewrite it in c++ and make it an independent node
+# TODO or reintegrate it with auv_fsm.py
 
 def callback_active():
     rospy.loginfo("Action server is processing the goal")
@@ -60,12 +61,14 @@ class AUVControl:
         device_id = 1  # Lifter_id
         if 'lift' in scene:
             velocity = -110
+            pause_common = 6
         elif 'lower' in scene:
             velocity = 110
+            pause_common = 2
         else:
             velocity = 0
+            pause_common = 1
 
-        pause_common = 1
         if 'wait' in scene:
             pause_optional = scene['wait']
         else:
@@ -79,9 +82,9 @@ class AUVControl:
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common + pause_optional)
 
-    def execute_dropper_goal(self, *args, **kwargs):
+    def execute_dropper_goal(self, *args, velocity=100, **kwargs):
         device_id = 4  # dropper_id
-        velocity = 100
+
         pause_common = 3
         pause_optional = 0
 
@@ -92,10 +95,6 @@ class AUVControl:
                                      active_cb=callback_active)
         self.DevicesClient.wait_for_server()
         rospy.sleep(pause_common)
-
-        goal = UpDownGoal(device=device_id, velocity=0, pause_common=pause_common, pause_optional=pause_optional)
-
-        self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,  active_cb=callback_active)
 
     def execute_move_goal(self, scene):
         """
@@ -131,22 +130,6 @@ class AUVControl:
         if 'wait' in scene:
             rospy.loginfo(f"Wait for {scene['wait']} seconds ...")
             rospy.sleep(scene['wait'])
-
-    def execute_FUCKING_RANDOM_GOAL(self, *args, **kwargs):
-        force = 100
-        pause_common = 5
-        pause_optional = 0
-        for device_id in range(6):
-            rospy.loginfo(f"AGRESSIVLY SENDING {force} TO DEVICE {device_id}")
-            goal = UpDownGoal(device=device_id, velocity=force,
-                              pause_common=pause_common, pause_optional=pause_optional)
-
-            self.DevicesClient.send_goal(goal, done_cb=callback_done, feedback_cb=callback_feedback,
-                                         active_cb=callback_active)
-            rospy.sleep(pause_common)
-            self.DevicesClient.wait_for_server()
-            rospy.sleep(pause_common)
-
 
     def execute_dive_goal(self, scene):
         """
