@@ -11,6 +11,7 @@ UpDownServer::UpDownServer(const std::string& actionName, const std::string& dev
 
 void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr &goal) {
     //    TODO: load actual device ID from config. Current: dropper - 4, lifter - 1
+    //
 
     stingray_devices_msgs::SetDeviceAction SetDeviceAction;
 
@@ -28,15 +29,6 @@ void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr 
         ros::service::call(deviceActionService, SetDeviceAction);
         ros::Duration(goal->pause_optional).sleep();
     }
-    ROS_INFO("Lifting back...");
-    SetDeviceAction.request.value = -goal->velocity;
-    ros::service::call(deviceActionService, SetDeviceAction);
-    ros::Duration(goal->pause_common).sleep();
-
-    SetDeviceAction.request.value = 0;
-    ros::service::call(deviceActionService, SetDeviceAction);
-
-    ROS_INFO("Lifting done");
 
     actionServer.setSucceeded();
 }
