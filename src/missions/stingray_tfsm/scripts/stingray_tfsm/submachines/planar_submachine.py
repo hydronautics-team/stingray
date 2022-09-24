@@ -15,7 +15,7 @@ class CenteringPlanarSub(AUVMission):
                  tolerance: int = 9,
                  auv: AUVControl = None,
                  lifter_offset_x=-20,
-                 simulation=True,
+                 simulation=False,
                  drop=True
                  ):
         """ Submission for centering on object in camera
