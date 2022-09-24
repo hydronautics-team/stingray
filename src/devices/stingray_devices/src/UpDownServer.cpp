@@ -10,7 +10,7 @@ UpDownServer::UpDownServer(const std::string& actionName, const std::string& dev
 
 
 void UpDownServer::goalCallback(const stingray_devices_msgs::UpDownGoalConstPtr &goal) {
-    //    TODO: load actual device ID from config. Current: dropper - 1, lifter - 2
+    //    TODO: load actual device ID from config. Current: dropper - 4, lifter - 1
 
     stingray_devices_msgs::SetDeviceAction SetDeviceAction;
 
