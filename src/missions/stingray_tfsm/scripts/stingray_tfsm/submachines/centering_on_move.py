@@ -25,7 +25,12 @@ class CenteringWithAvoidSub(AUVMission):
                  speed: float = 0.5,
                  wait: int = 3,
                  lag='left',
-                 is_big_value: float = 0.5,
+                 is_big_w: float = 1.0,
+                 is_big_h: float = 1.0,
+                 is_big_w_avoid: float = 1.0,
+                 is_big_h_avoid: float = 1.0,
+                 is_big_method: str = 'width',
+                 is_big_method_avoid: str = 'width',
                  ):
         """ Submission for centering on object in camera
 
@@ -49,7 +54,13 @@ class CenteringWithAvoidSub(AUVMission):
         self.avoid_confidence = avoid_confidence
         self.speed = speed
         self.wait = wait
-        self.is_big_value = is_big_value
+        self.is_big_w = is_big_w
+        self.is_big_h = is_big_h
+        self.is_big_w_avoid = is_big_w_avoid
+        self.is_big_h_avoid = is_big_h_avoid
+
+        self.is_big_method = is_big_method
+        self.is_big_method_avoid = is_big_method_avoid
 
         self.lag_dir = -1 if lag == "left" else 1
 
@@ -87,10 +98,17 @@ class CenteringWithAvoidSub(AUVMission):
             rospy.loginfo(f'avoid')
             self.event_handler(self.avoid_detected, 0.5)
             if self.avoid_detected.is_triggered():
-                rospy.loginfo(
-                    f'self.avoid_detected.is_big() {self.avoid_detected.is_big_h()}')
-                if self.avoid_detected.is_big_h():
-                    self.do_avoid()
+                if self.is_big_method_avoid == 'width':
+                    rospy.loginfo(
+                        f'self.avoid_detected.is_big() {self.avoid_detected.is_big_w()}')
+                    if self.avoid_detected.is_big_w():
+                        self.do_avoid()
+                elif self.is_big_method_avoid == 'height':
+                    rospy.loginfo(
+                        f'self.avoid_detected.is_big() {self.avoid_detected.is_big_h()}')
+                    if self.avoid_detected.is_big_h():
+                        self.do_avoid()
+                
             else:
                 rospy.loginfo(f'avoid not detected')
 
@@ -131,13 +149,13 @@ class CenteringWithAvoidSub(AUVMission):
             'yaw': 0,
             'wait': 4,
         })
-        # rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
-        # self.machine.auv.execute_move_goal({
-        #     'march': self.speed,
-        #     'lag': -0.7 * self.lag_dir,
-        #     'yaw': 0,
-        #     'wait': 3,
-        # })
+        rospy.loginfo('LAAAAAAAAAAAAAAAAAAAAAAAAAAAAG')
+        self.machine.auv.execute_move_goal({
+            'march': self.speed,
+            'lag': -0.7 * self.lag_dir,
+            'yaw': 0,
+            'wait': 3,
+        })
 
     def prerun(self):
         pass
@@ -160,7 +178,7 @@ class CenteringWithAvoidSub(AUVMission):
 
     def setup_events(self):
         self.target_detected = ObjectDetectionEvent(
-            get_objects_topic(self.camera), self.target, self.confirmation, confidence=self.confidence, is_big_h_value=0.5)
+            get_objects_topic(self.camera), self.target, self.confirmation, confidence=self.confidence, is_big_h_value=self.is_big_h, is_big_w_value=self.is_big_w)
         if self.avoid is not None:
             self.avoid_detected = ObjectDetectionEvent(
-                get_objects_topic(self.camera), self.avoid, self.avoid_confirmation, confidence=self.avoid_confidence, is_big_h_value=0.3)
+                get_objects_topic(self.camera), self.avoid, self.avoid_confirmation, confidence=self.avoid_confidence, is_big_h_value=self.is_big_h, is_big_w_value=self.is_big_w)
