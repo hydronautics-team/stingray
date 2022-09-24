@@ -12,7 +12,8 @@ class CenteringPlanarSub(AUVMission):
                  camera: str,  # bottom needed
                  target: str,
                  confirmation: int = 2,
-                 tolerance: int = 9
+                 tolerance: int = 9,
+                 auv: AUVControl = None,
                  ):
         """ Submission for centering on object in camera
 
@@ -34,7 +35,10 @@ class CenteringPlanarSub(AUVMission):
         self.move_speed = 0.5
         self.x_offset = 0
         self.y_offset = 0
-        self.auv = AUVControl(verbose=False)  # govnocod
+        if auv is None:
+            self.auv = AUVControl(verbose=False)  # govnocod
+        else:
+            self.auv = auv
 
         self.gate_detected = None
         super().__init__(name)
@@ -93,7 +97,6 @@ class CenteringPlanarSub(AUVMission):
         loginfo("RESET THIS FUCKING DEPTH WHILE NOT TOO LATE")
         sleep(3)
         loginfo("LETZZ FUCKING GO")
-
 
     def check_done(self, event):
         if not self.event_handler(event, wait=0.5):

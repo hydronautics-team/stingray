@@ -2,8 +2,8 @@ from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 import rospy
 
-DEFAULT_RANGE_W = 640
-DEFAULT_RANGE_H = 480
+DEFAULT_RANGE_W = 800
+DEFAULT_RANGE_H = 800
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_CONFIDENCE = 0.65
 
@@ -11,7 +11,7 @@ DEFAULT_CONFIDENCE = 0.65
 
 
 def width(_obj):
-    return abs(_obj.top_left_x - _obj.bottom_right_x)
+    return abs(_obj.top_left_x - _obj.bottom_right_x)  #
 
 
 def height(_obj):
