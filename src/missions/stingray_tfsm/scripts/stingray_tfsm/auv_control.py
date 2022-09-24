@@ -186,7 +186,4 @@ class AUVControl:
             'lag': 0.0,
             'yaw': 0,
         })
-        self.execute_dive_goal({
-            'depth': 0,
-        })
         rospy.loginfo('Everything stopped!')

@@ -27,7 +27,7 @@ class EndAUVMission(AUVMission):
     def end_auv(self):
         self.machine.auv.execute_stop_goal()
         self.machine.auv.execute_dive_goal({
-            'depth': 100,
+            'depth': 0,
         })
         rospy.sleep(10)
         self.enable_stabilization()
