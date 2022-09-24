@@ -14,8 +14,9 @@ class CenteringPlanarSub(AUVMission):
                  confirmation: int = 2,
                  tolerance: int = 9,
                  auv: AUVControl = None,
-                 dropper_offset_x=-150,
+                 lifter_offset_x=-20,
                  simulation=True,
+                 drop=True
                  ):
         """ Submission for centering on object in camera
 
@@ -34,10 +35,14 @@ class CenteringPlanarSub(AUVMission):
         self.previous = 0  # or 1
         self.wobbles = 0
         self.give_up_threshold = 15
-        self.move_speed = 0.1
+        self.move_speed = 0.2
         self.lag_time = 0
         self.march_time = 0
-        self.dropper_offset_x = dropper_offset_x
+        if drop:
+            self.lifter_offset_x = -100
+
+        else:
+            self.lifter_offset_x = lifter_offset_x
         self.simulation = simulation
         self.done = False
 
@@ -56,12 +61,14 @@ class CenteringPlanarSub(AUVMission):
     def setup_states(self):
         states = (
             'condition_detected',
-            'move_stop',
+            'custom_stop',
             'move_lag',
             'move_march',
             'custom_lag_wait',
             'custom_march_wait',
-            'move_stop_abort'
+            'move_stop_abort',
+            'custom_adjust',
+
                   )
         states = tuple(i + '_' + self.name for i in states)
         return states
@@ -69,22 +76,28 @@ class CenteringPlanarSub(AUVMission):
     def setup_transitions(self):
         return [
             [self.machine.transition_start, [
-                self.machine.state_init, 'custom_lag_wait' + '_' + self.name], 'condition_detected' + '_' + self.name],
+                self.machine.state_init,
+            #    'custom_march_wait' + '_' + self.name,
+            #    'custom_stop' + '_' + self.name,
+                'custom_adjust' + '_' + self.name
+            ], 'condition_detected' + '_' + self.name],
 
-            ['march_stop', 'move_march' + '_' + self.name, 'custom_march_wait' + '_' + self.name],
+            #['march', 'move_march' + '_' + self.name, 'custom_march_wait' + '_' + self.name],
 
-            ['lag_go', 'custom_march_wait' + '_' + self.name, 'move_lag' + '_' + self.name],
-            ['lag_stop', 'move_lag' + '_' + self.name, 'custom_lag_wait' + '_' + self.name],
+            # ['lag_go', 'custom_lag_wait' + '_' + self.name, 'move_march' + '_' + self.name],
+            # ['lag_stop', 'move_lag' + '_' + self.name, 'custom_lag_wait' + '_' + self.name],
+            #
+            # ['STAHP', 'custom_lag_wait' + '_' + self.name, 'custom_stop' + '_' + self.name],
 
             ['condition_f', 'condition_detected' + '_' + self.name, 'move_stop_abort' + '_' + self.name],
-            ['condition_s', 'condition_detected' + '_' + self.name, 'move_march' + '_' + self.name],
+            ['condition_s', 'condition_detected' + '_' + self.name, 'custom_adjust' + '_' + self.name],
 
 
         ]
 
     def setup_events(self):
         self.gate_detected = ObjectDetectionEvent(
-            get_objects_topic(self.camera), self.target, self.confirmation, confidence=0.2)
+            get_objects_topic(self.camera), self.target, self.confirmation, confidence=0.2, closest=True)
 
     def stabilize(self):
         self.reset_freeze()
@@ -99,10 +112,6 @@ class CenteringPlanarSub(AUVMission):
         loginfo("LETZZ FUCKING GO")
 
     def calculate_offsets(self, event):
-        if self.done:
-            loginfo("Already centered")
-            return 0
-
         if not self.event_handler(event, wait=0.5):
             self.reset_freeze()
             loginfo('dich happened')
@@ -110,21 +119,65 @@ class CenteringPlanarSub(AUVMission):
 
         if self.simulation:
             loginfo(f"it's simulator and image is not upright")
-            self.lag_time = int(event.get_y_offset() * 0.02)
-            self.march_time = int(event.get_x_offset() * 0.02)
-            loginfo(f'shifts are {event.get_y_offset()}px right and {event.get_x_offset()}px forward')
+            self.lag_dist = (event.get_y_offset() + self.lifter_offset_x)
+            self.lag_time = int(self.lag_dist * 0.02)
+            self.march_dist = (event.get_x_offset()-10)
+            self.march_time = int(self.march_dist * 0.02)
+            loginfo(f'shifts are {self.lag_dist}px right and {self.march_dist}px forward')
+
         else:
-            self.lag_time = int(event.get_y_offset() * 0.02)
-            self.march_time = int(event.get_x_offset() * 0.02)
+            self.lag_dist = (event.get_x_offset()+30)
+            self.lag_time = int(self.lag_dist * 0.02)
+            self.march_dist = (event.get_y_offset() - 30)
+            self.march_time = int(self.march_dist * 0.02)
+            loginfo(f'shifts are {self.lag_dist}px right and {self.march_dist}px forward')
 
         if self.target == 'red_bowl' or self.target == 'blue_bowl':
-            if (event.get_y_offset() * 0.02)**2+(event.get_x_offset() * 0.02)**2 < 4:
+            if (self.lag_dist * 0.1)**2+(self.march_dist * 0.1)**2 < 1:
                 loginfo('DOOOOOONEEEEEE')
                 self.done = True
+
+        if self.done:
+            loginfo("Already centered")
+            return 0
 
         loginfo(f'it looks like we need to move {self.lag_time}s right and {self.march_time}s forward')
 
         return 1
+
+    def adjust(self):
+        if self.march_time:
+            self.auv.execute_move_goal({  # go march
+                    'march': self.move_speed if self.march_time >= 0 else -self.move_speed,
+                    'lag': 0.0,
+                    'yaw': 0,
+                })
+            sleep(abs(self.march_time))
+        if self.lag_time:
+            self.auv.execute_move_goal({  # go lag
+                    'march': 0.0,
+                    'lag': self.move_speed if self.lag_time >= 0 else -self.move_speed,
+                    'yaw': 0,
+                })
+            sleep(abs(self.lag_time))
+        if not(self.lag_time or self.march_time):
+            self.done = 1
+        self.auv.execute_move_goal({  # go lag
+            'march': 0.0,
+            'lag': 0,
+            'yaw': 0,
+        })
+
+    def stahp_pls(self):
+        for i in range(1):
+            self.auv.execute_move_goal(
+                {
+                    'march': 0.00,
+                    'lag': 0.0000,
+                    'yaw': 0,
+                },
+            )
+            sleep(1)
 
     def setup_scene(self):
         return {
@@ -139,7 +192,7 @@ class CenteringPlanarSub(AUVMission):
             },
             'move_lag' + '_' + self.name: {
                 'march': 0.0,
-                'lag': self.move_speed if self.lag_time < 0 else -self.move_speed,
+                'lag': self.move_speed if self.lag_time >= 0 else -self.move_speed,
                 'yaw': 0,
             },
             'move_stop_abort' + '_' + self.name: {
@@ -160,5 +213,12 @@ class CenteringPlanarSub(AUVMission):
                 'condition': self.calculate_offsets,
                 'args': (self.gate_detected,)
             },
-
+            'custom_stop' + '_' + self.name: {
+                'custom': self.stahp_pls,
+                'args': ()
+            },
+            'custom_adjust' + '_' + self.name: {
+                'custom': self.adjust,
+                'args': ()
+            },
         }

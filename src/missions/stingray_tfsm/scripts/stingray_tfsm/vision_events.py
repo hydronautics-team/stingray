@@ -2,8 +2,8 @@ from stingray_tfsm.core.pure_events import TopicEvent
 from stingray_object_detection_msgs.msg import ObjectsArray
 import rospy
 
-DEFAULT_RANGE_W = 800
-DEFAULT_RANGE_H = 800
+DEFAULT_RANGE_W = 640
+DEFAULT_RANGE_H = 480
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_CONFIDENCE = 0.65
 
@@ -69,21 +69,6 @@ def get_best_object(objects, target_name, req_confidence):
     else:
         return None
 
-
-def get_closest_to_memorized(objects, target_name, memorized):
-    obj_to_asses = []
-    for obj in objects:
-        if obj.name == target_name:
-            pos = calculate_center_x(obj)
-            c = pos - memorized
-            direction = 1 if c >= 0 else -1
-            c = abs(c)
-            obj_to_asses.append((c, direction, pos))
-
-    result = min(obj_to_asses)
-    return result[0]*result[1], result[2]
-
-
 def is_big(_obj, border_h=DEFAULT_RANGE_H):
     if height(_obj) / border_h > 0.5:
         return True
@@ -105,6 +90,7 @@ class ObjectDetectionEvent(TopicEvent):
                  confidence: float = 0.65,
                  is_big_w_value: float = 0.5,
                  is_big_h_value: float = 0.5,
+                 closest: bool = False,
                  ):
         """The constructor.
         :param topic_name: Object detection topic name.
@@ -119,7 +105,8 @@ class ObjectDetectionEvent(TopicEvent):
                          trigger_fn=self._trigger_fn,
                          n_triggers=n_triggers,
                          trigger_reset=True,
-                         queue_size=queue_size)
+                         queue_size=queue_size,
+                         )
         self._target_object = object_name
         self._confidence = confidence
         self._tolerance = tolerance
@@ -134,11 +121,43 @@ class ObjectDetectionEvent(TopicEvent):
         self.current_width = None
         self.current_height = None
 
+        self.closest = closest
+        self._closest_obj = None
+
         self.current_object = None
         if self._target_object == 'red_bowl' or\
                 self._target_object == 'yellow_flare' or\
                 self._target_object == 'blue_bowl':
             self._confidence -= 0.3
+
+    def get_closest_to_memorized_x(self, objects, target_name, memorized):
+        obj_to_asses = []
+        for obj in objects:
+            if obj.name == target_name:
+                pos = calculate_center_x(obj)
+                c = pos - memorized
+                direction = 1 if c >= 0 else -1
+                c = abs(c)
+                obj_to_asses.append((c, direction, pos))
+                self._closest_obj = obj
+
+        result = min(obj_to_asses)
+        return result[0] * result[1], result[2]
+
+    def get_closest_to_center_xy(self, objects, target_name, memorized_x, memorized_y):
+        obj_to_asses = []
+        for obj in objects:
+            if obj.name == target_name:
+                pos_x = calculate_center_x(obj)
+                pos_y = calculate_center_y(obj)
+                shift_xy = ((pos_x - memorized_x)**2+(pos_y - memorized_y)**2)**0.5
+                print(f'shift_xy {shift_xy}')
+                obj_to_asses.append((shift_xy, obj))
+        if obj_to_asses:
+            result = min(obj_to_asses)
+            return result[1], result[0]
+        else:
+            return None, None
 
     def is_big_w(self):
         rospy.loginfo(f'is_big_w: {width(self.current_object) / DEFAULT_RANGE_W}')
@@ -205,14 +224,26 @@ class ObjectDetectionEvent(TopicEvent):
             return 0
 
     def _trigger_fn(self, msg: ObjectsArray):
-        _obj = get_best_object(
-            msg.objects, self._target_object, self._confidence)
+        if not self.closest:
+            _obj = get_best_object(
+                msg.objects, self._target_object, self._confidence)
+        else:
+            if self._closest_obj is not None:
+                _obj, _ = self.get_closest_to_center_xy(
+                    msg.objects, self._target_object,
+                    0,
+                    0,
+                )
+            else:
+                _obj = get_best_object(
+                    msg.objects, self._target_object, self._confidence)
+
         if _obj:
             self.current_object = _obj
             if self.current_center_x is not None:
                 self.relative_shift_x, self.current_center_x =\
-                    get_closest_to_memorized(msg.objects, self._target_object,
-                                             self.current_center_x + self.relative_shift_x)
+                    self.get_closest_to_memorized_x(msg.objects, self._target_object,
+                                                  self.current_center_x + self.relative_shift_x)
             else:
                 self.relative_shift_x, self.current_center_x = 0, calculate_center_x(
                     _obj)
