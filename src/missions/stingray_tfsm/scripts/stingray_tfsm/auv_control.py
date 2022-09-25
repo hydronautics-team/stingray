@@ -64,7 +64,7 @@ class AUVControl:
             pause_common = 6
         elif 'lower' in scene:
             velocity = 110
-            pause_common = 2
+            pause_common = 6
         else:
             velocity = 0
             pause_common = 1
