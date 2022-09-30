@@ -10,7 +10,8 @@
         "pinger_buckets": "/stingray/topics/position/pinger_buckets",
         "pinger_flare": "/stingray/topics/position/pinger_flare",
         "gazebo_velocity": "/cmd_vel",
-        "gazebo_odometry": "/odom"
+        "gazebo_odometry": "/odom",
+        "marker": "/marker_box"
     },
     "services": {
         "set_horizontal_move": "/stingray/services/control/set_horizontal_move",
@@ -22,7 +23,8 @@
         "gazebo_get_state": "/gazebo/get_model_state",
         "gazebo_set_state": "/gazebo/set_model_state",
         "set_enable_object_detection": "/stingray/services/vision/set_enable_object_detection",
-        "updown": "/stingray/services/devices/updown"
+        "updown": "/stingray/services/devices/updown",
+        "set_enable_marker": "/marker_detection_switch"
     },
     "actions": {
         "movement": {

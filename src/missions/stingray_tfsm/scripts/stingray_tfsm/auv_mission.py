@@ -28,6 +28,7 @@ class AUVMission(PureMission):
         self.simulation = simulation
         self.machine = AUVStateMachine(name, auv, verbose=verbose, simulation=simulation)
         super().__init__(name, self.machine, verbose)
+        super().__init__(name, self.machine, verbose)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera

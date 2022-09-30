@@ -16,7 +16,7 @@ class CenteringPlanarSub(AUVMission):
                  auv: AUVControl = None,
                  lifter_offset_x=-20,
                  simulation=False,
-                 drop=True
+                 drop=False
                  ):
         """ Submission for centering on object in camera
 
@@ -38,7 +38,7 @@ class CenteringPlanarSub(AUVMission):
         self.move_speed = 0.2
         self.lag_time = 0
         self.march_time = 0
-        if drop:
+        if not drop:
             self.lifter_offset_x = -100
 
         else:
@@ -51,7 +51,7 @@ class CenteringPlanarSub(AUVMission):
         else:
             self.auv = auv
 
-        self.gate_detected = None
+        self.obj_detected = None
         super().__init__(name)
 
     def reset_freeze(self):
@@ -64,29 +64,38 @@ class CenteringPlanarSub(AUVMission):
             'move_stop_abort',
             'custom_adjust',
                   )
-        states = tuple(i + '_' + self.name for i in states)
+        states = tuple(i + '_' + self.target for i in states)
         return states
 
     def setup_transitions(self):
         return [
             [self.machine.transition_start, [
                 self.machine.state_init,
-                'custom_adjust' + '_' + self.name
-            ], 'condition_detected' + '_' + self.name],
+                'custom_adjust' + '_' + self.target
+            ], 'condition_detected' + '_' + self.target],
 
-            ['condition_f', 'condition_detected' + '_' + self.name, 'move_stop_abort' + '_' + self.name],
-            ['condition_s', 'condition_detected' + '_' + self.name, 'custom_adjust' + '_' + self.name],
+            ['condition_f', 'condition_detected' + '_' + self.target, 'move_stop_abort' + '_' + self.target],
+            ['condition_s', 'condition_detected' + '_' + self.target, 'custom_adjust' + '_' + self.target],
 
 
         ]
 
     def setup_events(self):
-        self.gate_detected = ObjectDetectionEvent(
-            get_objects_topic(self.camera), self.target, self.confirmation, confidence=0.2, closest=True)
+        if self.target == 'marker':
+            closest = False
+        else:
+            closest = True
+            
+        self.obj_detected = ObjectDetectionEvent(
+            get_objects_topic(self.camera),
+            self.target,
+            self.confirmation,
+            confidence=0.2,
+            closest=closest
+        )
 
     def stabilize(self):
         self.reset_freeze()
-        self.enable_object_detection(self.camera, True)
         self.auv.execute_move_goal({
             'march': 0.0,
             'lag': 0.0,
@@ -95,7 +104,7 @@ class CenteringPlanarSub(AUVMission):
         loginfo("LETZZ FUCKING GO")
 
     def calculate_offsets(self, event):
-        if not self.event_handler(event, wait=0.5):
+        if not self.event_handler(event, wait=1):
             self.reset_freeze()
             loginfo('dich happened')
             return 0
@@ -157,17 +166,17 @@ class CenteringPlanarSub(AUVMission):
                 'preps': self.stabilize,
                 'args': ()
             },
-            'move_stop_abort' + '_' + self.name: {
+            'move_stop_abort' + '_' + self.target: {
                 'march': 0,
                 'lag': 0.0,
                 'yaw': 0,
                 'wait': 1
             },
-            'condition_detected' + '_' + self.name: {
+            'condition_detected' + '_' + self.target: {
                 'condition': self.calculate_offsets,
-                'args': (self.gate_detected,)
+                'args': (self.obj_detected,)
             },
-            'custom_adjust' + '_' + self.name: {
+            'custom_adjust' + '_' + self.target: {
                 'custom': self.adjust,
                 'args': ()
             },
