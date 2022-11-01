@@ -26,6 +26,7 @@ class AUVMission(PureMission):
         self.ros_config = load_config("ros.json")
         self.machine = AUVStateMachine(name, auv, verbose=verbose)
         super().__init__(name, self.machine, verbose)
+        super().__init__(name, self.machine, verbose)
 
     def enable_object_detection(self, camera_topic: str, enable: bool = True):
         """ method to enable object detection for specific camera

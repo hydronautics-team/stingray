@@ -22,7 +22,7 @@ def calculate_proximity(tlx, brx, tly, bry, mrange):
     proximity = abs(tlx - brx)
     proximity += abs(tly - bry)
     proximity = 1 - mrange / proximity * 0.43
-    # print("Ya sotvoril dich: ", proximity)
+    # rospy.loginfo("Ya sotvoril dich: ", proximity)
 
     return proximity
 
@@ -40,14 +40,14 @@ def very_close(tlx, brx, tly, bry, mrange, target, *args, **kwargs):
     if target == 'red_flare':
         prox += 0.45
     if prox < 0:
-        print(f'too far away to assess {target}')
+        rospy.loginfo(f'too far away to assess {target}')
         return False
-    print(prox)
+    rospy.loginfo(prox)
     if target == 'gate':
         close = (1 - (1 - prox) * 100) * 100
     else:
         close = prox*2
-    print(close, end='\n-====-\n')
+    rospy.loginfo(close, end='\n-====-\n')
     return close > 0.80
 
 
@@ -131,6 +131,8 @@ class ObjectDetectionEvent(TopicEvent):
             self._confidence -= 0.3
 
     def get_closest_to_memorized_x(self, objects, target_name, memorized):
+        if target_name == 'marker':
+            rospy.loginfo(*objects)
         obj_to_asses = []
         for obj in objects:
             if obj.name == target_name:
@@ -145,13 +147,15 @@ class ObjectDetectionEvent(TopicEvent):
         return result[0] * result[1], result[2]
 
     def get_closest_to_center_xy(self, objects, target_name, memorized_x, memorized_y):
+        if target_name == 'marker':
+            rospy.loginfo(*objects)
         obj_to_asses = []
         for obj in objects:
             if obj.name == target_name:
                 pos_x = calculate_center_x(obj)
                 pos_y = calculate_center_y(obj)
                 shift_xy = ((pos_x - memorized_x)**2+(pos_y - memorized_y)**2)**0.5
-                print(f'shift_xy {shift_xy}')
+                rospy.loginfo(f'shift_xy {shift_xy}')
                 obj_to_asses.append((shift_xy, obj))
         if obj_to_asses:
             result = min(obj_to_asses)
@@ -217,24 +221,30 @@ class ObjectDetectionEvent(TopicEvent):
 
     def is_ortho(self):
         if 1 - self._tolerance <= self.current_width/self.current_height <= 1 + self._tolerance:
-            print(f"{self._target_object} is orthogonal to AUV")
+            rospy.loginfo(f"{self._target_object} is orthogonal to AUV")
             return 1
         else:
-            print(f"{self._target_object} is NOT orthogonal to AUV")
+            rospy.loginfo(f"{self._target_object} is NOT orthogonal to AUV")
             return 0
 
     def _trigger_fn(self, msg: ObjectsArray):
         if not self.closest:
+            if self._target_object == "marker":
+                rospy.loginfo('debug 1')
             _obj = get_best_object(
                 msg.objects, self._target_object, self._confidence)
         else:
             if self._closest_obj is not None:
+                if self._target_object == "marker":
+                    rospy.loginfo('debug 2')
                 _obj, _ = self.get_closest_to_center_xy(
                     msg.objects, self._target_object,
                     0,
                     0,
                 )
             else:
+                if self._target_object == "marker":
+                    rospy.loginfo('debug 3')
                 _obj = get_best_object(
                     msg.objects, self._target_object, self._confidence)
 
