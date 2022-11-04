@@ -48,28 +48,27 @@ catkin_make
 
 ```bash
 source devel/setup.bash
-roslaunch stingray_startup main.launch simulation:=true
 ```
 
 ## Basic launch file:
 
 ```bash
-roslaunch stingray_startup base.launch 
+roslaunch stingray_startup main.launch 
 ```
-*see args [inside launch file](src/utils/stingray_startup/launch/base.launch) or [below](#other-args)
+*see args [inside launch file](src/utils/stingray_startup/launch/main.launch) or [below](#other-args)
 
-### Run with simulator
+## Run with simulator
 
 * Clone and build our [simulator](https://github.com/hidronautics/simulator) (now it's only for sauvc competition).
 * Run simulator.
-* in stingray directory run
 
-And use arg:
+In stingray directory run
+
 ```bash
-simulation:=true 
+roslaunch stingray_startup main.launch simulation:=true 
 ```
 
-### Run with qr codes
+## Run with qr codes
 
 [➦ Full description here](#launch-with-qrtrigger-node)
 
@@ -146,8 +145,9 @@ Libs:
 Contains launch files and qr trigger node.
 
 Launch files:
-- `base.launch`
-- `vision.launch`
+- `main.launch`
+- `camera.launch`
+- `object_detection.launch`
 
 ### Launch with qr_trigger node
 
@@ -159,7 +159,7 @@ Generate qr code from launch file name without custom prefix and *.launch*.
 
 > Example: you have `stingray_qr_mission.launch` file. **stingray_qr_** is the prefix which you pass to qr_trigger node as `name_pattern` parameter. Also you don't need **.launch** to generate qr code. Eventually you need to generate `mission` to qr code
 
-Launch `base.launch` with param:
+Launch `main.launch` with param:
 ```bash
 qr_launch:=true 
 ```
