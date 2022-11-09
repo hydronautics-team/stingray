@@ -120,6 +120,19 @@ struct ResponseMessage
     float pitchSpeed;
     float yawSpeed;
 
+    float accelX;
+    float accelY;
+    float accelZ;
+
+    float magX;
+    float magY;
+    float magZ;
+    
+    float quatA;
+    float quatB;
+    float quatC;
+    float quatD;
+
     float depth;
     //float lag;
     float in_pressure;

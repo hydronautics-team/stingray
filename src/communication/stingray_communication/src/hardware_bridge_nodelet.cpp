@@ -60,9 +60,24 @@ void hardware_bridge::inputMessage_callback(const std_msgs::UInt8MultiArrayConst
         hardwareInfoMessage.roll = responseMessage.roll;
         hardwareInfoMessage.pitch = responseMessage.pitch;
         hardwareInfoMessage.yaw = responseMessage.yaw;
+
         hardwareInfoMessage.rollSpeed = responseMessage.rollSpeed;
         hardwareInfoMessage.pitchSpeed = responseMessage.pitchSpeed;
         hardwareInfoMessage.yawSpeed = responseMessage.yawSpeed;
+
+        hardwareInfoMessage.accelX = responseMessage.accelX;
+        hardwareInfoMessage.accelY = responseMessage.accelY;
+        hardwareInfoMessage.accelZ = responseMessage.accelZ;
+
+        hardwareInfoMessage.magX = responseMessage.magX;
+        hardwareInfoMessage.magY = responseMessage.magY;
+        hardwareInfoMessage.magZ = responseMessage.magZ;
+        
+        hardwareInfoMessage.quatA = responseMessage.quatA;
+        hardwareInfoMessage.quatB = responseMessage.quatB;
+        hardwareInfoMessage.quatC = responseMessage.quatC;
+        hardwareInfoMessage.quatD = responseMessage.quatD;
+
         hardwareInfoMessage.depth = responseMessage.depth;
     }
     else

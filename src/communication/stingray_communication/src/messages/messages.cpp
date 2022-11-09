@@ -208,6 +208,19 @@ bool ResponseMessage::parseVector(std::vector<uint8_t> &input)
     popFromVector(input, depth);
     //popFromVector(input, lag);
 
+    popFromVector(input, quatD);
+    popFromVector(input, quatC);
+    popFromVector(input, quatB);
+    popFromVector(input, quatA);
+
+    popFromVector(input, magZ);
+    popFromVector(input, magY);
+    popFromVector(input, magX);
+
+    popFromVector(input, accelZ);
+    popFromVector(input, accelY);
+    popFromVector(input, accelX);
+
     popFromVector(input, yawSpeed);
     popFromVector(input, pitchSpeed);
     popFromVector(input, rollSpeed);
