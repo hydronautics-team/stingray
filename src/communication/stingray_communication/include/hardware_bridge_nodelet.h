@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include <stingray_communication_msgs/HardwareInfo.h>
 #include <stingray_communication_msgs/SetHorizontalMove.h>
 #include <stingray_communication_msgs/SetFloat64.h>
 #include <stingray_communication_msgs/SetInt32.h>
@@ -46,6 +47,7 @@ private:
 
     // ROS publishers
     ros::Publisher outputMessagePublisher;
+    ros::Publisher hardwareInfoPublisher;
     ros::Publisher depthPublisher;
     ros::Publisher yawPublisher;
     // ROS subscribers
@@ -57,6 +59,7 @@ private:
     ros::ServiceServer stabilizationService;
     ros::ServiceServer deviceActionService;
     // Message containers
+    stingray_communication_msgs::HardwareInfo hardwareInfoMessage; 
     std_msgs::UInt8MultiArray outputMessage; // Hardware bridge -> Protocol_bridge
     std_msgs::Int32 depthMessage;
     std_msgs::Int32 yawMessage;
