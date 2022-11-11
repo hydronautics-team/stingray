@@ -157,6 +157,11 @@ Provide the name of the package with weights: `WEIGHTS_PACKAGE_NAME`.
 - Edit [config.yaml](src/vision/stingray_object_detection/weights/config.yaml) to add your labels
 - Put best checkpoint of yolov5 as **best.pt** in [weights folder](src/vision/stingray_object_detection/weights)
 
+# Structure
+
+<div align="center">
+    <img src="structure.png" alt="Stingray logo" width="600"/>
+</div>
 
 # Packages
 
