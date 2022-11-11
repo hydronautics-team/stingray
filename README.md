@@ -48,7 +48,7 @@ source devel/setup.bash
 ```
 
 # Run
-> See the example of custom launch file [here](https://github.com/hydronautics-team/sauvc/blob/master/src/sauvc_startup/launch/main.launch)
+> See the example of custom launch file [here](https://github.com/hydronautics-team/sauvc/blob/4abe9ef8e696a0c40c444ce8b6b267f75ae0db48/src/sauvc_startup/launch/main.launch)
 
 ## Run with Gazebo simulation:
 
