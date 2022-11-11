@@ -1,17 +1,18 @@
 # stingray
 
-Stingray is a ROS based framework for autonomous (AUV) and remote operated (ROV) underwater vehicles
+Stingray is a ROS based framework for autonomous underwater vehicles (AUV)
 
 <div align="center">
     <img src="logo.jpg" alt="Stingray logo" width="600"/>
 </div>
 
 ## Dependencies
-- [ROS Noetic](https://wiki.ros.org/noetic)
-- [YOLOv5](https://github.com/ultralytics/yolov5)
+- [ROS Noetic](https://wiki.ros.org/noetic) - base framework
+- [YOLOv5](https://github.com/ultralytics/yolov5) - for object detection
+- [pytransitions](https://github.com/pytransitions/transitions) - for state machine
 
 
-# Install
+# Setup Stingray framework
 
 - Initialize and update git submodules used in project:
 ```bash
@@ -24,45 +25,36 @@ git submodule update --init --recursive
 - Install ros packages:
 
 ```bash
-$ROS_DISTRO=noetic
+sudo apt-get install ros-noetic-serial ros-noetic-usb-cam ros-noetic-rosbridge-server ros-noetic-image-view ros-noetic-actionlib ros-noetic-zbar-ros
 ```
 
-```bash
-sudo apt-get install ros-$ROS_DISTRO-serial ros-$ROS_DISTRO-usb-cam ros-$ROS_DISTRO-rosbridge-server ros-$ROS_DISTRO-image-view ros-$ROS_DISTRO-actionlib ros-$ROS_DISTRO-zbar-ros
-```
-- Install other dependencies
+- Install pytransitions dependencies
+
 ```bash
 sudo apt install graphviz-dev
 pip3 install pygraphviz transitions
 ```
 
 - Build
+
 ```bash
-source /opt/ros/$ROS_DISTRO/setup.bash
+source /opt/ros/noetic/setup.bash
 catkin_make
 ```
-
-# Run
-
-### Setup workspace before you start to work:
+Setup workspace before you start to work:
 
 ```bash
 source devel/setup.bash
 ```
 
-## Basic launch file:
+# Run
+> See the example of custom launch file [here](https://github.com/hydronautics-team/sauvc/blob/master/src/sauvc_startup/launch/main.launch)
 
-```bash
-roslaunch stingray_startup main.launch 
-```
-*see args [inside launch file](src/utils/stingray_startup/launch/main.launch) or [below](#other-args)
-
-## Run with simulator
+## Run with Gazebo simulation:
 
 * Clone and build our [simulator](https://github.com/hidronautics/simulator) (now it's only for sauvc competition).
 * Run simulator.
 
-In stingray directory run
 
 ```bash
 roslaunch stingray_startup main.launch simulation:=true 
@@ -83,27 +75,85 @@ If `stop` qr code has been detected then the running launch file will be stopped
 ### Other args:
 - `hardware_connection:=false` - disable connection btw jetson and stm32 via serial (uart_driver) 
 - `stream:=true` - enable web video stream from all cameras 
-- `debug:=false` - disable image_view nodes and publishing output videos after object detection
+- `debug:=true` - enable image_view nodes and publishing output videos after object detection
 - `file_cam:=true` - provide input videos from file
 - `record_raw:=true` - enable recording video from all cameras 
 - `record_output:=true` - enable recording video after object detection 
 
-## Vision launch file with object detection
+## Launch system
 
-- Run detection on real cameras:
-```bash
-roslaunch stingray_startup vision.launch real_cam:=true 
-```
-- Run detection on simulation cameras:
-```bash
-roslaunch stingray_startup vision.launch simulation:=true
-```
-- Run detection on video from files:
-```bash
-roslaunch stingray_startup vision.launch file:=true file1_path:=PATH_TO_VIDEO_1 file2_path:=PATH_TO_VIDEO_2
+`stingray_startup` package contains launch files for running the whole system.
+
+### Main launch file
+
+Use `main.launch` as the base for your custom launch file.
+Include like this:
+
+```xml
+<!-- MAIN -->
+    <include file="$(find stingray_startup)/launch/main.launch">
+        <arg name="ROS_OUTPUT" value="$(arg ROS_OUTPUT)" />
+        <arg name="DEBUG" value="$(arg DEBUG)" />
+        <arg name="STREAM" value="$(arg STREAM)" />
+        <arg name="SIMULATION" value="$(arg SIMULATION)" />
+        <arg name="HARDWARE_CONNECTION" value="$(arg HARDWARE_CONNECTION)" />
+        <arg name="QR_LAUNCH" value="$(arg QR_LAUNCH)" />
+        <arg name="QR_CAMERA" value="$(arg QR_CAMERA)" />
+        <arg name="QR_LAUNCH_PACKAGE_NAME" value="$(arg QR_LAUNCH_PACKAGE_NAME)" />
+        <arg name="QR_NAME_PATTERN" value="$(arg QR_NAME_PATTERN)" />
+    </include>
 ```
 
-### If you want to run your own trained yolov5:
+*see args [inside launch file](src/utils/stingray_startup/launch/main.launch) or [below](#other-args)
+
+### Camera launch file
+
+Add camera to your custom launch file file like that:
+
+```xml
+<!-- FRONT CAMERA -->
+    <include file="$(find stingray_startup)/launch/camera.launch">
+        <arg name="REAL_CAM" value="true" unless="$(arg SIMULATION)" />
+        <arg name="SIMULATION_CAM" value="true" if="$(arg SIMULATION)" />
+
+        <arg name="CAMERA_NAME" value="$(arg FRONT_CAMERA)" />
+        <arg name="CAMERA_PATH" value="$(arg FRONT_CAMERA_PATH)" />
+        <arg name="CAMERA_TOPIC" value="$(arg FRONT_CAMERA_TOPIC)" />
+
+        <arg name="ROS_OUTPUT" value="$(arg ROS_OUTPUT)" />
+        <arg name="SHOW" value="$(arg SHOW)" />
+        <arg name="DEBUG" value="$(arg DEBUG)" />
+        <arg name="RECORD_RAW" value="$(arg RECORD_RAW)" />
+        <arg name="RECORD_OUTPUT" value="$(arg RECORD_OUTPUT)" />
+        <arg name="RECORD_DIR" value="$(arg RECORD_DIR)" />
+    </include>
+```
+
+Specify camera args: `CAMERA_NAME`, `CAMERA_PATH`, `CAMERA_TOPIC`.
+
+Also, you can specify the camera type: `REAL_CAM`, `SIMULATION_CAM` or `FILE_CAM`.
+
+`RECORD` args for recording video from camera.
+
+### Object detection launch file
+
+Add object detection to your custom launch file file like that:
+
+```xml
+<!-- OBJECT DETECTION -->
+    <include file="$(find stingray_startup)/launch/object_detection.launch">
+        <arg name="IMAGE_TOPIC_LIST" value="$(arg FRONT_CAMERA_TOPIC) $(arg BOTTOM_CAMERA_TOPIC)" />
+        <arg name="WEIGHTS_PACKAGE_NAME" value="$(arg WEIGHTS_PACKAGE_NAME)" />
+        <arg name="ROS_OUTPUT" value="$(arg ROS_OUTPUT)" />
+        <arg name="DEBUG" value="$(arg DEBUG)" />
+    </include>
+```
+
+Provide the list of topics to subscribe to: `IMAGE_TOPIC_LIST`.
+Provide the name of the package with weights: `WEIGHTS_PACKAGE_NAME`.
+
+
+## Setup yolov5 object detection:
 - Edit [config.yaml](src/vision/stingray_object_detection/weights/config.yaml) to add your labels
 - Put best checkpoint of yolov5 as **best.pt** in [weights folder](src/vision/stingray_object_detection/weights)
 
@@ -111,19 +161,35 @@ roslaunch stingray_startup vision.launch file:=true file1_path:=PATH_TO_VIDEO_1 
 # Packages
 
 ## stingray_communication
-TODO: description
+
+Nodes:
+- harware_bridge - abstract bridge node between hardware and ros
+- uart_driver - node for communication with stm32 via uart
 
 ## stingray_gazebo_communication
-TODO: description
+
+Contain `gazebo_bridge` node for communication with gazebo simulator.
 
 ## stingray_devices
-TODO: description
+
+Contain nodes for working with lifter device.
 
 ## stingray_tfsm
-TODO: description
+
+<div align="center">
+    <img src="fsm.png" alt="Stingray logo" width="600"/>
+</div>
+
+FSM package allows you to create a missions for robot.
+- `AUVController` class is a high-level mission controller. 
+- `AUVMission` allows you to create custom missions.
+- `TopicEvent` listens to the topic and triggers the event when the message is received. Allows you to create custom events.
+
+Use `ObjectDetectionEvent` to trigger the event when the object is detected.
 
 ## stingray_movement
-TODO: description
+
+Contains c++ nodes for controlling robot movement - `basic`, `common` and `patterns`.
 
 ## stingray_resources
 
@@ -136,7 +202,6 @@ Config files:
 - `simulation.json`- all stuff for simulation mode
 
 Libs:
-- `json.hpp` - cpp lib for reading json files
 - `utils.py` - util python methods
     - `load_config` - loads config file with name
 
@@ -148,6 +213,12 @@ Launch files:
 - `main.launch`
 - `camera.launch`
 - `object_detection.launch`
+
+## stingray_utils
+
+Contains util libs and nodes.
+
+- `json.hpp` - cpp lib for json files
 
 ### Launch with qr_trigger node
 
@@ -168,4 +239,5 @@ and you'll able to trigger launch files with qr codes.
 If `stop` has been detected then running launch file will be stopped.
 
 ## stingray_video_recorder
-TODO: description
+
+Contains node for recording video from camera.
