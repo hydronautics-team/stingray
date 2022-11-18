@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>stingray_resources</name>
+  <version>0.0.0</version>
+  <description>The stingray_resources package</description>
+
+  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
+
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+
+</package>

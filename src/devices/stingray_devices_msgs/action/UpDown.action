@@ -1,0 +1,15 @@
+# Goal
+# TODO: PUT ACTUAL DEVICE ID
+# uint8 DEVICE_DROPPER=1
+# uint8 DEVICE_LIFTER=2
+
+int32 device
+int32 velocity
+uint32 pause_common
+uint32 pause_optional
+---
+# Result
+bool success
+---
+# Feedback
+bool isFinished

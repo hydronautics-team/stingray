@@ -1,0 +1,1 @@
+stingray_object_detection_msgs/Object[] objects
