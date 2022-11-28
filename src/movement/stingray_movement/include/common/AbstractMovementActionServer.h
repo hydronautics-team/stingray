@@ -1,7 +1,7 @@
 #ifndef STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTMOVEMENTACTIONSERVER_H_
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTMOVEMENTACTIONSERVER_H_
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <actionlib/server/simple_action_server.h>
 #include <ros/package.h>
 #include <fstream>
