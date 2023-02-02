@@ -1,7 +1,7 @@
 #include <basic/HorizontalMovementServer.h>
 
-#include <stingray_communication_msgs/SetHorizontalMove.h>
-#include <std_msgs/Int32.hpp>
+#include <stingray_communication_msgs/msg/SetHorizontalMove.h>
+#include <std_msgs/msg/Int32.hpp>
 
 HorizontalMovementServer::HorizontalMovementServer(const std::string &actionName, double velocityCoefficient) : AbstractMovementActionServer<stingray_movement_msgs::HorizontalMoveAction,
                                                                                                                                              stingray_movement_msgs::HorizontalMoveGoalConstPtr>(actionName, velocityCoefficient){};

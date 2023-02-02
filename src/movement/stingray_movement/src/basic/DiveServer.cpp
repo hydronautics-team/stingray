@@ -2,8 +2,7 @@
 
 #include <cmath>
 
-#include <stingray_communication_msgs/SetInt32.hpp>
-#include <std_msgs/UInt32.hpp>
+#include <stingray_communication_msgs/msg/SetInt32.hpp>
 #include <stingray_utils/json.hpp>
 
 using json = nlohmann::json;

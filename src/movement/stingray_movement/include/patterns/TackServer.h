@@ -1,7 +1,7 @@
 #ifndef STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_PATTERNS_TACKSERVER_H_
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_PATTERNS_TACKSERVER_H_
 
-#include <stingray_movement_msgs/TackAction.h>
+#include <stingray_movement_msgs/msg/TackAction.h>
 
 #include "common/AbstractMovementActionServer.h"
 

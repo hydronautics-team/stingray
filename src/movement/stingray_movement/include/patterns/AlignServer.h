@@ -1,7 +1,7 @@
 #ifndef STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_PATTERNS_ALIGNSERVER_H_
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_PATTERNS_ALIGNSERVER_H_
 
-#include <stingray_movement_msgs/AlignAction.h>
+#include <stingray_movement_msgs/msg/AlignAction.h>
 
 #include "common/AbstractMovementActionServer.h"
 
