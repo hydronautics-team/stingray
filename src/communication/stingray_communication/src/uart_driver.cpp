@@ -4,25 +4,22 @@
  * - receives byte array from hardware_bridge and send it to STM32 via UART
  */
 
-#include <pluginlib/class_list_macros.h>
-#include <ros/package.h>
 #include <fstream>
-#include "uart_driver_nodelet.h"
+#include "uart_driver.h"
 
-
-void uart_driver::onInit()
+UartDriver::UartDriver() : Node("UartDriver")
 {
     ros_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/ros.json"));
     hardware_config = json::parse(std::ifstream(ros::package::getPath("stingray_resources") + "/configs/hardware.json"));
-    // Initializing nodelet and parameters
-    ros::NodeHandle &nodeHandle = getNodeHandle();
     // Serial port initialization
-    portInitialize(nodeHandle);
+    portInitialize();
     // ROS publishers
-    outputMessage_pub = nodeHandle.advertise<std_msgs::UInt8MultiArray>(ros_config["topics"]["input_parcel"], 1000);
+    outputMessage_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["input_parcel"], 1000);
     // ROS subscribers
-    inputMessage_sub = nodeHandle.subscribe(ros_config["topics"]["output_parcel"], 1000,
-                                            &uart_driver::inputMessage_callback, this);
+    inputMessage_sub = this->create_subscription<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000,
+                                                                                 std::bind(
+                                                                                     &UartDriver::inputMessage_callback,
+                                                                                     this, _1));
     // Input message container
     inputMessage.layout.dim.push_back(std_msgs::MultiArrayDimension());
     inputMessage.layout.dim[0].size = RequestMessage::length;
@@ -41,7 +38,7 @@ void uart_driver::onInit()
  * Closes port if it is closed, initialized it
  * with given parameter and DOES NOT OPEN IT.
  */
-void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
+void UartDriver::portInitialize()
 {
     std::string device = hardware_config["uart"]["device"];
     int baudrate = hardware_config["uart"]["baudrate"];
@@ -62,7 +59,7 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
         dataBytes = serial::bytesize_t::eightbits;
         break;
     default:
-        NODELET_ERROR("Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
+        RCLCPP_ERROR(this->get_logger(), "Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
         return;
     }
     std::string parityStr = hardware_config["uart"]["parity"];
@@ -76,8 +73,8 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
         parity = serial::parity_t::parity_none;
     else
     {
-        NODELET_ERROR("Unrecognised parity \"%s\", available parities: \"none\", \"odd\", \"even\"",
-                      parityStr.c_str());
+        RCLCPP_ERROR(this->get_logger(), "Unrecognised parity \"%s\", available parities: \"none\", \"odd\", \"even\"",
+                     parityStr.c_str());
         return;
     }
     int stopBitsInt = hardware_config["uart"]["stop_bits"];
@@ -91,11 +88,12 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
         stopBits = serial::stopbits_t::stopbits_two;
         break;
     default:
-        NODELET_ERROR("Forbidden stop bits size %d, available sizes: 1, 2", stopBitsInt);
+        RCLCPP_ERROR(this->get_logger(), "Forbidden stop bits size %d, available sizes: 1, 2", stopBitsInt);
         return;
     }
-    NODELET_DEBUG("UART settings: Device: %s, Baudrate: %d, Data bytes: %d, Parity: %s, Stop bits: %d",
-                  device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
+    RCLCPP_INFO(this->get_logger(),
+                "UART settings: Device: %s, Baudrate: %d, Data bytes: %d, Parity: %s, Stop bits: %d",
+                device.c_str(), baudrate, dataBytes, parityStr.c_str(), stopBitsInt);
     if (port.isOpen())
         port.close();
     port.setPort(device);
@@ -107,7 +105,7 @@ void uart_driver::portInitialize(ros::NodeHandle &nodeHandle)
     port.setStopbits(stopBits);
 }
 
-bool uart_driver::sendData()
+bool UartDriver::sendData()
 {
     std::vector<uint8_t> msg;
     for (int i = 0; i < RequestMessage::length; i++)
@@ -121,12 +119,12 @@ bool uart_driver::sendData()
     }
     catch (serial::IOException &ex)
     {
-        NODELET_ERROR("Serial exception, when trying to flush and send. Error: %s", ex.what());
+        RCLCPP_ERROR(this->get_logger(), "Serial exception, when trying to flush and send. Error: %s", ex.what());
         return false;
     }
 }
 
-bool uart_driver::receiveData()
+bool UartDriver::receiveData()
 {
     if (port.available() < ResponseMessage::length)
         return false;
@@ -135,7 +133,7 @@ bool uart_driver::receiveData()
     outputMessage.data.clear();
     for (int i = 0; i < ResponseMessage::length; i++)
         outputMessage.data.push_back(answer[i]);
-    NODELET_DEBUG("RECEIVE FROM STM");
+    RCLCPP_DEBUG(this->get_logger(), "RECEIVE FROM STM");
 
     return true;
 }
@@ -144,7 +142,7 @@ bool uart_driver::receiveData()
  *
  * @param[in]  &input String to parse.
  */
-void uart_driver::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr msg)
+void UartDriver::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg)
 {
     inputMessage.data.clear();
     for (int i = 0; i < RequestMessage::length; i++)
@@ -155,25 +153,24 @@ void uart_driver::inputMessage_callback(const std_msgs::UInt8MultiArrayConstPtr 
         {
             port.open();
             if (!port.isOpen())
-                NODELET_ERROR("Unable to open UART port");
+                RCLCPP_ERROR(this->get_logger(), "Unable to open UART port");
         }
     }
     catch (serial::IOException &ex)
     {
-        NODELET_ERROR("Serial exception when trying to open. Error: %s", ex.what());
+        RCLCPP_ERROR(this->get_logger(), "Serial exception when trying to open. Error: %s", ex.what());
         return;
     }
     if (!sendData())
     {
-        NODELET_ERROR("Unable to send message to STM32");
+        RCLCPP_ERROR(this->get_logger(), "Unable to send message to STM32");
         return;
     }
     if (receiveData())
         outputMessage_pub.publish(outputMessage);
     else
     {
-        NODELET_ERROR("Unable to receive message from STM32");
+        RCLCPP_ERROR(this->get_logger(), "Unable to receive message from STM32");
         return;
     }
 }
-PLUGINLIB_EXPORT_CLASS(uart_driver, nodelet::Nodelet);

@@ -44,7 +44,7 @@ catkin_make
 Setup workspace before you start to work:
 
 ```bash
-source devel/setup.bash
+source install/setup.bash
 ```
 
 # Run

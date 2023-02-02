@@ -1,12 +1,26 @@
-## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
+from setuptools import setup
 
-from distutils.core import setup
-from catkin_pkg.python_setup import generate_distutils_setup
+package_name = 'stingray_vision'
 
-# fetch values from package.xml
-setup_args = generate_distutils_setup(
-    packages=[''],
-    package_dir={'': 'scripts'},
+setup(
+    name=package_name,
+    version='0.1.0',
+    packages=[package_name],
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+         ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='vladushked',
+    maintainer_email='vladushked@yandex.ru',
+    description='The stingray_vision package',
+    license='MIT',
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            'opencv_object_detector = stingray_vision.opencv_object_detector:main',
+        ],
+    },
 )
-
-setup(**setup_args)
