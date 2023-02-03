@@ -7,12 +7,13 @@ from stingray_object_detection_msgs.msg import Object, ObjectsArray
 from stingray_object_detection_msgs.srv import SetEnableObjectDetection, SetEnableObjectDetectionResponse, SetEnableObjectDetectionRequest
 from stingray_resources.utils import load_config
 from stingray_object_detection.utils import get_objects_topic, get_debug_image_topic
+from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
 import os
 import sys
 import torch
-import numpy as np
 
+import numpy as np
 sys.path.insert(1, os.path.join(rospkg.RosPack().get_path(
     "stingray_object_detection"), "scripts/yolov5"))
 from models.common import DetectMultiBackend
@@ -21,6 +22,8 @@ from utils.general import (
 from utils.plots import Annotator, colors
 from utils.torch_utils import select_device, time_sync
 from utils.augmentations import letterbox
+
+
 
 
 class YoloDetector:
@@ -35,7 +38,10 @@ class YoloDetector:
                  device='',
                  classes=None,
                  agnostic_nms=False,
-                 line_thickness=3):
+                 line_thickness=3,
+                 tracker_max_age=20,
+                 tracker_min_hits=20,
+                 tracker_iou_threshold=0.3):
         """ Detecting objects on image
 
         Args:
@@ -50,6 +56,9 @@ class YoloDetector:
             classes (_type_, optional): filter by class: --class 0, or --class 0 2 3. Defaults to None.
             agnostic_nms (bool, optional): class-agnostic NMS. Defaults to False.
             line_thickness (int, optional): bounding box thickness (pixels). Defaults to 3.
+            tracker_max_age (int, optional): lifetime of tracked object. Defaults to 20.
+            tracker_min_hits (int, optional): hits to start track object. Defaults to 20.
+            tracker_iou_threshold (float, optional): IOU threshold for SORT-tracker. Defaults to 0.3.
         """
         # get weights path
         self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_name)
@@ -65,7 +74,7 @@ class YoloDetector:
         self.conf_thres = conf_thres
         self.iou_thres = iou_thres
         self.max_det = max_det
-        self.device = device
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.classes = classes
         self.agnostic_nms = agnostic_nms
         self.line_thickness = line_thickness
@@ -76,6 +85,8 @@ class YoloDetector:
         # get node name
         node_name = rospy.get_name()
         rospy.loginfo("{} node initializing".format(node_name))
+        # init SORT tracker
+        self.tracker = Tracker(tracker_max_age, tracker_min_hits, tracker_iou_threshold)
 
         set_enable_object_detection_service = rospy.Service(
             self.ros_config['services']['set_enable_object_detection'], SetEnableObjectDetection, self.set_enable_object_detection)
@@ -84,7 +95,10 @@ class YoloDetector:
         self.objects_array_publishers = {}
         self.image_publishers = {}
 
+
+
         for input_topic in self.image_topic_list:
+
             # disable detection by default
             self.detection_enabled[input_topic] = False
 
@@ -142,6 +156,7 @@ class YoloDetector:
         Returns:
             SetEnableObjectDetectionResponse: response with str message and success bool arg
         """
+
         self.detection_enabled[request.camera_topic] = request.enabled
         response = SetEnableObjectDetectionResponse()
         response.success = True
@@ -160,7 +175,6 @@ class YoloDetector:
         with torch.no_grad():
             # Padded resize
             im = letterbox(img, new_shape=self.imgsz, stride=self.stride)[0]
-
             # Convert
             im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
             im = np.ascontiguousarray(im)
@@ -200,18 +214,18 @@ class YoloDetector:
                     det[:, :4] = scale_coords(
                         im.shape[2:], det[:, :4], im0.shape).round()
 
-                    # Print results
-                    for c in det[:, -1].unique():
-                        n = (det[:, -1] == c).sum()  # detections per class
-                    # Write results
-                    for *xyxy, conf, cls in reversed(det):
-                        c = int(cls)  # integer class
-                        label = f'{self.names[c]} {conf:.2f}'
+                    # for cpu and gpu machines
+                    det = det.cpu().detach().numpy()
+                    dots = np.asarray(det).reshape(-1, 6)
 
-                        # draw bboxes if enabled
+                    # update tracking objects
+                    dots_tracked = self.tracker.update(dots)
+
+                    for *xyxy, c, id in reversed(dots_tracked):
+                        label = self.names[int(c)]
                         if self.debug:
-                            annotator.box_label(
-                                xyxy, label, color=colors(c, True))
+                            annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label + ' ' + str(int(id)),
+                                                color=colors(int(c), True))
 
                         # rospy.loginfo("conf type: {0}".format(type(float(conf.cpu().detach().numpy()))))
                         # rospy.loginfo("conf: {0}".format(conf.cpu().detach().numpy()))
@@ -219,17 +233,11 @@ class YoloDetector:
                         # rospy.loginfo("xyxy[0]: {0}".format(xyxy[0].cpu().detach().numpy()))
 
                         object_msg = Object()
-                        object_msg.name = self.names[c]
-                        object_msg.confidence = float(
-                            conf.cpu().detach().numpy())
-                        object_msg.top_left_x = int(
-                            xyxy[0].cpu().detach().numpy())
-                        object_msg.top_left_y = int(
-                            xyxy[1].cpu().detach().numpy())
-                        object_msg.bottom_right_x = int(
-                            xyxy[2].cpu().detach().numpy())
-                        object_msg.bottom_right_y = int(
-                            xyxy[3].cpu().detach().numpy())
+                        object_msg.name = label + ' ' + str(int(id))
+                        object_msg.top_left_x = int(xyxy[0])
+                        object_msg.top_left_y = int(xyxy[1])
+                        object_msg.bottom_right_x = int(xyxy[2])
+                        object_msg.bottom_right_y = int(xyxy[3])
                         objects_array_msg.objects.append(object_msg)
 
             # Stream results

@@ -1,15 +1,29 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(stingray_object_detection_msgs)
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy message_generation
-                                        std_msgs)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-add_message_files(FILES Object.msg ObjectsArray.msg)
+find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-add_service_files(FILES SetEnableObjectDetection.srv)
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}
+  "msg/Object.msg"
+  "msg/ObjectsArray.msg"
+  "srv/SetEnableObjectDetection.srv"
+  DEPENDENCIES std_msgs)
 
-generate_messages(DEPENDENCIES std_msgs)
+  if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights uncomment
+  # the line when a copyright and license is not present in all source files
+  # set(ament_cmake_copyright_FOUND TRUE) the following line skips cpplint (only
+  # works in a git repo) uncomment the line when this package is not in a git
+  # repo set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-catkin_package(CATKIN_DEPENDS message_runtime roscpp rospy std_msgs)
-
-include_directories(${catkin_INCLUDE_DIRS})
+ament_package()
