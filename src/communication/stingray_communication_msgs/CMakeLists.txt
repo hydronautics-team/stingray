@@ -3,26 +3,33 @@ project(stingray_communication_msgs)
 
 add_compile_options(-std=c++11)
 
-find_package(
-  catkin REQUIRED
-  COMPONENTS roscpp
-             rospy
-             message_generation
-             std_msgs
-             geometry_msgs
-             sensor_msgs
-             actionlib_msgs)
+find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
+find_package(actionlib REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(actionlib_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(message_generation REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-add_message_files(FILES HardwareInfo.msg)
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}
+  "msg/HardwareInfo.msg"
+  "srv/SetFloat64.srv"
+  "srv/SetDeviceAction.srv"
+  "srv/SetStabilization.srv"
+  "srv/SetInt32.srv"
+  "srv/SetHorizontalMove.srv"
+  DEPENDENCIES  std_msgs
+                geometry_msgs
+                sensor_msgs
+                actionlib_msgs)
 
-add_service_files(FILES SetFloat64.srv SetDeviceAction.srv SetStabilization.srv
-                  SetInt32.srv SetHorizontalMove.srv)
-
-generate_messages(DEPENDENCIES std_msgs geometry_msgs sensor_msgs
-                  actionlib_msgs)
-
-catkin_package(
-  CATKIN_DEPENDS
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+ament_lint_auto_find_test_dependencies()
+ament_export_dependencies(
   roscpp
   rospy
   std_msgs
@@ -30,8 +37,7 @@ catkin_package(
   sensor_msgs
   message_runtime
   actionlib_msgs
-  # INCLUDE_DIRS include LIBRARIES stingray_common CATKIN_DEPENDS
-  # other_catkin_pkg DEPENDS system_lib
 )
+endif()
 
-include_directories(${catkin_INCLUDE_DIRS})
+ament_package()
