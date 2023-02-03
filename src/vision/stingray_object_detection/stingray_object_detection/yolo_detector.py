@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import rospy
+import rclpy
+from rclpy.logging import get_logger
+from rclpy.node import Node
 import rospkg
 from cv_bridge import CvBridge, CvBridgeError
 from stingray_object_detection_msgs.msg import Object, ObjectsArray
@@ -14,19 +16,17 @@ import sys
 import torch
 
 import numpy as np
-sys.path.insert(1, os.path.join(rospkg.RosPack().get_path(
-    "stingray_object_detection"), "scripts/yolov5"))
-from models.common import DetectMultiBackend
-from utils.general import (
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.general import (
     check_img_size, non_max_suppression, scale_coords)
-from utils.plots import Annotator, colors
-from utils.torch_utils import select_device, time_sync
-from utils.augmentations import letterbox
+from yolov5.utils.plots import Annotator, colors
+from yolov5.utils.torch_utils import select_device, time_sync
+from yolov5.utils.augmentations import letterbox
 
 
 
 
-class YoloDetector:
+class YoloDetector(Node):
     def __init__(self,
                  weights_pkg_name,
                  image_topic_list,
@@ -60,6 +60,11 @@ class YoloDetector:
             tracker_min_hits (int, optional): hits to start track object. Defaults to 20.
             tracker_iou_threshold (float, optional): IOU threshold for SORT-tracker. Defaults to 0.3.
         """
+        # configs
+        self.ros_config = load_config()
+
+        super().__init__(self.ros_config["nodes"]["object_detection"])
+        
         # get weights path
         self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_name)
         self.weights_path = os.path.join(
@@ -79,12 +84,11 @@ class YoloDetector:
         self.agnostic_nms = agnostic_nms
         self.line_thickness = line_thickness
 
-        # configs
-        self.ros_config = load_config()
+        
 
         # get node name
-        node_name = rospy.get_name()
-        rospy.loginfo("{} node initializing".format(node_name))
+        node_name = self.ros_config["nodes"]["object_detection"]
+        self.get_logger().info("{} node initializing".format(node_name))
         # init SORT tracker
         self.tracker = Tracker(tracker_max_age, tracker_min_hits, tracker_iou_threshold)
 
@@ -108,20 +112,24 @@ class YoloDetector:
                 node_name, input_topic, objects_array_topic))
 
             # ROS subscribers
-            self.image_sub = rospy.Subscriber(
-                input_topic, Image, self.image_callback, callback_args=input_topic, queue_size=1)
+            self.image_sub = self.create_subscription(
+                Image,
+                input_topic,
+                self.image_callback,
+                1,
+                callback_args=input_topic)
 
             # ROS publishers
-            objects_array_pub = rospy.Publisher(
-                objects_array_topic, ObjectsArray, queue_size=10)
+            objects_array_pub = self.create_publisher(
+                ObjectsArray, objects_array_topic, 10)
             self.objects_array_publishers[input_topic] = objects_array_pub
 
             if self.debug:
                 output_image_topic = get_debug_image_topic(input_topic)
-                rospy.loginfo("Node: {}, input topic: {}, output image topic: {}".format(
+                self.get_logger().info("Node: {}, input topic: {}, output image topic: {}".format(
                     node_name, input_topic, output_image_topic))
-                image_pub = rospy.Publisher(
-                    output_image_topic, Image, queue_size=1)
+                image_pub = self.create_publisher(
+                    Image, output_image_topic, 1)
                 self.image_publishers[input_topic] = image_pub
 
         # init cv_bridge
@@ -268,17 +276,19 @@ class YoloDetector:
                     self.image_publishers[topic].publish(ros_image)
 
             except CvBridgeError as e:
-                rospy.logerr(e)
+                self.get_logger().error(e)
 
 
 if __name__ == '__main__':
-    rospy.init_node(load_config()["nodes"]["object_detection"])
+    rclpy.init(args=None)
+
     # parameters
-    weights_pkg_name = rospy.get_param('~weights_pkg_name')
-    image_topic_list = rospy.get_param('~image_topic_list')
-    debug = rospy.get_param('~debug')
-    try:
-        ot = YoloDetector(weights_pkg_name, image_topic_list, debug)
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        rospy.logerr("Shutting down {} node".format(rospy.get_name()))
+    weights_pkg_name = rclpy.get_param('~weights_pkg_name')
+    image_topic_list = rclpy.get_param('~image_topic_list')
+    debug = rclpy.get_param('~debug')
+
+    detector = YoloDetector(weights_pkg_name, image_topic_list, debug)
+    rclpy.spin(detector)
+
+    detector.destroy_node()
+    rclpy.shutdown()
