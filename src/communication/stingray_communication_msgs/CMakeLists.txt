@@ -6,13 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(rclcpp REQUIRED)
-find_package(rclpy REQUIRED)
-find_package(actionlib REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(actionlib_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(message_generation REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(
@@ -20,14 +14,10 @@ rosidl_generate_interfaces(
   "msg/HardwareInfo.msg"
   "srv/SetFloat64.srv"
   "srv/SetDeviceAction.srv"
-  "srv/SetStabilization.srv"
-  "srv/SetInt32.srv"
   "srv/SetHorizontalMove.srv"
-  DEPENDENCIES  std_msgs
-                geometry_msgs
-                sensor_msgs
-                actionlib_msgs
-                )
+  "srv/SetInt32.srv"
+  "srv/SetStabilization.srv"
+  DEPENDENCIES  std_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

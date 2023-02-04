@@ -1,8 +1,8 @@
 # Request
-bool depthStabilization
-bool pitchStabilization
-bool yawStabilization
-bool lagStabilization
+bool depth_stabilization
+bool pitch_stabilization
+bool yaw_stabilization
+bool lag_stabilization
 ---
 # Response
 bool success
