@@ -1,9 +1,9 @@
 #ifndef STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_BASICMOVEMENTSERVER_H_
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_BASICMOVEMENTSERVER_H_
 
-#include <stingray_movement_msgs/msg/horizontal_move_action.h>
+#include <stingray_movement_msgs/action/horizontal_move.hpp>
 
-#include "common/abstract_movement_action_server.h"
+#include "common/AbstractMovementActionServer.h"
 
 /**
  * Action server that is responsible for moving vehicle
