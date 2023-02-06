@@ -16,8 +16,9 @@ rosidl_generate_interfaces(
   "srv/SetEnableObjectDetection.srv"
   DEPENDENCIES std_msgs)
 
-  if(BUILD_TESTING)
+if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+
   # the following line skips the linter which checks for copyrights uncomment
   # the line when a copyright and license is not present in all source files
   # set(ament_cmake_copyright_FOUND TRUE) the following line skips cpplint (only

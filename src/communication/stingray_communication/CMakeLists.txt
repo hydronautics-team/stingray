@@ -18,32 +18,31 @@ find_package(std_srvs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(serial REQUIRED)
 find_package(stingray_communication_msgs REQUIRED)
+find_package(stingray_utils REQUIRED)
 
 
 include_directories(
         include
+        ${stingray_utils_INCLUDE_DIRS}
 )
 
-add_executable(uart_bridge
-        src/uart_bridge.cpp
-        include/uart_bridge.h
-        include/topics_and_services.h
-        src/messages/messages.cpp
-        include/messages/messages.h)
-ament_target_dependencies(uart_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs)
+# add_executable(uart_driver
+#         src/uart_driver.cpp
+#         include/uart_driver.h
+#         src/messages/messages.cpp
+#         include/messages/messages.h)
+# ament_target_dependencies(uart_driver rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs stingray_utils)
 
 add_executable(hardware_bridge
         src/hardware_bridge.cpp
         include/hardware_bridge.h
-        include/topics_and_services.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(hardware_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs)
+ament_target_dependencies(hardware_bridge rclcpp std_msgs geometry_msgs sensor_msgs std_srvs nav_msgs serial stingray_communication_msgs stingray_utils)
 
 install(TARGETS
         hardware_bridge
-        uart_bridge
-#        gazebo_bridge
+        # uart_driver
         DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

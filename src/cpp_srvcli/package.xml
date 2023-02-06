@@ -1,18 +1,17 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>stingray_utils</name>
-  <version>0.1.0</version>
-  <description>Package contains different helper utilities of the Stingray platform.</description>
-
-  <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
-  <maintainer email="myaghkov16@gmail.com">Artyom Davtyan</maintainer>
-  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
-
-  <license>MIT</license>
+  <name>cpp_srvcli</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="vladik1209@gmail.com">vladushked</maintainer>
+  <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
