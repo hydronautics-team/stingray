@@ -23,12 +23,9 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
 ament_lint_auto_find_test_dependencies()
 ament_export_dependencies(
-  roscpp
-  rospy
   std_msgs
   geometry_msgs
   sensor_msgs
-  message_runtime
   actionlib_msgs
 )
 endif()

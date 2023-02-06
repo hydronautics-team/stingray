@@ -1,7 +1,7 @@
 #ifndef STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_DIVESERVER_H_
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_DIVESERVER_H_
 
-#include <stingray_movement_msgs/msg/DiveAction.h>
+#include <stingray_movement_msgs/action/dive.hpp>
 
 #include "common/AbstractMovementActionServer.h"
 

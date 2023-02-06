@@ -2,8 +2,7 @@
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTMOVEMENTACTIONSERVER_H_
 
 #include "rclcpp/rclcpp.hpp"
-#include <actionlib/server/simple_action_server.h>
-#include <ros/package.h>
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <fstream>
 
 #include <stingray_utils/json.hpp>
