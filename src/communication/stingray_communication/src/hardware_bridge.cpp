@@ -14,8 +14,8 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge")
     // ROS publishers
     this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
     this->hardwareInfoPublisher = this->create_publisher<stingray_communication_msgs::msg::HardwareInfo>(ros_config["topics"]["robot_info"], 1000);
-    this->depthPublisher = this->create_publisher<std_msgs::msg::UInt32>(ros_config["topics"]["depth"], 1000);
-    this->yawPublisher = this->create_publisher<std_msgs::msg::Int32>(ros_config["topics"]["yaw"], 20);
+    this->depthPublisher = this->create_publisher<std_msgs::msg::Float64>(ros_config["topics"]["depth"], 1000);
+    this->yawPublisher = this->create_publisher<std_msgs::msg::Float64>(ros_config["topics"]["yaw"], 20);
     // ROS subscribers
     this->inputMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["input_parcel"], 1000,
                                                                                        std::bind(&HardwareBridge::inputMessage_callback, this, std::placeholders::_1));
@@ -24,7 +24,7 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge")
                                                                                                       std::bind(
                                                                                                           &HardwareBridge::horizontalMoveCallback, this, std::placeholders::_1, std::placeholders::_2));
 
-    this->depthService = this->create_service<stingray_communication_msgs::srv::SetInt32>(ros_config["services"]["set_depth"], std::bind(
+    this->depthService = this->create_service<stingray_communication_msgs::srv::SetInt16>(ros_config["services"]["set_depth"], std::bind(
                                                                                                                              &HardwareBridge::depthCallback, this, std::placeholders::_1, std::placeholders::_2));
     this->imuService = this->create_service<std_srvs::srv::SetBool>(ros_config["services"]["set_imu_enabled"], std::bind(
                                                                                                              &HardwareBridge::imuCallback, this, std::placeholders::_1, std::placeholders::_2));
@@ -56,10 +56,10 @@ void HardwareBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray 
     bool ok = responseMessage.parseVector(received_vector);
     if (ok)
     {
-        depthMessage.data = static_cast<int>(responseMessage.depth); // Convert metres to centimetres
+        depthMessage.data = responseMessage.depth; // Convert metres to centimetres
         RCLCPP_INFO(this->get_logger(), "Received depth: %f", responseMessage.depth);
         // TODO: Test yaw obtaining
-        yawMessage.data = static_cast<int>(responseMessage.yaw);
+        yawMessage.data = responseMessage.yaw;
         RCLCPP_INFO(this->get_logger(), "Received yaw: %f", responseMessage.yaw);
 
         hardwareInfoMessage.roll = responseMessage.roll;
@@ -95,15 +95,15 @@ void HardwareBridge::horizontalMoveCallback(const std::shared_ptr<stingray_commu
         response->message = "Yaw stabilization is not enabled";
         return;
     }
-    currentYaw += request->yaw;
-    requestMessage.yaw = static_cast<int16_t>(currentYaw);
+    // currentYaw += request->yaw;
+    requestMessage.yaw = static_cast<int16_t>(responseMessage.yaw + request->yaw);
 
     isReady = true;
     response->success = true;
 }
 
-void HardwareBridge::depthCallback(const std::shared_ptr<stingray_communication_msgs::srv::SetInt32::Request> request,
-                                   std::shared_ptr<stingray_communication_msgs::srv::SetInt32::Response> response)
+void HardwareBridge::depthCallback(const std::shared_ptr<stingray_communication_msgs::srv::SetInt16::Request> request,
+                                   std::shared_ptr<stingray_communication_msgs::srv::SetInt16::Response> response)
 {
     RCLCPP_INFO(this->get_logger(), "Setting depth to %d", request->value);
     if (!depthStabilizationEnabled)
@@ -112,7 +112,7 @@ void HardwareBridge::depthCallback(const std::shared_ptr<stingray_communication_
         response->message = "Depth stabilization is not enabled";
         return;
     }
-    requestMessage.depth = (static_cast<int16_t>(request->value)); // For low-level stabilization purposes
+    requestMessage.depth = request->value; // For low-level stabilization purposes
     RCLCPP_INFO(this->get_logger(), "Sending to STM32 depth value: %d", requestMessage.depth);
 
     isReady = true;
@@ -133,13 +133,13 @@ void HardwareBridge::stabilizationCallback(const std::shared_ptr<stingray_commun
                                            std::shared_ptr<stingray_communication_msgs::srv::SetStabilization::Response> response)
 {
     // set current yaw
-    currentYaw = responseMessage.yaw;
-    requestMessage.yaw = currentYaw;
-    RCLCPP_INFO(this->get_logger(), "Hardware bridge: Setting initial yaw: %d", currentYaw);
+    // currentYaw = responseMessage.yaw;
+    // requestMessage.yaw = currentYaw;
+    // RCLCPP_INFO(this->get_logger(), "Hardware bridge: Setting initial yaw: %f", currentYaw);
     // set current depth
-    currentDepth = responseMessage.depth;
-    requestMessage.depth = currentDepth;
-    RCLCPP_INFO(this->get_logger(), "Hardware bridge: Setting initial depth: %d", currentDepth);
+    // currentDepth = responseMessage.depth;
+    // requestMessage.depth = currentDepth;
+    // RCLCPP_INFO(this->get_logger(), "Hardware bridge: Setting initial depth: %f", currentDepth);
 
     RCLCPP_INFO(this->get_logger(), "Setting depth stabilization %d", request->depth_stabilization);
     setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, request->depth_stabilization);
@@ -184,10 +184,10 @@ void HardwareBridge::timerCallback()
             outputMessage.data.push_back(output_vector[i]);
         }
         // Publish messages
-        // hardwareInfoPublisher->publish(hardwareInfoMessage);
-        // outputMessagePublisher->publish(outputMessage);
-        // depthPublisher->publish(depthMessage);
-        // yawPublisher->publish(yawMessage);
+        hardwareInfoPublisher->publish(hardwareInfoMessage);
+        outputMessagePublisher->publish(outputMessage);
+        depthPublisher->publish(depthMessage);
+        yawPublisher->publish(yawMessage);
         RCLCPP_INFO(this->get_logger(), "Hardware bridge publishing ...");
     }
     else

@@ -20,10 +20,10 @@ public:
     UartDriver();
 
 private:
-    // void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg);
-    // void portInitialize();
-    // bool sendData();
-    // bool receiveData();
+    void inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg);
+    void portInitialize();
+    bool sendData();
+    bool receiveData();
 
     // ROS publishers
     rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessage_pub;

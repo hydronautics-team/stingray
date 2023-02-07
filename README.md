@@ -7,10 +7,10 @@ Stingray is a ROS based framework for autonomous underwater vehicles (AUV)
 </div>
 
 ## Dependencies
-- [ROS Noetic](https://wiki.ros.org/noetic) - base framework
+- [ROS2 Humble](https://docs.ros.org/en/humble/index.html) - base framework
 - [YOLOv5](https://github.com/ultralytics/yolov5) - for object detection
 - [pytransitions](https://github.com/pytransitions/transitions) - for state machine
-
+- [serial](https://github.com/jinmenglei/serial.git) - for communication with stm32 and etc.
 
 # Setup Stingray framework
 
@@ -25,7 +25,7 @@ git submodule update --init --recursive
 - Install ros packages:
 
 ```bash
-sudo apt-get install ros-noetic-serial ros-noetic-usb-cam ros-noetic-rosbridge-server ros-noetic-image-view ros-noetic-actionlib ros-noetic-zbar-ros
+sudo apt-get install ros-humble-serial ros-humble-usb-cam ros-humble-rosbridge-server ros-humble-image-view ros-humble-zbar-ros
 ```
 
 - Install pytransitions dependencies
@@ -38,7 +38,7 @@ pip3 install pygraphviz transitions
 - Build
 
 ```bash
-source /opt/ros/noetic/setup.bash
+source /opt/ros/humble/setup.bash
 catkin_make
 ```
 Setup workspace before you start to work:

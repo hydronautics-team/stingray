@@ -16,7 +16,7 @@ rosidl_generate_interfaces(
   "srv/SetFloat64.srv"
   "srv/SetDeviceAction.srv"
   "srv/SetHorizontalMove.srv"
-  "srv/SetInt32.srv"
+  "srv/SetInt16.srv"
   "srv/SetStabilization.srv"
   DEPENDENCIES std_msgs)
 
