@@ -1,5 +1,5 @@
 {
-    "model_name": "rov_model_urdf",
+    "vehicle_model_name": "rov_model_urdf",
     "communication_delay": 100,
     "initial_yaw": 3.141501,
     "initial_roll": 0.0,
