@@ -8,11 +8,11 @@ set(CMAKE_CXX_STANDARD 14)
 
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
 
-include_directories(
-        include
-)
+include_directories(include)
 ament_export_include_directories(include)
 
 install(DIRECTORY include/
@@ -20,5 +20,8 @@ install(DIRECTORY include/
   FILES_MATCHING PATTERN "*.hpp"
   PATTERN ".svn" EXCLUDE
 )
+
+# Install Python modules
+ament_python_install_package(${PROJECT_NAME})
 
 ament_package()
