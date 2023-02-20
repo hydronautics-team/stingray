@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>stingray_startup</name>
+  <version>0.2.0</version>
+  <description>Package contains basic launch files and helping scripts.</description>
+
+  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
+  <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <depend>std_msgs</depend>
+  <depend>stingray_utils</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
