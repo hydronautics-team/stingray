@@ -16,7 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "action/Align.action"
         "action/Tack.action"
         "msg/AlignValue.msg"
-        )
+        DEPENDENCIES std_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
