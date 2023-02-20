@@ -26,7 +26,7 @@ include_directories(
         ${stingray_utils_INCLUDE_DIRS}
 )
 
-add_executable(gazebo_bridge src/gazebo_bridge.cpp)
+add_executable(gazebo_bridge include/gazebo_bridge.h src/gazebo_bridge.cpp)
 ament_target_dependencies(gazebo_bridge rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils gazebo_msgs geometry_msgs tf2 tf2_geometry_msgs)
 
 install(TARGETS
