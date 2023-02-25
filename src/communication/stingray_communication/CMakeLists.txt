@@ -37,9 +37,17 @@ add_executable(hardware_bridge
         include/messages/messages.h)
 ament_target_dependencies(hardware_bridge rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
+add_executable(udp_bridge
+        src/udp_bridge.cpp
+        include/udp_bridge.h
+        src/messages/messages.cpp
+        include/messages/messages.h)
+ament_target_dependencies(udp_bridge rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
+
 install(TARGETS
         hardware_bridge
         uart_driver
+        udp_bridge
         DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
