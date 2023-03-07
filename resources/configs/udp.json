@@ -1,0 +1,6 @@
+{
+    "udp_sender": {
+        "ip_address": "",
+        "udp_port": ""
+    }
+}
