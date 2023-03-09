@@ -15,8 +15,7 @@ find_package(
              std_srvs
              stingray_communication_msgs
              stingray_object_detection
-             stingray_object_detection_msgs
-             stingray_movement_msgs)
+             stingray_object_detection_msgs)
 
 catkin_package(INCLUDE_DIRS scripts/stingray_tfsm scripts)
 
