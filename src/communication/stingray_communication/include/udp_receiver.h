@@ -22,14 +22,15 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 
-class UdpReceiver : public rclcpp::Node {
-   public:
+class UdpReceiver : public rclcpp::Node
+{
+public:
     UdpReceiver();
-
-   private:
-    void udpReceive_callback();
     void wait();
-    void Receiver();
+    udp::socket socket;
+
+private:
+    void udpReceive_callback(const boost::system::error_code &error, size_t bytes_transferred);
 
     // ROS publishers
     rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessagePublisher;
@@ -44,9 +45,8 @@ class UdpReceiver : public rclcpp::Node {
 
     // UPD receiver
     boost::asio::io_service io_service;
-    udp::socket socket{io_service};
-    boost::array<char, 1024> recv_buffer;
+    boost::array<uint8_t, 1024> recv_buffer;
     udp::endpoint remote_endpoint;
 };
 
-#endif  // STINGRAY_COMMUNICATION_UDP_RECEIVER_H
+#endif // STINGRAY_COMMUNICATION_UDP_RECEIVER_H

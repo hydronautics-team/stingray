@@ -6,12 +6,11 @@
 #include <fstream>
 #include <thread>
 
-UdpSender::UdpSender() : Node("UdpSender") {
+UdpSender::UdpSender() : Node("UdpSender"), io_service(), socket(io_service) {
     ros_config = json::parse(std::ifstream("resources/configs/ros.json"));
     udp_config = json::parse(std::ifstream("resources/configs/udp.json"));
 
     // UDP sender
-    socket = udp::socket(io_service);
     remote_endpoint = udp::endpoint(address::from_string(udp_config["udp_sender"]["ip_address"]), udp_config["udp_sender"]["udp_port"]);
     socket.open(udp::v4());
 
@@ -28,16 +27,16 @@ void UdpSender::udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     bool ok = guiMessage.parseVector(received_vector);
     if (ok) {
         boost::system::error_code err;
-        auto sent = socket.send_to(boost::asio::buffer(received_vector), remote_endpoint, 0, err);
+        socket.send_to(boost::asio::buffer(received_vector), remote_endpoint, 0, err);
     } else
         RCLCPP_WARN(this->get_logger(), "Wrong checksum");
 }
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
-    std::shared_ptr<rclcpp::Node> node = std::make_shared<UdpSender>();
+    std::shared_ptr<UdpSender> node = std::make_shared<UdpSender>();
     rclcpp::spin(node);
-    std::dynamic_pointer_cast<UdpSender>(node).get()->socket.close();
+    node.get()->socket.close();
     rclcpp::shutdown();
     return 0;
 }

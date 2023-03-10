@@ -1,6 +1,6 @@
 #include "udp_receiver.h"
 
-UdpReceiver::UdpReceiver() : Node("UdpReceiver")
+UdpReceiver::UdpReceiver() : Node("UdpReceiver"), io_service(), socket(io_service)
 {
     ros_config = json::parse(std::ifstream("resources/configs/ros.json"));
     udp_config = json::parse(std::ifstream("resources/configs/udp.json"));
@@ -17,18 +17,17 @@ void UdpReceiver::udpReceive_callback(const boost::system::error_code &error, si
     // Make output message
     if (error)
     {
-        RCLCPP_ERROR(this->get_logger(), "Receive failed: %c", error.message().c_str());
+        RCLCPP_ERROR(this->get_logger(), "Receive failed: %s", error.message().c_str());
         return;
     }
 
     std::vector<uint8_t> gui_vector;
     for (int i = 0; i < GuiRequestMessage::length; i++)
     {
-        gui_vector.push_back(msg.data[i]);
+        gui_vector.push_back(recv_buffer[i]);
     }
     bool ok = guiRequestMessage.parseVector(gui_vector);
 
-    requestMessage.type = guiRequestMessage.type;
     requestMessage.flags = guiRequestMessage.flags;
     requestMessage.march = guiRequestMessage.march;
     requestMessage.lag = guiRequestMessage.lag;
@@ -65,9 +64,10 @@ int main(int argc, char *argv[])
     std::shared_ptr<UdpReceiver> node = std::make_shared<UdpReceiver>();
     while (rclcpp::ok())
     {
-        node.wait();
+        node.get()->wait();
         rclcpp::spin_some(node);
     }
+    node.get()->socket.close();
     rclcpp::shutdown();
     return 0;
 }

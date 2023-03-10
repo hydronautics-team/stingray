@@ -11,12 +11,12 @@ set(CMAKE_CXX_STANDARD 14)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(serial REQUIRED)
 find_package(stingray_communication_msgs REQUIRED)
 find_package(stingray_utils REQUIRED)
-find_package(boost REQUIRED)
 
 
 include_directories(
@@ -43,14 +43,14 @@ add_executable(udp_sender
         include/udp_sender.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(udp_sender boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
+ament_target_dependencies(udp_sender Boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
 add_executable(udp_receiver
         src/udp_receiver.cpp
         include/udp_receiver.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(udp_receiver boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
+ament_target_dependencies(udp_receiver Boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
 install(TARGETS
         hardware_bridge
@@ -58,4 +58,6 @@ install(TARGETS
         udp_sender
         DESTINATION lib/${PROJECT_NAME})
 
+ament_export_dependencies(Boost)
+ament_export_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 ament_package()
