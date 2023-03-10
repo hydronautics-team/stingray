@@ -59,16 +59,6 @@ void UdpReceiver::wait()
         boost::bind(&UdpReceiver::udpReceive_callback, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 }
 
-void UdpReceiver::Receiver()
-{
-
-    wait();
-
-    RCLCPP_INFO(this->get_logger(), "Receiving");
-    io_service.run();
-    RCLCPP_INFO(this->get_logger(), "Receiver exit");
-}
-
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
