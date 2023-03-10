@@ -56,6 +56,7 @@ install(TARGETS
         hardware_bridge
         uart_driver
         udp_sender
+        udp_receiver
         DESTINATION lib/${PROJECT_NAME})
 
 ament_export_dependencies(Boost)
