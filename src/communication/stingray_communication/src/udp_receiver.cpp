@@ -10,6 +10,7 @@ UdpReceiver::UdpReceiver() : Node("UdpReceiver"), io_service(), socket(io_servic
 
     // ROS publishers
     this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
+    RCLCPP_INFO(this->get_logger(), "Construct suka");
 }
 
 void UdpReceiver::udpReceive_callback(const boost::system::error_code &error, size_t bytes_transferred)
