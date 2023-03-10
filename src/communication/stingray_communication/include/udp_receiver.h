@@ -35,6 +35,7 @@ class UdpReceiver : public rclcpp::Node {
     rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessagePublisher;
 
     std_msgs::msg::UInt8MultiArray outputMessage;
+    GuiRequestMessage guiRequestMessage;
 
     // get json config
     json ros_config;

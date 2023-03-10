@@ -185,6 +185,25 @@ GuiMessage::GuiMessage()
     rollSpeed = 0;
     pitchSpeed = 0;
     yawSpeed = 0;
+
+    checksum = 0;
+}
+
+GuiRequestMessage::GuiRequestMessage() 
+{
+    flags = 0;
+    march = 0;
+    lag = 0;
+    depth = 0;
+    roll = 0;
+    pitch = 0;
+    yaw = 0;
+
+    checksum = 0;
+
+    for(int i=0; i<DevAmount; i++) {
+        dev[i] = 0;
+    }
 }
 
 /** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.

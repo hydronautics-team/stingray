@@ -155,7 +155,25 @@ struct GuiMessage
     float yawSpeed;
     
     bool parseVector(std::vector<uint8_t> &input);
+    uint16_t checksum;
 };
+
+struct GuiRequestMessage 
+{
+    GuiRequestMessage();
+
+    const static uint8_t type = 0xA5;
+    uint8_t flags;
+    int16_t march;
+    int16_t lag;
+    int16_t depth;
+    int16_t roll;
+    int16_t pitch;
+    int16_t yaw;
+
+    int8_t dev[6];
+    uint16_t checksum;
+}
 
 void pushToVector(std::vector<uint8_t> &vector, int8_t var);
 void pushToVector(std::vector<uint8_t> &vector, uint8_t var);
