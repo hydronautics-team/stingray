@@ -139,6 +139,25 @@ struct ResponseMessage
     bool parseVector(std::vector<uint8_t> &input);
 };
 
+struct GuiMessage
+{
+    GuiMessage();
+
+    const static uint8_t lengthResponse = 70;
+    const static uint8_t lengthRequest = 30;
+
+    float roll;
+    float pitch;
+    float yaw;
+    float depth;
+
+    float rollSpeed;
+    float pitchSpeed;
+    float yawSpeed;
+    
+    bool parseVector(std::vector<uint8_t> &input);
+}
+
 void pushToVector(std::vector<uint8_t> &vector, int8_t var);
 void pushToVector(std::vector<uint8_t> &vector, uint8_t var);
 void pushToVector(std::vector<uint8_t> &vector, int16_t var, bool revert = false);

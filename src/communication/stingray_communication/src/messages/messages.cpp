@@ -175,6 +175,18 @@ ResponseMessage::ResponseMessage()
     checksum = 0;
 }
 
+GuiMessage::GuiMessage()
+{
+    roll = 0;
+    pitch = 0;
+    yaw = 0;
+    depth = 0;
+
+    rollSpeed = 0;
+    pitchSpeed = 0;
+    yawSpeed = 0;
+}
+
 /** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
   *
   * @param[in]  &input String to parse.

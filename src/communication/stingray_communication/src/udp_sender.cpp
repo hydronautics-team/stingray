@@ -26,28 +26,21 @@ UdpSender::UdpSender() : Node("UdpSender") {
 }
 
 void UdpSender::udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg) {
-    std::vector<uint8_t> received_vector;
-    for (int i = 0; i < ResponseMessage::length; i++) {
-        received_vector.push_back(msg.data[i]);
+    std::vector<uint8_t> gui_vector;
+    for (int i = 0; i < GuiMessage::lengthResponse; i++) {
+        gui_vector.push_back(msg.data[i]);
     }
-    bool ok = responseMessage.parseVector(received_vector);
+    bool ok = guiMessage.parseVector(gui_vector);
     if (ok) {
-        depthMessage.data = responseMessage.depth;  // Convert metres to centimetres
-        RCLCPP_INFO(this->get_logger(), "Received depth: %f", responseMessage.depth);
+        depthMessage.data = guiMessage.depth;  // Convert metres to centimetres
+        RCLCPP_INFO(this->get_logger(), "Received depth: %f", guiMessage.depth);
         // TODO: Test yaw obtaining
-        yawMessage.data = responseMessage.yaw;
-        RCLCPP_INFO(this->get_logger(), "Received yaw: %f", responseMessage.yaw);
+        yawMessage.data = guiMessage.yaw;
+        RCLCPP_INFO(this->get_logger(), "Received yaw: %f", guiMessage.yaw);
 
-        udpInfoMessage.roll = responseMessage.roll;
-        udpInfoMessage.pitch = responseMessage.pitch;
-        udpInfoMessage.yaw = responseMessage.yaw;
-        udpInfoMessage.roll_speed = responseMessage.rollSpeed;
-        udpInfoMessage.pitch_speed = responseMessage.pitchSpeed;
-        udpInfoMessage.yaw_speed = responseMessage.yawSpeed;
-        udpInfoMessage.depth = responseMessage.depth;
         
         boost::system::error_code err;
-        auto sent = socket.send_to(boost::asio::buffer(in), remote_endpoint, 0, err);
+        auto sent = socket.send_to(boost::asio::buffer(guiMessage), remote_endpoint, 0, err);
     } else
         RCLCPP_WARN(this->get_logger(), "Wrong checksum");
 }

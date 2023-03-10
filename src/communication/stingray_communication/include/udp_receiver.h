@@ -1,5 +1,5 @@
-#ifndef STINGRAY_COMMUNICATION_UPD_SENDER
-#define STINGRAY_COMMUNICATION_UPD_SENDER
+#ifndef STINGRAY_COMMUNICATION_UDP_RECEIVER_H
+#define STINGRAY_COMMUNICATION_UDP_RECEIVER_H
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "stingray_communication_msgs/msg/upd_info.hpp"
+#include "stingray_communication_msgs/msg/hardware_info.hpp"
 #include "stingray_communication_msgs/srv/set_float64.hpp"
 #include "stingray_communication_msgs/srv/set_int16.hpp"
 #include "messages/messages.h"
@@ -27,27 +27,24 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 
-class UdpSender : public rclcpp::Node
+class UpdReceiver : public rclcpp::Node
 {
 public:
-    UdpSender();
+    UpdReceiver();
 
 private:
-    void udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg);
+    void UdpReceiver::timerCallback();
+    void UdpReceiver::wait();
+    void UdpReceiver::Receiver();
 
-    // ROS subscribers
-    rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr inputMessageSubscriber;
-    // Message containers
+    // ROS publishers
+    rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessagePublisher;
+    
     std_msgs::msg::UInt8MultiArray outputMessage;
-    std_msgs::msg::Float64 depthMessage;
-    std_msgs::msg::Float64 yawMessage;
-    RequestMessage requestMessage;
-    ResponseMessage responseMessage;
-    GuiMessage  guiMessage
-
+    
     // get json config
     json ros_config;
     json udp_config;
 };
 
-#endif // STINGRAY_COMMUNICATION_UPD_SENDER
+#endif // STINGRAY_COMMUNICATION_UDP_RECEIVER_H

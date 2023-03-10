@@ -2,5 +2,9 @@
     "udp_sender": {
         "ip_address": "",
         "udp_port": ""
+    },
+    "udp_receiver": {
+        "ip_address": "",
+        "udp_port": ""
     }
 }
