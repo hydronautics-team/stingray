@@ -1,2 +1,0 @@
-bool has_value
-float64 difference
