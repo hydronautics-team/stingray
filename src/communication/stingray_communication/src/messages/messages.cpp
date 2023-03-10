@@ -231,6 +231,25 @@ bool ResponseMessage::parseVector(std::vector<uint8_t> &input)
     return true;
 }
 
+
+/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
+  *
+  * @param[in]  &input String to parse.
+  */
+bool GuiMessage::parseVector(std::vector<uint8_t> &input)
+{
+    popFromVector(input, yawSpeed);
+    popFromVector(input, pitchSpeed);
+    popFromVector(input, rollSpeed);
+
+    popFromVector(input, depth);
+    popFromVector(input, yaw);
+    popFromVector(input, pitch);
+    popFromVector(input, roll);
+
+    return true;
+}
+
 /** @brief Overloaded transform to string function, transforms value to string bitwise correctly
   *
   * @param[in]  var     Variable to transform.

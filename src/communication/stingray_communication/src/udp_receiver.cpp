@@ -1,24 +1,18 @@
 #include "udp_receiver.h"
 
-#include <boost/asio.hpp>
-#include <boost/array.hpp>
-#include <boost/bind.hpp>
-#include <thread>
-#include <fstream>
-
 UdpReceiver::UdpReceiver() : Node("UdpReceiver") {
     ros_config = json::parse(std::ifstream("resources/configs/ros.json"));
     udp_config = json::parse(std::ifstream("resources/configs/udp.json"));
-
-    // ROS publishers
-    this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
 
     // UPD receiver
     boost::asio::io_service io_service;
     udp::socket socket{io_service};
     boost::array<char, 1024> recv_buffer;
     udp::endpoint remote_endpoint;
-   }
+
+    // ROS publishers
+    this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
+}
 
 void UdpReceiver::timerCallback() {
     RCLCPP_INFO(this->get_logger(), "Timer callback");
@@ -26,7 +20,7 @@ void UdpReceiver::timerCallback() {
         // Make output message
         std::vector<uint8_t> output_vector = guiMessage.formVector();
         outputMessage.data.clear();
-        for (int i = 0; i < GuiMessage::lengthRequest; i++) {
+        for (int i = 0; i < GuiMessage::length; i++) {
             outputMessage.data.push_back(output_vector[i]);
         }
         // Publish messages
@@ -37,13 +31,12 @@ void UdpReceiver::timerCallback() {
 }
 
 void UdpReceiver::wait() {
-    socket.async_receive_from(boost::asio::buffer(recv_buffer), \
-        remote_endpoint, \
+    socket.async_receive_from(
+        boost::asio::buffer(recv_buffer), remote_endpoint,
         boost::bind(&UdpReceiver::timerCallback, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 }
 
-void UdpReceiver::Receiver()
-{
+void UdpReceiver::Receiver() {
     socket.open(udp::v4());
     socket.bind(udp::endpoint(address::from_string(udp_config["udp_receiver"]["ip_address"]), udp_config["udp_receiver"]["udp_port"]));
 

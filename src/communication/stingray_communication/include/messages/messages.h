@@ -143,8 +143,7 @@ struct GuiMessage
 {
     GuiMessage();
 
-    const static uint8_t lengthResponse = 70;
-    const static uint8_t lengthRequest = 30;
+    const static uint8_t length = 28;
 
     float roll;
     float pitch;
@@ -156,7 +155,7 @@ struct GuiMessage
     float yawSpeed;
     
     bool parseVector(std::vector<uint8_t> &input);
-}
+};
 
 void pushToVector(std::vector<uint8_t> &vector, int8_t var);
 void pushToVector(std::vector<uint8_t> &vector, uint8_t var);
