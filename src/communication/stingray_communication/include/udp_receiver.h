@@ -27,7 +27,7 @@ class UdpReceiver : public rclcpp::Node {
     UdpReceiver();
 
    private:
-    void timerCallback();
+    void udpReceive_callback();
     void wait();
     void Receiver();
 
@@ -35,11 +35,18 @@ class UdpReceiver : public rclcpp::Node {
     rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessagePublisher;
 
     std_msgs::msg::UInt8MultiArray outputMessage;
+    RequestMessage requestMessage;
     GuiRequestMessage guiRequestMessage;
 
     // get json config
     json ros_config;
     json udp_config;
+
+    // UPD receiver
+    boost::asio::io_service io_service;
+    udp::socket socket{io_service};
+    boost::array<char, 1024> recv_buffer;
+    udp::endpoint remote_endpoint;
 };
 
 #endif  // STINGRAY_COMMUNICATION_UDP_RECEIVER_H

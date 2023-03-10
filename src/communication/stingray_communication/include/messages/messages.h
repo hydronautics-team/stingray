@@ -139,9 +139,9 @@ struct ResponseMessage
     bool parseVector(std::vector<uint8_t> &input);
 };
 
-struct GuiMessage
+struct GuiResponseMessage
 {
-    GuiMessage();
+    GuiResponseMessage();
 
     const static uint8_t length = 28;
 
@@ -162,8 +162,13 @@ struct GuiRequestMessage
 {
     GuiRequestMessage();
 
-    const static uint8_t type = 0xA5;
+    /// Length in bytes of the normal message protocol
+    const static uint8_t length = 30;
+
+    /// Type code for the normal message protocol
+    const static uint8_t type = 0xA5;    
     uint8_t flags;
+    
     int16_t march;
     int16_t lag;
     int16_t depth;
@@ -173,7 +178,9 @@ struct GuiRequestMessage
 
     int8_t dev[6];
     uint16_t checksum;
-}
+
+    bool parseVector(std::vector<uint8_t> &input);
+};
 
 void pushToVector(std::vector<uint8_t> &vector, int8_t var);
 void pushToVector(std::vector<uint8_t> &vector, uint8_t var);

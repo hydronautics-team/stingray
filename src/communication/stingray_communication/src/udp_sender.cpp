@@ -22,7 +22,7 @@ UdpSender::UdpSender() : Node("UdpSender") {
 
 void UdpSender::udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     std::vector<uint8_t> received_vector;
-    for (int i = 0; i < GuiMessage::length; i++) {
+    for (int i = 0; i < GuiResponseMessage::length; i++) {
         received_vector.push_back(msg.data[i]);
     }
     bool ok = guiMessage.parseVector(received_vector);
