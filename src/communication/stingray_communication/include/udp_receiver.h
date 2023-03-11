@@ -26,8 +26,8 @@ class UdpReceiver : public rclcpp::Node
 {
 public:
     UdpReceiver();
+    ~UdpReceiver();
     void wait();
-    udp::socket socket;
 
 private:
     void udpReceive_callback(const boost::system::error_code &error, size_t bytes_transferred);
@@ -47,6 +47,7 @@ private:
     boost::asio::io_service io_service;
     boost::array<uint8_t, 1024> recv_buffer;
     udp::endpoint remote_endpoint;
+    udp::socket socket;
 };
 
 #endif // STINGRAY_COMMUNICATION_UDP_RECEIVER_H

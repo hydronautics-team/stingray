@@ -11,13 +11,9 @@ UdpSender::UdpSender() : Node("UdpSender"), io_service(), socket(io_service) {
     udp_config = json::parse(std::ifstream("resources/configs/udp.json"));
 
     // UDP sender
-    // udp::resolver resolver(io_service);
-    // udp::resolver::query query(udp::v4(), address::from_string(udp_config["udp_sender"]["ip_address"]), udp_config["udp_sender"]["udp_port"]);
-    // udp::resolver::iterator iter = resolver.resolve(query);
-    // remote_endpoint = *iter;
     remote_endpoint = udp::endpoint(address::from_string(udp_config["udp_sender"]["ip_address"]), udp_config["udp_sender"]["udp_port"].get<int>());
     socket.open(udp::v4());
-    RCLCPP_INFO(this->get_logger(), "UdpSender: socket opened. Adress: %s, port: %d",
+    RCLCPP_INFO(this->get_logger(), "UdpSender: socket opened. Address: %s, port: %d",
                 udp_config["udp_sender"]["ip_address"].get<std::string>().c_str(), udp_config["udp_sender"]["udp_port"].get<int>());
 
     // ROS subscribers
