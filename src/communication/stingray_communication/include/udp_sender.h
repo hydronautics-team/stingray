@@ -23,7 +23,7 @@ using std::placeholders::_1;
 class UdpSender : public rclcpp::Node {
    public:
     UdpSender();
-    udp::socket socket;
+    ~UdpSender();
 
    private:
     void udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg);
@@ -42,6 +42,7 @@ class UdpSender : public rclcpp::Node {
     // udp
     boost::asio::io_service io_service;
     udp::endpoint remote_endpoint;
+    udp::socket socket;
 };
 
 #endif  // STINGRAY_COMMUNICATION_UPD_SENDER

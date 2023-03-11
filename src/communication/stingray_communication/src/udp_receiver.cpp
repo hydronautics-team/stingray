@@ -21,13 +21,15 @@ void UdpReceiver::udpReceive_callback(const boost::system::error_code &error, si
         RCLCPP_ERROR(this->get_logger(), "Receive failed: %s", error.message().c_str());
         return;
     }
+    RCLCPP_INFO(this->get_logger(), "Bytes transferred: %ld", bytes_transferred);
+
 
     std::vector<uint8_t> gui_vector;
     for (int i = 0; i < GuiRequestMessage::length; i++)
     {
         gui_vector.push_back(recv_buffer[i]);
     }
-    bool ok = guiRequestMessage.parseVector(gui_vector);
+    guiRequestMessage.parseVector(gui_vector);
 
     requestMessage.flags = guiRequestMessage.flags;
     requestMessage.march = guiRequestMessage.march;

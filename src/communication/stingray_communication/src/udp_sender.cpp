@@ -11,13 +11,22 @@ UdpSender::UdpSender() : Node("UdpSender"), io_service(), socket(io_service) {
     udp_config = json::parse(std::ifstream("resources/configs/udp.json"));
 
     // UDP sender
-    remote_endpoint = udp::endpoint(address::from_string(udp_config["udp_sender"]["ip_address"]), udp_config["udp_sender"]["udp_port"]);
+    // udp::resolver resolver(io_service);
+    // udp::resolver::query query(udp::v4(), address::from_string(udp_config["udp_sender"]["ip_address"]), udp_config["udp_sender"]["udp_port"]);
+    // udp::resolver::iterator iter = resolver.resolve(query);
+    // remote_endpoint = *iter;
+    remote_endpoint = udp::endpoint(address::from_string(udp_config["udp_sender"]["ip_address"]), udp_config["udp_sender"]["udp_port"].get<int>());
     socket.open(udp::v4());
+    RCLCPP_INFO(this->get_logger(), "UdpSender: socket opened. Adress: %s, port: %d",
+                udp_config["udp_sender"]["ip_address"].get<std::string>().c_str(), udp_config["udp_sender"]["udp_port"].get<int>());
 
     // ROS subscribers
     this->inputMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
         ros_config["topics"]["input_parcel"], 1000, std::bind(&UdpSender::udpSender_callback, this, std::placeholders::_1));
+    RCLCPP_INFO(this->get_logger(), "UdpSender: Constructed");
 }
+
+UdpSender::~UdpSender() { socket.close(); }
 
 void UdpSender::udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     std::vector<uint8_t> received_vector;
@@ -36,7 +45,7 @@ int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
     std::shared_ptr<UdpSender> node = std::make_shared<UdpSender>();
     rclcpp::spin(node);
-    node.get()->socket.close();
+    // node.get()->socket.close();
     rclcpp::shutdown();
     return 0;
 }
