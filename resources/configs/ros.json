@@ -3,8 +3,8 @@
         "object_detection": "yolo_detector"
     },
     "topics": {
-        "output_parcel": "/stingray/topics/interface/parcel",
-        "input_parcel": "/stingray/topics/driver/parcel",
+        "to_driver_parcel": "/stingray/topics/to_driver_parcel",
+        "from_driver_parcel": "/stingray/topics/from_driver_parcel",
         "robot_info": "/stingray/topics/driver/robot_info",
         "depth": "/stingray/topics/position/depth",
         "yaw": "/stingray/topics/position/yaw",

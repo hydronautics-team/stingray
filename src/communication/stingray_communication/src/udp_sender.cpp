@@ -18,7 +18,7 @@ UdpSender::UdpSender() : Node("UdpSender"), io_service(), socket(io_service) {
 
     // ROS subscribers
     this->inputMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
-        ros_config["topics"]["input_parcel"], 1000, std::bind(&UdpSender::udpSender_callback, this, std::placeholders::_1));
+        ros_config["topics"]["from_driver_parcel"], 1000, std::bind(&UdpSender::udpSender_callback, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "UdpSender: Constructed");
 }
 
@@ -26,7 +26,7 @@ UdpSender::~UdpSender() { socket.close(); }
 
 void UdpSender::udpSender_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     std::vector<uint8_t> received_vector;
-    for (int i = 0; i < GuiResponseMessage::length; i++) {
+    for (int i = 0; i < ToGuiMessage::length; i++) {
         received_vector.push_back(msg.data[i]);
     }
     bool ok = guiMessage.parseVector(received_vector);

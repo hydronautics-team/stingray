@@ -38,25 +38,17 @@ add_executable(hardware_bridge
         include/messages/messages.h)
 ament_target_dependencies(hardware_bridge rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
-add_executable(udp_sender
-        src/udp_sender.cpp
-        include/udp_sender.h
+add_executable(gui_bridge
+        src/gui_bridge.cpp
+        include/gui_bridge.h
         src/messages/messages.cpp
         include/messages/messages.h)
-ament_target_dependencies(udp_sender Boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
-
-add_executable(udp_receiver
-        src/udp_receiver.cpp
-        include/udp_receiver.h
-        src/messages/messages.cpp
-        include/messages/messages.h)
-ament_target_dependencies(udp_receiver Boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
+ament_target_dependencies(gui_bridge Boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
 install(TARGETS
         hardware_bridge
         uart_driver
-        udp_sender
-        udp_receiver
+        gui_bridge
         DESTINATION lib/${PROJECT_NAME})
 
 ament_export_dependencies(Boost)

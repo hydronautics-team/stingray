@@ -1,10 +1,9 @@
 #include "messages/messages.h"
 
-/** @brief Constructor for RequestMessage
+/** @brief Constructor for ToDriverMessage
  *
  */
-RequestMessage::RequestMessage()
-{
+ToDriverMessage::ToDriverMessage() {
     flags = 0;
     march = 0;
     lag = 0;
@@ -13,8 +12,7 @@ RequestMessage::RequestMessage()
     pitch = 0;
     yaw = 0;
 
-    for (int i = 0; i < DevAmount; i++)
-    {
+    for (int i = 0; i < DevAmount; i++) {
         dev[i] = 0;
     }
 
@@ -24,11 +22,10 @@ RequestMessage::RequestMessage()
     pc_reset = 0;
 }
 
-/** @brief Form bitwise correct string with computed 16bit checksum from the data stored in RequestMessage
+/** @brief Form bitwise correct string with computed 16bit checksum from the data stored in ToDriverMessage
  *lag_error
  */
-std::vector<uint8_t> RequestMessage::formVector()
-{
+std::vector<uint8_t> ToDriverMessage::formVector() {
     std::vector<uint8_t> container;
 
     pushToVector(container, type);
@@ -41,8 +38,7 @@ std::vector<uint8_t> RequestMessage::formVector()
     pushToVector(container, pitch);
     pushToVector(container, yaw);
 
-    for (int i = 0; i < DevAmount; i++)
-    {
+    for (int i = 0; i < DevAmount; i++) {
         pushToVector(container, dev[i]);
     }
 
@@ -53,116 +49,97 @@ std::vector<uint8_t> RequestMessage::formVector()
     pushToVector(container, pc_reset);
 
     uint16_t checksum = getChecksum16b(container);
-    pushToVector(container, checksum); // do i need to revert bytes here?
+    pushToVector(container, checksum);  // do i need to revert bytes here?
 
     return container;
 }
 
-/** @brief Constructor for ConfigRequestMessage
+/** @brief Constructor for ToDriverConfigMessage
  *
  */
-ConfigRequestMessage::ConfigRequestMessage()
-{
-    for (int i = 0; i < ControlAmount; i++)
-    {
+ToDriverConfigMessage::ToDriverConfigMessage() {
+    for (int i = 0; i < ControlAmount; i++) {
         depth_control[i] = 0;
     }
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         roll_control[i] = 0;
     }
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         pitch_control[i] = 0;
     }
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         yaw_control[i] = 0;
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         vma_position[i] = 0;
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         vma_setting[i] = 0;
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         vma_kforward[i] = 0;
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         vma_kbackward[i] = 0;
     }
 }
 
-/** @brief Form bitwise correct string with computed 16bit checksum from the data stored in ConfigRequestMessage
+/** @brief Form bitwise correct string with computed 16bit checksum from the data stored in ToDriverConfigMessage
  *
  */
-std::vector<uint8_t> ConfigRequestMessage::formVector()
-{
+std::vector<uint8_t> ToDriverConfigMessage::formVector() {
     std::vector<uint8_t> container;
     pushToVector(container, type);
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         pushToVector(container, depth_control[i]);
     }
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         pushToVector(container, roll_control[i]);
     }
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         pushToVector(container, pitch_control[i]);
     }
 
-    for (int i = 0; i < ControlAmount; i++)
-    {
+    for (int i = 0; i < ControlAmount; i++) {
         pushToVector(container, yaw_control[i]);
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         pushToVector(container, vma_position[i]);
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         pushToVector(container, vma_setting[i]);
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         pushToVector(container, vma_kforward[i]);
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         pushToVector(container, vma_kbackward[i]);
     }
 
     uint16_t checksum = getChecksum16b(container);
-    pushToVector(container, checksum, false); // do i need to revert bytes here?
+    pushToVector(container, checksum, false);  // do i need to revert bytes here?
 
     return container;
 }
 
-/** @brief Constructor for ResponseMessage
+/** @brief Constructor for FromDriverMessage
  *
  */
-ResponseMessage::ResponseMessage()
-{
+FromDriverMessage::FromDriverMessage() {
     roll = 0;
     pitch = 0;
     yaw = 0;
@@ -178,13 +155,11 @@ ResponseMessage::ResponseMessage()
     dev_state = 0;
     leak_data = 0;
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         vma_current[i] = 0;
     }
 
-    for (int i = 0; i < DevAmount; i++)
-    {
+    for (int i = 0; i < DevAmount; i++) {
         dev_current[i] = 0;
     }
 
@@ -195,8 +170,7 @@ ResponseMessage::ResponseMessage()
     checksum = 0;
 }
 
-GuiResponseMessage::GuiResponseMessage()
-{
+ToGuiMessage::ToGuiMessage() {
     roll = 0;
     pitch = 0;
     yaw = 0;
@@ -209,8 +183,7 @@ GuiResponseMessage::GuiResponseMessage()
     checksum = 0;
 }
 
-GuiRequestMessage::GuiRequestMessage()
-{
+FromGuiMessage::FromGuiMessage() {
     flags = 0;
     march = 0;
     lag = 0;
@@ -219,26 +192,22 @@ GuiRequestMessage::GuiRequestMessage()
     pitch = 0;
     yaw = 0;
 
-    checksum = 0;
-
-    for (int i = 0; i < DevAmount; i++)
-    {
+    for (int i = 0; i < DevAmount; i++) {
         dev[i] = 0;
     }
+    checksum = 0;
 }
 
-/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
+/** @brief Parse string bitwise correctly into FromDriverMessage and check 16bit checksum.
  *
  * @param[in]  &input String to parse.
  */
-bool ResponseMessage::parseVector(std::vector<uint8_t> &input)
-{
+bool FromDriverMessage::parseVector(std::vector<uint8_t> &input) {
     popFromVector(input, checksum, true);
 
     uint16_t checksum_calc = getChecksum16b(input);
 
-    if (checksum_calc != checksum)
-    {
+    if (checksum_calc != checksum) {
         return false;
     }
 
@@ -246,13 +215,11 @@ bool ResponseMessage::parseVector(std::vector<uint8_t> &input)
     popFromVector(input, dev_errors);
     popFromVector(input, vma_errors);
 
-    for (int i = 0; i < DevAmount; i++)
-    {
+    for (int i = 0; i < DevAmount; i++) {
         popFromVector(input, dev_current[DevAmount - i]);
     }
 
-    for (int i = 0; i < VmaAmount; i++)
-    {
+    for (int i = 0; i < VmaAmount; i++) {
         popFromVector(input, vma_current[VmaAmount - i]);
     }
 
@@ -274,49 +241,41 @@ bool ResponseMessage::parseVector(std::vector<uint8_t> &input)
     return true;
 }
 
-/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
- *
- * @param[in]  &input String to parse.
+/** @brief Form bitwise correct string with computed 16bit checksum from the data stored in ToGuiMessage
+ *lag_error
  */
-bool GuiResponseMessage::parseVector(std::vector<uint8_t> &input)
-{
-    popFromVector(input, checksum, true);
+std::vector<uint8_t> ToGuiMessage::formVector() {
+    std::vector<uint8_t> container;
 
-    uint16_t checksum_calc = getChecksum16b(input);
+    pushToVector(container, roll);
+    pushToVector(container, pitch);
+    pushToVector(container, yaw);
+    pushToVector(container, depth);
 
-    if (checksum_calc != checksum)
-    {
-        return false;
-    }
-    popFromVector(input, yawSpeed);
-    popFromVector(input, pitchSpeed);
-    popFromVector(input, rollSpeed);
+    popFromVector(container, rollSpeed);
+    popFromVector(container, pitchSpeed);
+    popFromVector(container, yawSpeed);
 
-    popFromVector(input, depth);
-    popFromVector(input, yaw);
-    popFromVector(input, pitch);
-    popFromVector(input, roll);
+    uint16_t checksum = getChecksum16b(container);
+    pushToVector(container, checksum);  // do i need to revert bytes here?
 
-    return true;
+    return container;
 }
 
-/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
+/** @brief Parse string bitwise correctly into FromDriverMessage and check 16bit checksum.
  *
  * @param[in]  &input String to parse.
  */
-bool GuiRequestMessage::parseVector(std::vector<uint8_t> &input)
-{
+bool FromGuiMessage::parseVector(std::vector<uint8_t> &input) {
     popFromVector(input, checksum, true);
 
     uint16_t checksum_calc = getChecksum16b(input);
 
-    if (checksum_calc != checksum)
-    {
+    if (checksum_calc != checksum) {
         return false;
     }
 
-    for (int i = 0; i < DevAmount; i++)
-    {
+    for (int i = 0; i < DevAmount; i++) {
         popFromVector(input, dev[DevAmount - i]);
     }
 
@@ -336,8 +295,7 @@ bool GuiRequestMessage::parseVector(std::vector<uint8_t> &input)
  * @param[in]  var     Variable to transform.
  * @param[in]  revert  Revert bytes or not.
  */
-void pushToVector(std::vector<uint8_t> &vector, int8_t var)
-{
+void pushToVector(std::vector<uint8_t> &vector, int8_t var) {
     uint8_t buf = *reinterpret_cast<uint8_t *>(&var);
     vector.push_back(buf);
 }
@@ -347,46 +305,19 @@ void pushToVector(std::vector<uint8_t> &vector, int8_t var)
  * @param[in]  var     Variable to transform.
  * @param[in]  revert  Revert bytes or not.
  */
-void pushToVector(std::vector<uint8_t> &vector, uint8_t var)
-{
-    vector.push_back(var);
-}
+void pushToVector(std::vector<uint8_t> &vector, uint8_t var) { vector.push_back(var); }
 
 /** @brief Overloaded transform to string function, transforms value to string bitwise correctly
  *
  * @param[in]  var     Variable to transform.
  * @param[in]  revert  Revert bytes or not.
  */
-void pushToVector(std::vector<uint8_t> &vector, int16_t var, bool revert)
-{
+void pushToVector(std::vector<uint8_t> &vector, int16_t var, bool revert) {
     uint8_t *ptr = reinterpret_cast<uint8_t *>(&var);
-    if (revert)
-    {
+    if (revert) {
         vector.push_back(ptr[1]);
         vector.push_back(ptr[0]);
-    }
-    else
-    {
-        vector.push_back(ptr[0]);
-        vector.push_back(ptr[1]);
-    }
-}
-
-/** @brief Overloaded transform to string function, transforms value to string bitwise correctly
- *
- * @param[in]  var     Variable to transform.
- * @param[in]  revert  Revert bytes or not.
- */
-void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert)
-{
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(&var);
-    if (revert)
-    {
-        vector.push_back(ptr[1]);
-        vector.push_back(ptr[0]);
-    }
-    else
-    {
+    } else {
         vector.push_back(ptr[0]);
         vector.push_back(ptr[1]);
     }
@@ -397,17 +328,28 @@ void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert)
  * @param[in]  var     Variable to transform.
  * @param[in]  revert  Revert bytes or not.
  */
-void pushToVector(std::vector<uint8_t> &vector, float var, bool revert)
-{
+void pushToVector(std::vector<uint8_t> &vector, uint16_t var, bool revert) {
     uint8_t *ptr = reinterpret_cast<uint8_t *>(&var);
-    for (int i = 0; i < 4; i++)
-    {
-        if (revert)
-        {
+    if (revert) {
+        vector.push_back(ptr[1]);
+        vector.push_back(ptr[0]);
+    } else {
+        vector.push_back(ptr[0]);
+        vector.push_back(ptr[1]);
+    }
+}
+
+/** @brief Overloaded transform to string function, transforms value to string bitwise correctly
+ *
+ * @param[in]  var     Variable to transform.
+ * @param[in]  revert  Revert bytes or not.
+ */
+void pushToVector(std::vector<uint8_t> &vector, float var, bool revert) {
+    uint8_t *ptr = reinterpret_cast<uint8_t *>(&var);
+    for (int i = 0; i < 4; i++) {
+        if (revert) {
             vector.push_back(ptr[3 - i]);
-        }
-        else
-        {
+        } else {
             vector.push_back(ptr[i]);
         }
     }
@@ -418,17 +360,12 @@ void pushToVector(std::vector<uint8_t> &vector, float var, bool revert)
  * @param[in]  var     Variable to transform.
  * @param[in]  revert  Revert bytes or not.
  */
-void pushToVector(std::vector<uint8_t> &vector, int32_t var, bool revert)
-{
+void pushToVector(std::vector<uint8_t> &vector, int32_t var, bool revert) {
     uint8_t *ptr = reinterpret_cast<uint8_t *>(&var);
-    for (int i = 0; i < 4; i++)
-    {
-        if (revert)
-        {
+    for (int i = 0; i < 4; i++) {
+        if (revert) {
             vector.push_back(ptr[3 - i]);
-        }
-        else
-        {
+        } else {
             vector.push_back(ptr[i]);
         }
     }
@@ -440,8 +377,7 @@ void pushToVector(std::vector<uint8_t> &vector, int32_t var, bool revert)
  * @param[out] &value      Link to variable in which the data will be stored.
  * @param[in]  revert      Revert bytes or not.
  */
-void popFromVector(std::vector<uint8_t> &vector, uint8_t &output)
-{
+void popFromVector(std::vector<uint8_t> &vector, uint8_t &output) {
     output = vector.back();
     vector.pop_back();
 }
@@ -452,8 +388,7 @@ void popFromVector(std::vector<uint8_t> &vector, uint8_t &output)
  * @param[out] &value      Link to variable in which the data will be stored.
  * @param[in]  revert      Revert bytes or not.
  */
-void popFromVector(std::vector<uint8_t> &vector, int8_t &output)
-{
+void popFromVector(std::vector<uint8_t> &vector, int8_t &output) {
     uint8_t out_raw = vector.back();
     vector.pop_back();
     output = *reinterpret_cast<int8_t *>(&out_raw);
@@ -465,17 +400,13 @@ void popFromVector(std::vector<uint8_t> &vector, int8_t &output)
  * @param[out] &value      Link to variable in which the data will be stored.
  * @param[in]  revert      Revert bytes or not.
  */
-void popFromVector(std::vector<uint8_t> &vector, int16_t &output, bool revert)
-{
+void popFromVector(std::vector<uint8_t> &vector, int16_t &output, bool revert) {
     uint8_t *ptr = reinterpret_cast<uint8_t *>(&output);
-    if (revert)
-    {
+    if (revert) {
         ptr[1] = vector.back();
         vector.pop_back();
         ptr[0] = vector.back();
-    }
-    else
-    {
+    } else {
         ptr[0] = vector.back();
         vector.pop_back();
         ptr[1] = vector.back();
@@ -489,17 +420,13 @@ void popFromVector(std::vector<uint8_t> &vector, int16_t &output, bool revert)
  * @param[out] &value      Link to variable in which the data will be stored.
  * @param[in]  revert      Revert bytes or not.
  */
-void popFromVector(std::vector<uint8_t> &vector, uint16_t &output, bool revert)
-{
+void popFromVector(std::vector<uint8_t> &vector, uint16_t &output, bool revert) {
     uint8_t *ptr = reinterpret_cast<uint8_t *>(&output);
-    if (revert)
-    {
+    if (revert) {
         ptr[1] = vector.back();
         vector.pop_back();
         ptr[0] = vector.back();
-    }
-    else
-    {
+    } else {
         ptr[0] = vector.back();
         vector.pop_back();
         ptr[1] = vector.back();
@@ -513,18 +440,13 @@ void popFromVector(std::vector<uint8_t> &vector, uint16_t &output, bool revert)
  * @param[out] &value      Link to variable in which the data will be stored.
  * @param[in]  revert      Revert bytes or not.
  */
-void popFromVector(std::vector<uint8_t> &vector, float &output, bool revert)
-{
+void popFromVector(std::vector<uint8_t> &vector, float &output, bool revert) {
     uint8_t *ptr = reinterpret_cast<uint8_t *>(&output);
-    for (size_t i = 0; i < 4; i++)
-    {
-        if (revert)
-        {
+    for (size_t i = 0; i < 4; i++) {
+        if (revert) {
             ptr[3 - i] = vector.back();
             vector.pop_back();
-        }
-        else
-        {
+        } else {
             ptr[i] = vector.back();
             vector.pop_back();
         }
@@ -536,42 +458,29 @@ void popFromVector(std::vector<uint8_t> &vector, float &output, bool revert)
  * @param[in]  &msg    Link to the stream
  * @param[in]  length  Length of the message in the stream
  */
-uint16_t getChecksum16b(std::vector<uint8_t> &vector)
-{
+uint16_t getChecksum16b(std::vector<uint8_t> &vector) {
     uint16_t len = vector.size();
     uint16_t crc = 0xFFFF;
     uint8_t i;
     uint8_t g = 0;
 
-    while (len--)
-    {
+    while (len--) {
         crc ^= vector[g++] << 8;
 
-        for (i = 0; i < 8; i++)
-            crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+        for (i = 0; i < 8; i++) crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
     }
     return crc;
 }
 
-bool pickBit(uint8_t &input, uint8_t bit)
-{
-    return static_cast<bool>((input << (8 - bit)) >> 8);
-}
+bool pickBit(uint8_t &input, uint8_t bit) { return static_cast<bool>((input << (8 - bit)) >> 8); }
 
-void setBit(uint8_t &byte, uint8_t bit, bool state)
-{
+void setBit(uint8_t &byte, uint8_t bit, bool state) {
     uint8_t value = 1;
-    if (state)
-    {
+    if (state) {
         byte = byte | (value << bit);
-    }
-    else
-    {
+    } else {
         byte = byte & ~(value << bit);
     }
 }
 
-void setStabilizationState(RequestMessage &request, uint8_t bit, bool state)
-{
-    setBit(request.stabilize_flags, bit, state);
-}
+void setStabilizationState(ToDriverMessage &request, uint8_t bit, bool state) { setBit(request.stabilize_flags, bit, state); }

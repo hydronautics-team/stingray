@@ -3,18 +3,19 @@
 
 #include <stdint.h>
 #include <unistd.h>
+
 #include <vector>
 
 /** Bits to initialize stabilization
  */
-#define SHORE_STABILIZE_DEPTH_BIT       0
-#define SHORE_STABILIZE_ROLL_BIT        1
-#define SHORE_STABILIZE_PITCH_BIT       2
-#define SHORE_STABILIZE_YAW_BIT         3
-#define SHORE_STABILIZE_LAG_BIT         4
-#define SHORE_STABILIZE_MARCH_BIT       5
-#define SHORE_STABILIZE_IMU_BIT         6
-#define SHORE_STABILIZE_SAVE_BIT        7
+#define SHORE_STABILIZE_DEPTH_BIT 0
+#define SHORE_STABILIZE_ROLL_BIT 1
+#define SHORE_STABILIZE_PITCH_BIT 2
+#define SHORE_STABILIZE_YAW_BIT 3
+#define SHORE_STABILIZE_LAG_BIT 4
+#define SHORE_STABILIZE_MARCH_BIT 5
+#define SHORE_STABILIZE_IMU_BIT 6
+#define SHORE_STABILIZE_SAVE_BIT 7
 
 /// Number of the propellers
 static const uint8_t VmaAmount = 8;
@@ -25,33 +26,17 @@ static const uint8_t DevAmount = 6;
 
 /** Enumerator for constants in the automatic control system
  */
-enum ControlConstantNames {
-    CONTROL_K1 = 0,
-    CONTROL_K2,
-    CONTROL_K3,
-    CONTROL_K4,
-    CONTROL_IBORDERS,
-    CONTROL_PGAIN,
-    CONTROL_IGAIN
-};
+enum ControlConstantNames { CONTROL_K1 = 0, CONTROL_K2, CONTROL_K3, CONTROL_K4, CONTROL_IBORDERS, CONTROL_PGAIN, CONTROL_IGAIN };
 
 /** Enumerator for devs names
  */
-enum DevNames {
-    DEV_LIGHT = 0,
-    DEV_TILT,
-    DEV_GRAB,
-    DEV_GRAB_ROTATE,
-    DEV_ADDITIONAL_1,
-    DEV_ADDITIONAL_2
-};
+enum DevNames { DEV_LIGHT = 0, DEV_TILT, DEV_GRAB, DEV_GRAB_ROTATE, DEV_ADDITIONAL_1, DEV_ADDITIONAL_2 };
 
 /** @brief Structure for storing and processing data from the STM32 normal request message protocol
  * Shore send requests and STM send responses
  */
-struct RequestMessage
-{
-    RequestMessage();
+struct ToDriverMessage {
+    ToDriverMessage();
 
     /// Length in bytes of the normal message protocol
     const static uint8_t length = 30;
@@ -71,7 +56,7 @@ struct RequestMessage
     uint8_t stabilize_flags;
     uint8_t cameras;
     uint8_t pc_reset;
-    //uint16_t checksum;
+    // uint16_t checksum;
 
     std::vector<uint8_t> formVector();
 };
@@ -79,9 +64,8 @@ struct RequestMessage
 /** @brief Structure for storing and processing data from the STM32 configuration request message protocol
  * Shore send requests and STM send responses
  */
-struct ConfigRequestMessage
-{
-    ConfigRequestMessage();
+struct ToDriverConfigMessage {
+    ToDriverConfigMessage();
 
     /// Length in bytes of the configuration message protocol
     const static uint8_t length = 195;
@@ -98,7 +82,7 @@ struct ConfigRequestMessage
     uint8_t vma_kforward[VmaAmount];
     uint8_t vma_kbackward[VmaAmount];
 
-    //uint16_t checksum;
+    // uint16_t checksum;
 
     std::vector<uint8_t> formVector();
 };
@@ -106,9 +90,8 @@ struct ConfigRequestMessage
 /** @brief Structure for storing and processing data from the STM32 configuration response message protocol
  * Shore send requests and STM send responses
  */
-struct ResponseMessage
-{
-    ResponseMessage();
+struct FromDriverMessage {
+    FromDriverMessage();
 
     const static uint8_t length = 70;
 
@@ -121,7 +104,7 @@ struct ResponseMessage
     float yawSpeed;
 
     float depth;
-    //float lag;
+    // float lag;
     float in_pressure;
 
     uint8_t dev_state;
@@ -139,11 +122,10 @@ struct ResponseMessage
     bool parseVector(std::vector<uint8_t> &input);
 };
 
-struct GuiResponseMessage
-{
-    GuiResponseMessage();
+struct ToGuiMessage {
+    ToGuiMessage();
 
-    const static uint8_t length = 28;
+    const static uint8_t length = 30;
 
     float roll;
     float pitch;
@@ -153,22 +135,22 @@ struct GuiResponseMessage
     float rollSpeed;
     float pitchSpeed;
     float yawSpeed;
-    
-    bool parseVector(std::vector<uint8_t> &input);
+
     uint16_t checksum;
+
+    std::vector<uint8_t> formVector();
 };
 
-struct GuiRequestMessage 
-{
-    GuiRequestMessage();
+struct FromGuiMessage {
+    FromGuiMessage();
 
     /// Length in bytes of the normal message protocol
-    const static uint8_t length = 30;
+    const static uint8_t length = 22;
 
     /// Type code for the normal message protocol
-    const static uint8_t type = 0xA5;    
+    const static uint8_t type = 0xA5;
     uint8_t flags;
-    
+
     int16_t march;
     int16_t lag;
     int16_t depth;
@@ -199,6 +181,6 @@ uint16_t getChecksum16b(std::vector<uint8_t> &msg);
 
 bool pickBit(uint8_t &input, uint8_t bit);
 void setBit(uint8_t &byte, uint8_t bit, bool state);
-void setStabilizationState(RequestMessage& request, uint8_t bit, bool state);
+void setStabilizationState(ToDriverMessage &request, uint8_t bit, bool state);
 
-#endif //STINGRAY_MESSAGES_H
+#endif  // STINGRAY_MESSAGES_H

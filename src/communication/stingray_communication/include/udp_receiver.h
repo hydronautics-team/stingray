@@ -36,8 +36,8 @@ private:
     rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr outputMessagePublisher;
 
     std_msgs::msg::UInt8MultiArray outputMessage;
-    RequestMessage requestMessage;
-    GuiRequestMessage guiRequestMessage;
+    ToDriverMessage requestMessage;
+    FromGuiMessage guiRequestMessage;
 
     // get json config
     json ros_config;

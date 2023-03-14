@@ -32,8 +32,8 @@ class UdpSender : public rclcpp::Node {
     rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr inputMessageSubscriber;
     // Message containers
     std_msgs::msg::UInt8MultiArray outputMessage;
-    ResponseMessage responseMessage;
-    GuiResponseMessage guiMessage;
+    FromDriverMessage responseMessage;
+    ToGuiMessage guiMessage;
 
     // get json config
     json ros_config;

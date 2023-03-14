@@ -10,26 +10,26 @@
 UartDriver::UartDriver() : Node("UartDriver")
 {
     ros_config = json::parse(std::ifstream("resources/configs/ros.json"));
-    hardware_config = json::parse(std::ifstream("resources/configs/hardware.json"));
+    com_config = json::parse(std::ifstream("resources/configs/communication.json"));
     // Serial port initialization
     portInitialize();
     // ROS publishers
-    this->outputMessage_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["input_parcel"], 1000);
+    this->outputMessage_pub = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["from_driver_parcel"], 1000);
     // ROS subscribers
-    this->inputMessage_sub = this->create_subscription<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000,
+    this->inputMessage_sub = this->create_subscription<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["to_driver_parcel"], 1000,
                                                                                        std::bind(
                                                                                            &UartDriver::inputMessage_callback,
                                                                                            this, _1));
     // Input message container
     inputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-    inputMessage.layout.dim[0].size = RequestMessage::length;
-    inputMessage.layout.dim[0].stride = RequestMessage::length;
+    inputMessage.layout.dim[0].size = ToDriverMessage::length;
+    inputMessage.layout.dim[0].stride = ToDriverMessage::length;
     inputMessage.layout.dim[0].label = "inputMessage";
     inputMessage.data = {0};
     // Outnput message container
     outputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-    outputMessage.layout.dim[0].size = ResponseMessage::length;
-    outputMessage.layout.dim[0].stride = ResponseMessage::length;
+    outputMessage.layout.dim[0].size = FromDriverMessage::length;
+    outputMessage.layout.dim[0].stride = FromDriverMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     outputMessage.data = {0};
 }
@@ -40,9 +40,9 @@ UartDriver::UartDriver() : Node("UartDriver")
  */
 void UartDriver::portInitialize()
 {
-    std::string device = hardware_config["uart"]["device"];
-    int baudrate = hardware_config["uart"]["baudrate"];
-    int dataBytesInt = hardware_config["uart"]["data_bytes"];
+    std::string device = com_config["drivers"]["uart"]["device"];
+    int baudrate = com_config["drivers"]["uart"]["baudrate"];
+    int dataBytesInt = com_config["drivers"]["uart"]["data_bytes"];
     serial::bytesize_t dataBytes;
     switch (dataBytesInt)
     {
@@ -62,7 +62,7 @@ void UartDriver::portInitialize()
         RCLCPP_ERROR(this->get_logger(), "Forbidden data bytes size %d, available sizes: 5, 6, 7, 8", dataBytesInt);
         return;
     }
-    std::string parityStr = hardware_config["uart"]["parity"];
+    std::string parityStr = com_config["drivers"]["uart"]["parity"];
     std::transform(parityStr.begin(), parityStr.end(), parityStr.begin(), ::tolower);
     serial::parity_t parity;
     if (parityStr == "even")
@@ -77,7 +77,7 @@ void UartDriver::portInitialize()
                      parityStr.c_str());
         return;
     }
-    int stopBitsInt = hardware_config["uart"]["stop_bits"];
+    int stopBitsInt = com_config["drivers"]["uart"]["stop_bits"];
     serial::stopbits_t stopBits;
     switch (stopBitsInt)
     {
@@ -97,7 +97,7 @@ void UartDriver::portInitialize()
     if (port.isOpen())
         port.close();
     port.setPort(device);
-    serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(hardware_config["uart"]["serial_timeout"]);
+    serial::Timeout serialTimeout = serial::Timeout::simpleTimeout(com_config["drivers"]["uart"]["serial_timeout"]);
     port.setTimeout(serialTimeout);
     port.setBaudrate(baudrate);
     port.setBytesize(dataBytes);
@@ -108,7 +108,7 @@ void UartDriver::portInitialize()
 bool UartDriver::sendData()
 {
     std::vector<uint8_t> msg;
-    for (int i = 0; i < RequestMessage::length; i++)
+    for (int i = 0; i < ToDriverMessage::length; i++)
         msg.push_back(inputMessage.data[i]);
     size_t toWrite = sizeof(uint8_t) * msg.size();
     try
@@ -126,26 +126,26 @@ bool UartDriver::sendData()
 
 bool UartDriver::receiveData()
 {
-    if (port.available() < ResponseMessage::length)
+    if (port.available() < FromDriverMessage::length)
         return false;
     std::vector<uint8_t> answer;
-    port.read(answer, ResponseMessage::length);
+    port.read(answer, FromDriverMessage::length);
     outputMessage.data.clear();
-    for (int i = 0; i < ResponseMessage::length; i++)
+    for (int i = 0; i < FromDriverMessage::length; i++)
         outputMessage.data.push_back(answer[i]);
     RCLCPP_DEBUG(this->get_logger(), "RECEIVE FROM STM");
 
     return true;
 }
 
-/** @brief Parse string bitwise correctly into ResponseMessage and check 16bit checksum.
+/** @brief Parse string bitwise correctly into FromDriverMessage and check 16bit checksum.
  *
  * @param[in]  &input String to parse.
  */
 void UartDriver::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg)
 {
     inputMessage.data.clear();
-    for (int i = 0; i < RequestMessage::length; i++)
+    for (int i = 0; i < ToDriverMessage::length; i++)
         inputMessage.data.push_back(msg->data[i]);
     try
     {

@@ -9,7 +9,7 @@ UdpReceiver::UdpReceiver() : Node("UdpReceiver"), io_service(), socket(io_servic
     RCLCPP_INFO(this->get_logger(), "UdpReceiver: socket binded to address: %s, port: %d",
                 udp_config["udp_receiver"]["ip_address"].get<std::string>().c_str(), udp_config["udp_receiver"]["udp_port"].get<int>());
     // ROS publishers
-    this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
+    this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["to_driver_parcel"], 1000);
 }
 
 UdpReceiver::~UdpReceiver() { socket.close(); }
@@ -23,7 +23,7 @@ void UdpReceiver::udpReceive_callback(const boost::system::error_code &error, si
     RCLCPP_INFO(this->get_logger(), "Bytes transferred: %ld", bytes_transferred);
 
     std::vector<uint8_t> gui_vector;
-    for (int i = 0; i < GuiRequestMessage::length; i++) {
+    for (int i = 0; i < FromGuiMessage::length; i++) {
         gui_vector.push_back(recv_buffer[i]);
     }
     guiRequestMessage.parseVector(gui_vector);
@@ -41,7 +41,7 @@ void UdpReceiver::udpReceive_callback(const boost::system::error_code &error, si
 
     std::vector<uint8_t> output_vector = requestMessage.formVector();
     outputMessage.data.clear();
-    for (int i = 0; i < RequestMessage::length; i++) {
+    for (int i = 0; i < ToDriverMessage::length; i++) {
         outputMessage.data.push_back(output_vector[i]);
     }
     // Publish messages
