@@ -9,8 +9,8 @@
 #include <sstream>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include "messages/messages.h"
 #include "std_msgs/msg/string.hpp"
@@ -22,30 +22,49 @@ using boost::asio::ip::address;
 using boost::asio::ip::udp;
 using std::placeholders::_1;
 
-class GuiBridge : public rclcpp::Node {
+class GuiBridgeSender : public rclcpp::Node {
    public:
-    GuiBridge();
-    ~GuiBridge();
-    void receive_loop();
+    GuiBridgeSender(boost::asio::io_service &io_service);
+    ~GuiBridgeSender();
 
    private:
     void from_driver_callback(const std_msgs::msg::UInt8MultiArray &msg);
-    void from_gui_callback(const boost::system::error_code &error, size_t bytes_transferred);
     void timerCallback();
 
     // ROS subscribers
     rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr fromDriverMessageSubscriber;
+
+    // Message containers
+    FromDriverMessage fromDriverMessage;
+    ToGuiMessage toGuiMessage;
+
+    // get json config
+    json ros_config;
+    json com_config;
+
+    // udp connection
+    boost::asio::io_service &_io_service;
+    udp::endpoint _send_endpoint;
+    udp::socket _send_socket;
+
+    rclcpp::TimerBase::SharedPtr publishingTimer;  // Timer for publishing messages
+};
+
+class GuiBridgeReceiver : public rclcpp::Node {
+   public:
+    GuiBridgeReceiver(boost::asio::io_service &io_service);
+    ~GuiBridgeReceiver();
+    void try_receive();
+
+   private:
+    void from_gui_callback(const boost::system::error_code &error, size_t bytes_transferred);
+
     // ROS publishers
     rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr toDriverMessagePublisher;
-
-    rclcpp::CallbackGroup::SharedPtr receiver_group_;
-    rclcpp::CallbackGroup::SharedPtr sender_group_;
 
     // Message containers
     std_msgs::msg::UInt8MultiArray toDriverMessageContainer;
     ToDriverMessage toDriverMessage;
-    FromDriverMessage fromDriverMessage;
-    ToGuiMessage toGuiMessage;
     FromGuiMessage fromGuiMessage;
 
     // get json config
@@ -53,16 +72,10 @@ class GuiBridge : public rclcpp::Node {
     json com_config;
 
     // udp connection
-    boost::asio::io_service _io_service;
-    udp::endpoint _send_endpoint;
+    boost::asio::io_service &_io_service;
     udp::endpoint _receive_endpoint;
-    udp::socket _send_socket;
     udp::socket _receive_socket;
     boost::array<uint8_t, 1024> from_gui_buffer;
-
-
-    rclcpp::TimerBase::SharedPtr publishingTimer; // Timer for publishing messages
-
 };
 
 #endif  // STINGRAY_COMMUNICATION_GUI_BRIDGE
