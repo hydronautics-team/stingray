@@ -171,14 +171,14 @@ FromDriverMessage::FromDriverMessage() {
 }
 
 ToGuiMessage::ToGuiMessage() {
-    roll = 0;
-    pitch = 0;
-    yaw = 0;
-    depth = 0;
+    roll = 0.0;
+    pitch = 0.0;
+    yaw = 0.0;
+    depth = 0.0;
 
-    rollSpeed = 0;
-    pitchSpeed = 0;
-    yawSpeed = 0;
+    rollSpeed = 0.0;
+    pitchSpeed = 0.0;
+    yawSpeed = 0.0;
 
     checksum = 0;
 }
@@ -252,9 +252,9 @@ std::vector<uint8_t> ToGuiMessage::formVector() {
     pushToVector(container, yaw);
     pushToVector(container, depth);
 
-    popFromVector(container, rollSpeed);
-    popFromVector(container, pitchSpeed);
-    popFromVector(container, yawSpeed);
+    pushToVector(container, rollSpeed);
+    pushToVector(container, pitchSpeed);
+    pushToVector(container, yawSpeed);
 
     uint16_t checksum = getChecksum16b(container);
     pushToVector(container, checksum);  // do i need to revert bytes here?

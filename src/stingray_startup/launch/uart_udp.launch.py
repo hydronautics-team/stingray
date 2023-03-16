@@ -5,13 +5,12 @@ def generate_launch_description():
    return LaunchDescription([
 	Node(
             package='stingray_communication',
-            namespace='uartDriver',
-            executable='uart_driver.cpp',
-            name='uart_driver.cpp'
+            executable='uart_driver',
+            name='uart_driver'
     ),
     Node(
         package='stingray_communication',
-        executable='gui_bridge.cpp',
-        name='gui_bridge.cpp'
+        executable='gui_bridge',
+        name='gui_bridge'
     )
    ])
