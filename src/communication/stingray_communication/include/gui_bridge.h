@@ -11,6 +11,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <serial/serial.h>
 
 #include "messages/messages.h"
 #include "std_msgs/msg/string.hpp"
@@ -48,6 +49,8 @@ class GuiBridgeSender : public rclcpp::Node {
     udp::socket _send_socket;
 
     rclcpp::TimerBase::SharedPtr publishingTimer;  // Timer for publishing messages
+
+    serial::Serial ser;
 };
 
 class GuiBridgeReceiver : public rclcpp::Node {

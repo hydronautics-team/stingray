@@ -16,9 +16,28 @@ GuiBridgeSender::GuiBridgeSender(boost::asio::io_service &io_service) : Node("Gu
         ros_config["topics"]["from_driver_parcel"], 1000, std::bind(&GuiBridgeSender::from_driver_callback, this, std::placeholders::_1));
 
     this->publishingTimer = this->create_wall_timer(1s, std::bind(&GuiBridgeSender::timerCallback, this));
+
+    try {
+        ser.setPort("/dev/ttyACM0");
+        ser.setBaudrate(57600);
+        serial::Timeout to = serial::Timeout::simpleTimeout(1000);
+        ser.setTimeout(to);
+        ser.open();
+    } catch (serial::IOException &e) {
+        RCLCPP_ERROR(this->get_logger(), "Unable to open port.");
+    }
+
+    if (ser.isOpen()) {
+        RCLCPP_INFO(this->get_logger(), "Serial Port initialized");
+    } else {
+        RCLCPP_ERROR(this->get_logger(), "Serial Port not initialized");
+    }
 }
 
-GuiBridgeSender::~GuiBridgeSender() { _send_socket.close(); }
+GuiBridgeSender::~GuiBridgeSender() {
+    _send_socket.close();
+    ser.close();
+}
 
 void GuiBridgeSender::from_driver_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     std::vector<uint8_t> received_vector;
@@ -29,9 +48,9 @@ void GuiBridgeSender::from_driver_callback(const std_msgs::msg::UInt8MultiArray 
     RCLCPP_INFO(this->get_logger(), "Received from driver");
 
     if (ok) {
-        toGuiMessage.roll = fromDriverMessage.roll;
-        toGuiMessage.pitch = fromDriverMessage.pitch;
-        toGuiMessage.yaw = fromDriverMessage.yaw;
+        // toGuiMessage.roll = fromDriverMessage.roll;
+        // toGuiMessage.pitch = fromDriverMessage.pitch;
+        // toGuiMessage.yaw = fromDriverMessage.yaw;
         toGuiMessage.depth = fromDriverMessage.depth;
         toGuiMessage.rollSpeed = fromDriverMessage.rollSpeed;
         toGuiMessage.pitchSpeed = fromDriverMessage.pitchSpeed;
@@ -45,9 +64,43 @@ void GuiBridgeSender::from_driver_callback(const std_msgs::msg::UInt8MultiArray 
 }
 
 void GuiBridgeSender::timerCallback() {
-    boost::system::error_code err;
-    _send_socket.send_to(boost::asio::buffer(toGuiMessage.formVector()), _send_endpoint, 0, err);
-    RCLCPP_INFO(this->get_logger(), "Sent to gui %s", err.message().c_str());
+    std::string serialStdStr;
+
+    try {
+        serialStdStr = ser.read(ser.available());
+    } catch (serial::IOException &e) {
+        RCLCPP_ERROR(this->get_logger(), "Port closed.");
+    }
+
+    if (serialStdStr[0] != '\0') {  // проверка наличия непустой строки
+
+        std::string imuData[10];  // содержат подстроку, содержащую онин показатель
+
+        int counter = 0;                           // номер символа в строке перед следующим показателем
+        counter = serialStdStr.find_last_of('A');  // иногда в одной строке приходит 2 посылки всесте, берем последнюю
+
+        int countSpace = 0;
+        char ch = ' ';
+        for (int i = counter; (i = serialStdStr.find(ch, i)) != std::string::npos; i++) {
+            countSpace++;
+        }
+        if (countSpace != 10) {  // проверяем целостность строки по количеству пробелов в строке
+            RCLCPP_ERROR(this->get_logger(), "ERROR_DEFECTIVE_SERIAL_MESSAGE %s", serialStdStr.c_str());
+            return;
+        }
+
+        for (int i = 0; i < 10; i++) {
+            imuData[i] =
+                serialStdStr.substr(counter + 1, serialStdStr.find_first_of(counter, ',') - 1);  // вычленяем подстроку, содержащую один показатель
+            counter = serialStdStr.find_first_of(',', counter) + 1;
+        }
+        // приведение типов
+
+        toGuiMessage.pitch = stof(imuData[6]);
+        toGuiMessage.roll = stof(imuData[7]);
+        toGuiMessage.yaw = stof(imuData[8]);
+        RCLCPP_INFO(this->get_logger(), "Pitch: '%e', Roll: '%e', Yaw: '%e'", toGuiMessage.pitch, toGuiMessage.roll, toGuiMessage.yaw);
+    }
 }
 
 GuiBridgeReceiver::GuiBridgeReceiver(boost::asio::io_service &io_service)
