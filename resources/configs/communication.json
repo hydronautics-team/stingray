@@ -1,0 +1,21 @@
+{
+    "drivers": {
+        "uart": {
+            "device": "/dev/ttyS0",
+            "baudrate": 57600,
+            "data_bytes": 8,
+            "parity": "none",
+            "stop_bits": 1,
+            "serial_timeout": 1000
+        }
+    },
+    "bridges": {
+        "gui": {
+            "send_to_ip": "127.0.0.1",
+            "send_to_port": 5001,
+            "receive_from_ip": "127.0.0.1",
+            "receive_from_port": 5000
+        },
+        "hardware_bridge": {}
+    }
+}

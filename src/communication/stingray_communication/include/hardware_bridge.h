@@ -67,8 +67,8 @@ private:
     std_msgs::msg::UInt8MultiArray outputMessage; // Hardware bridge -> Protocol_bridge
     std_msgs::msg::Float64 depthMessage;
     std_msgs::msg::Float64 yawMessage;
-    RequestMessage requestMessage;
-    ResponseMessage responseMessage;
+    ToDriverMessage requestMessage;
+    FromDriverMessage responseMessage;
     // Other
     rclcpp::TimerBase::SharedPtr publishingTimer; // Timer for publishing messages
 

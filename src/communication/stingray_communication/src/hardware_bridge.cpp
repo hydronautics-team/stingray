@@ -12,13 +12,13 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge") {
     ros_config = json::parse(std::ifstream("resources/configs/ros.json"));
 
     // ROS publishers
-    this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["output_parcel"], 1000);
+    this->outputMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["to_driver_parcel"], 1000);
     this->hardwareInfoPublisher = this->create_publisher<stingray_communication_msgs::msg::HardwareInfo>(ros_config["topics"]["robot_info"], 1000);
     this->depthPublisher = this->create_publisher<std_msgs::msg::Float64>(ros_config["topics"]["depth"], 1000);
     this->yawPublisher = this->create_publisher<std_msgs::msg::Float64>(ros_config["topics"]["yaw"], 20);
     // ROS subscribers
     this->inputMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
-        ros_config["topics"]["input_parcel"], 1000, std::bind(&HardwareBridge::inputMessage_callback, this, std::placeholders::_1));
+        ros_config["topics"]["from_driver_parcel"], 1000, std::bind(&HardwareBridge::inputMessage_callback, this, std::placeholders::_1));
     // ROS services
     this->horizontalMoveService = this->create_service<stingray_communication_msgs::srv::SetHorizontalMove>(
         ros_config["services"]["set_horizontal_move"],
@@ -35,8 +35,8 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge") {
         ros_config["services"]["updown"], std::bind(&HardwareBridge::deviceActionCallback, this, std::placeholders::_1, std::placeholders::_2));
     // Output message container
     outputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-    outputMessage.layout.dim[0].size = RequestMessage::length;
-    outputMessage.layout.dim[0].stride = RequestMessage::length;
+    outputMessage.layout.dim[0].size = ToDriverMessage::length;
+    outputMessage.layout.dim[0].stride = ToDriverMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     // Initializing timer for publishing messages. Callback interval: 0.05 ms
     this->publishingTimer = this->create_wall_timer(50ms, std::bind(&HardwareBridge::timerCallback, this));
@@ -44,7 +44,7 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge") {
 
 void HardwareBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     std::vector<uint8_t> received_vector;
-    for (int i = 0; i < ResponseMessage::length; i++) {
+    for (int i = 0; i < FromDriverMessage::length; i++) {
         received_vector.push_back(msg.data[i]);
     }
     bool ok = responseMessage.parseVector(received_vector);
@@ -159,7 +159,7 @@ void HardwareBridge::timerCallback() {
         // Make output message
         std::vector<uint8_t> output_vector = requestMessage.formVector();
         outputMessage.data.clear();
-        for (int i = 0; i < RequestMessage::length; i++) {
+        for (int i = 0; i < ToDriverMessage::length; i++) {
             outputMessage.data.push_back(output_vector[i]);
         }
         // Publish messages

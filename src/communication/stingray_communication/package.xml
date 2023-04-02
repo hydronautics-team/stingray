@@ -21,6 +21,7 @@
   <depend>serial</depend>
   <depend>stingray_communication_msgs</depend>
   <depend>stingray_utils</depend>
+  <depend>boost</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

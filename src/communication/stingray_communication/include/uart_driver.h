@@ -36,7 +36,7 @@ private:
     std_msgs::msg::UInt8MultiArray outputMessage;// Protocol_driver -> Hardware bridge
     // get json config
     json ros_config;
-    json hardware_config;
+    json com_config;
 };
 
 #endif // STINGRAY_COMMUNICATION_UART_DRIVER_NODELET_H
