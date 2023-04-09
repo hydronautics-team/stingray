@@ -32,6 +32,81 @@ enum ControlConstantNames { CONTROL_K1 = 0, CONTROL_K2, CONTROL_K3, CONTROL_K4, 
  */
 enum DevNames { DEV_LIGHT = 0, DEV_TILT, DEV_GRAB, DEV_GRAB_ROTATE, DEV_ADDITIONAL_1, DEV_ADDITIONAL_2 };
 
+struct FromConfigMessage {
+    FromConfigMessage();
+
+    /// Type code for the Config message protocol
+    const static uint8_t type = 0x55;
+    uint8_t flags; //stabilize_flags, thrusters_on, reset_imu
+
+    uint8_t contour;
+
+    int16_t march;
+    int16_t lag;
+    int16_t depth;
+    int16_t roll;
+    int16_t pitch;
+    int16_t yaw;
+
+    float pJoyUnitCast;
+    float pSpeedDyn;
+    float pErrGain;
+
+    float posFilterT;
+    float posFilterK;
+    float speedFilterT;
+    float speedFilterK;
+
+    float pid_pGain;
+    float pid_iGain;
+    float pid_iMax;
+    float pid_iMin;
+
+    float pThrustersMin;
+    float pThrustersMax;
+
+    uint16_t checksum;
+
+    bool parseVector(std::vector<uint8_t> &input);
+};
+struct ToConfigMessage {
+    ToConfigMessage();
+
+    /// Type code for the normal message protocol
+    const static uint8_t type = 0xA5;
+
+    uint8_t contour;
+    uint8_t flags;
+
+    int16_t march;
+    int16_t lag;
+    int16_t depth;
+    int16_t roll;
+    int16_t pitch;
+    int16_t yaw;
+
+    float pJoyUnitCast;
+    float pSpeedDyn;
+    float pErrGain;
+
+    float posFilterT;
+    float posFilterK;
+    float speedFilterT;
+    float speedFilterK;
+
+    float pid_pGain;
+    float pid_iGain;
+    float pid_iMax;
+    float pid_iMin;
+
+    float pThrustersMin;
+    float pThrustersMax;
+    
+    uint16_t checksum;
+
+    std::vector<uint8_t> formVector();
+};
+
 /** @brief Structure for storing and processing data from the STM32 normal request message protocol
  * Shore send requests and STM send responses
  */

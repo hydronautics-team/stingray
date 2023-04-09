@@ -170,6 +170,70 @@ FromDriverMessage::FromDriverMessage() {
     checksum = 0;
 }
 
+ToConfigMessage::ToConfigMessage() {
+    flags = 0;
+
+    contour = 0;
+
+    march = 0;
+    lag = 0;
+    depth = 0;
+    roll = 0;
+    pitch = 0;
+    yaw = 0;
+
+    pJoyUnitCast = 0;
+    pSpeedDyn = 0;
+    pErrGain = 0;
+
+    posFilterT = 0;
+    posFilterK = 0;
+    speedFilterT = 0;
+    speedFilterK = 0;
+
+    pid_pGain = 0;
+    pid_iGain = 0;
+    pid_iMax = 0;
+    pid_iMin = 0;
+
+    pThrustersMin = 0;
+    pThrustersMax = 0;    
+
+    checksum = 0;
+}
+
+FromConfigMessage::FromConfigMessage() {
+    flags = 0;
+
+    contour = 0;
+
+    march = 0;
+    lag = 0;
+    depth = 0;
+    roll = 0;
+    pitch = 0;
+    yaw = 0;
+
+    pJoyUnitCast = 0;
+    pSpeedDyn = 0;
+    pErrGain = 0;
+
+    posFilterT = 0;
+    posFilterK = 0;
+    speedFilterT = 0;
+    speedFilterK = 0;
+
+    pid_pGain = 0;
+    pid_iGain = 0;
+    pid_iMax = 0;
+    pid_iMin = 0;
+
+    pThrustersMin = 0;
+    pThrustersMax = 0;    
+
+    checksum = 0;
+}
+
 ToGuiMessage::ToGuiMessage() {
     roll = 0.0;
     pitch = 0.0;
@@ -197,6 +261,83 @@ FromGuiMessage::FromGuiMessage() {
     }
     checksum = 0;
 }
+
+std::vector<uint8_t> ToConfigMessage::formVector() {
+    std::vector<uint8_t> container;
+
+    pushToVector(container, flags);
+    pushToVector(container, contour);
+
+    pushToVector(container, march);
+    pushToVector(container, lag);
+    pushToVector(container, depth);
+    pushToVector(container, roll);
+    pushToVector(container, pitch);
+    pushToVector(container, yaw);
+
+    pushToVector(container, pJoyUnitCast);
+    pushToVector(container, pSpeedDyn);
+    pushToVector(container, pErrGain);
+
+    pushToVector(container, posFilterT);
+    pushToVector(container, posFilterK);
+    pushToVector(container, speedFilterT);
+    pushToVector(container, speedFilterK);
+
+    pushToVector(container, pid_pGain);
+    pushToVector(container, pid_iGain);
+    pushToVector(container, pid_iMax);
+    pushToVector(container, pid_iMin);
+
+    pushToVector(container, pThrustersMin);
+    pushToVector(container, pThrustersMax);
+
+    uint16_t checksum = getChecksum16b(container);
+    pushToVector(container, checksum);
+
+    return container;
+}
+
+bool FromConfigMessage::parseVector(std::vector<uint8_t> &input) {
+    popFromVector(input, checksum, true);
+
+    uint16_t checksum_calc = getChecksum16b(input);
+
+    if (checksum_calc != checksum) {
+        return false;
+    }
+    
+    popFromVector(input, pThrustersMax);
+    popFromVector(input, pThrustersMin);
+
+    popFromVector(input, pid_iMin);
+    popFromVector(input, pid_iMax);
+    popFromVector(input, pid_iGain);
+    popFromVector(input, pid_pGain);
+
+    popFromVector(input, speedFilterK);
+    popFromVector(input, speedFilterT);
+    popFromVector(input, posFilterK);
+    popFromVector(input, posFilterT);
+
+    popFromVector(input, pErrGain);
+    popFromVector(input, pSpeedDyn);
+    popFromVector(input, pJoyUnitCast);
+
+    popFromVector(input, yaw);
+    popFromVector(input, pitch);
+    popFromVector(input, roll);
+    popFromVector(input, depth);
+    popFromVector(input, lag);
+    popFromVector(input, march);
+
+    popFromVector(input, contour);
+    
+    popFromVector(input, flags);
+
+    return true;
+}
+
 
 /** @brief Parse string bitwise correctly into FromDriverMessage and check 16bit checksum.
  *

@@ -145,6 +145,9 @@ bool UartDriver::receiveData()
 void UartDriver::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg)
 {
     inputMessage.data.clear();
+    for (auto copy : msg->data) {
+        inputMessage.data.push_back(copy);
+    }
     for (int i = 0; i < ToDriverMessage::length; i++)
         inputMessage.data.push_back(msg->data[i]);
     try

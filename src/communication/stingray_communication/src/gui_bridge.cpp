@@ -78,26 +78,61 @@ void GuiBridgeReceiver::from_gui_callback(const boost::system::error_code &error
     RCLCPP_INFO(this->get_logger(), "Received from gui %ld", bytes_transferred);
 
     std::vector<uint8_t> gui_vector;
-    for (int i = 0; i < FromGuiMessage::length; i++) {
-        gui_vector.push_back(from_gui_buffer[i]);
-    }
-    fromGuiMessage.parseVector(gui_vector);
-
-    toDriverMessage.flags = fromGuiMessage.flags;
-    toDriverMessage.march = fromGuiMessage.march;
-    toDriverMessage.lag = fromGuiMessage.lag;
-    toDriverMessage.depth = fromGuiMessage.depth;
-    toDriverMessage.roll = fromGuiMessage.roll;
-    toDriverMessage.pitch = fromGuiMessage.pitch;
-    toDriverMessage.yaw = fromGuiMessage.yaw;
-    for (int i = 0; i < DevAmount; i++) {
-        toDriverMessage.dev[i] = fromGuiMessage.dev[i];
+    for (auto msg : from_gui_buffer) {
+        gui_vector.push_back(msg);
     }
 
-    std::vector<uint8_t> output_vector = toDriverMessage.formVector();
+    switch (gui_vector.front()) {
+        case //from gui:
+            fromGuiMessage.parseVector(gui_vector);
+
+            toDriverMessage.flags = fromGuiMessage.flags;
+            toDriverMessage.march = fromGuiMessage.march;
+            toDriverMessage.lag = fromGuiMessage.lag;
+            toDriverMessage.depth = fromGuiMessage.depth;
+            toDriverMessage.roll = fromGuiMessage.roll;
+            toDriverMessage.pitch = fromGuiMessage.pitch;
+            toDriverMessage.yaw = fromGuiMessage.yaw;
+            for (int i = 0; i < DevAmount; i++) {
+                toDriverMessage.dev[i] = fromGuiMessage.dev[i];
+
+            std::vector<uint8_t> output_vector = toDriverMessage.formVector();
+            }
+        case //from SC
+            fromConfigMessage.parseVector(gui_vector);
+
+            toConfigMessage.flags = fromConfigMessage.flags;
+            toConfigMessage.contour = fromConfigMessage.contour;
+
+            toConfigMessage.march = fromConfigMessage.march;
+            toConfigMessage.lag = fromConfigMessage.lag;
+            toConfigMessage.depth = fromConfigMessage.depth;
+            toConfigMessage.roll = fromConfigMessage.roll;
+            toConfigMessage.pitch = fromConfigMessage.pitch;
+            toConfigMessage.yaw = fromConfigMessage.yaw;
+            
+            toConfigMessage.pJoyUnitCast = fromConfigMessage.pJoyUnitCast;
+            toConfigMessage.pSpeedDyn = fromConfigMessage.pSpeedDyn;
+            toConfigMessage.pErrGain = fromConfigMessage.pErrGain;
+
+            toConfigMessage.posFilterT = fromConfigMessage.posFilterT;
+            toConfigMessage.posFilterK = fromConfigMessage.posFilterK;
+            toConfigMessage.speedFilterT = fromConfigMessage.speedFilterT;
+            toConfigMessage.speedFilterK = fromConfigMessage.speedFilterK;
+
+            toConfigMessage.pid_pGain = fromConfigMessage.pid_pGain;
+            toConfigMessage.pid_iGain = fromConfigMessage.pid_iGain;
+            toConfigMessage.pid_iMax = fromConfigMessage.pid_iMax;
+            toConfigMessage.pid_iMin = fromConfigMessage.pid_iMin;
+            
+            toConfigMessage.pThrustersMin = fromConfigMessage.pThrustersMin;
+            toConfigMessage.pThrustersMax = fromConfigMessage.pThrustersMax;
+
+            std::vector<uint8_t> output_vector = toConfigMessage.formVector();
+    }
     toDriverMessageContainer.data.clear();
-    for (int i = 0; i < ToDriverMessage::length; i++) {
-        toDriverMessageContainer.data.push_back(output_vector[i]);
+    for (auto msg : output_vector) {
+        toDriverMessageContainer.data.push_back(msg);
     }
     // Publish messages
     toDriverMessagePublisher->publish(toDriverMessageContainer);
