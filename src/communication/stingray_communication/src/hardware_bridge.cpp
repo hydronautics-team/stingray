@@ -35,8 +35,8 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge") {
         ros_config["services"]["updown"], std::bind(&HardwareBridge::deviceActionCallback, this, std::placeholders::_1, std::placeholders::_2));
     // Output message container
     outputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-    outputMessage.layout.dim[0].size = ToDriverMessage::length;
-    outputMessage.layout.dim[0].stride = ToDriverMessage::length;
+    outputMessage.layout.dim[0].size = RequestNormalMessage::length;
+    outputMessage.layout.dim[0].stride = RequestNormalMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     // Initializing timer for publishing messages. Callback interval: 0.05 ms
     this->publishingTimer = this->create_wall_timer(50ms, std::bind(&HardwareBridge::timerCallback, this));
@@ -44,10 +44,10 @@ HardwareBridge::HardwareBridge() : Node("HardwareBridge") {
 
 void HardwareBridge::inputMessage_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     std::vector<uint8_t> received_vector;
-    for (int i = 0; i < FromDriverMessage::length; i++) {
+    for (int i = 0; i < ResponseNormalMessage::length; i++) {
         received_vector.push_back(msg.data[i]);
     }
-    bool ok = responseMessage.parseVector(received_vector);
+    bool ok = responseMessage.deserialize(received_vector);
     if (ok) {
         depthMessage.data = responseMessage.depth;  // Convert metres to centimetres
         RCLCPP_INFO(this->get_logger(), "Received depth: %f", responseMessage.depth);
@@ -107,7 +107,7 @@ void HardwareBridge::depthCallback(const std::shared_ptr<stingray_communication_
 void HardwareBridge::imuCallback(const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
                                  std::shared_ptr<std_srvs::srv::SetBool::Response> response) {
     RCLCPP_INFO(this->get_logger(), "Hardware bridge: Setting SHORE_STABILIZE_IMU_BIT to %d", request->data);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_IMU_BIT, request->data);
+    requestMessage.setStabilizationState(SHORE_STABILIZE_IMU_BIT, request->data);
 
     isReady = true;
     response->success = true;
@@ -125,13 +125,13 @@ void HardwareBridge::stabilizationCallback(const std::shared_ptr<stingray_commun
     // RCLCPP_INFO(this->get_logger(), "Hardware bridge: Setting initial depth: %f", currentDepth);
 
     RCLCPP_INFO(this->get_logger(), "Setting depth stabilization %d", request->depth_stabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_DEPTH_BIT, request->depth_stabilization);
+    requestMessage.setStabilizationState(SHORE_STABILIZE_DEPTH_BIT, request->depth_stabilization);
     RCLCPP_INFO(this->get_logger(), "Setting pitch stabilization %d", request->pitch_stabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_PITCH_BIT, request->pitch_stabilization);
+    requestMessage.setStabilizationState(SHORE_STABILIZE_PITCH_BIT, request->pitch_stabilization);
     RCLCPP_INFO(this->get_logger(), "Setting yaw stabilization %d", request->yaw_stabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_YAW_BIT, request->yaw_stabilization);
+    requestMessage.setStabilizationState(SHORE_STABILIZE_YAW_BIT, request->yaw_stabilization);
     RCLCPP_INFO(this->get_logger(), "Setting lag stabilization %d", request->lag_stabilization);
-    setStabilizationState(requestMessage, SHORE_STABILIZE_LAG_BIT, request->lag_stabilization);
+    requestMessage.setStabilizationState(SHORE_STABILIZE_LAG_BIT, request->lag_stabilization);
     depthStabilizationEnabled = request->depth_stabilization;
     pitchStabilizationEnabled = request->pitch_stabilization;
     yawStabilizationEnabled = request->yaw_stabilization;
@@ -157,9 +157,10 @@ void HardwareBridge::timerCallback() {
     RCLCPP_INFO(this->get_logger(), "Timer callback");
     if (isReady) {
         // Make output message
-        std::vector<uint8_t> output_vector = requestMessage.formVector();
+        std::vector<uint8_t> output_vector;
+        requestMessage.serialize(output_vector);
         outputMessage.data.clear();
-        for (int i = 0; i < ToDriverMessage::length; i++) {
+        for (int i = 0; i < RequestNormalMessage::length; i++) {
             outputMessage.data.push_back(output_vector[i]);
         }
         // Publish messages

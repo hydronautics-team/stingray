@@ -12,41 +12,17 @@ GuiBridgeSender::GuiBridgeSender(boost::asio::io_service &io_service) : Node("Gu
                 com_config["bridges"]["gui"]["send_to_ip"].get<std::string>().c_str(), com_config["bridges"]["gui"]["send_to_port"].get<int>());
 
     // ROS subscribers
-    this->fromDriverMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
+    this->responseMessageSubscriber = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
         ros_config["topics"]["from_driver_parcel"], 1000, std::bind(&GuiBridgeSender::from_driver_callback, this, std::placeholders::_1));
-
-    this->publishingTimer = this->create_wall_timer(1s, std::bind(&GuiBridgeSender::timerCallback, this));
 }
 
 GuiBridgeSender::~GuiBridgeSender() { _send_socket.close(); }
 
 void GuiBridgeSender::from_driver_callback(const std_msgs::msg::UInt8MultiArray &msg) {
-    std::vector<uint8_t> received_vector;
-    for (int i = 0; i < FromDriverMessage::length; i++) {
-        received_vector.push_back(msg.data[i]);
-    }
-    bool ok = fromDriverMessage.parseVector(received_vector);
     RCLCPP_INFO(this->get_logger(), "Received from driver");
 
-    if (ok) {
-        toGuiMessage.roll = fromDriverMessage.roll;
-        toGuiMessage.pitch = fromDriverMessage.pitch;
-        toGuiMessage.yaw = fromDriverMessage.yaw;
-        toGuiMessage.depth = fromDriverMessage.depth;
-        toGuiMessage.rollSpeed = fromDriverMessage.rollSpeed;
-        toGuiMessage.pitchSpeed = fromDriverMessage.pitchSpeed;
-        toGuiMessage.yawSpeed = fromDriverMessage.yawSpeed;
-
-        boost::system::error_code err;
-        _send_socket.send_to(boost::asio::buffer(toGuiMessage.formVector()), _send_endpoint, 0, err);
-        RCLCPP_INFO(this->get_logger(), "Sent to gui %s", err.message().c_str());
-    } else
-        RCLCPP_WARN(this->get_logger(), "Receive from driver: wrong checksum");
-}
-
-void GuiBridgeSender::timerCallback() {
     boost::system::error_code err;
-    _send_socket.send_to(boost::asio::buffer(toGuiMessage.formVector()), _send_endpoint, 0, err);
+    _send_socket.send_to(boost::asio::buffer(msg.data), _send_endpoint, 0, err);
     RCLCPP_INFO(this->get_logger(), "Sent to gui %s", err.message().c_str());
 }
 
@@ -56,7 +32,7 @@ GuiBridgeReceiver::GuiBridgeReceiver(boost::asio::io_service &io_service)
     com_config = json::parse(std::ifstream("resources/configs/communication.json"));
 
     // ROS publishers
-    this->toDriverMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["to_driver_parcel"], 1000);
+    this->requestMessagePublisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>(ros_config["topics"]["to_driver_parcel"], 1000);
 
     // UDP receiver
     _receive_socket.open(udp::v4());
@@ -77,65 +53,13 @@ void GuiBridgeReceiver::from_gui_callback(const boost::system::error_code &error
     }
     RCLCPP_INFO(this->get_logger(), "Received from gui %ld", bytes_transferred);
 
-    std::vector<uint8_t> gui_vector;
-    for (auto msg : from_gui_buffer) {
-        gui_vector.push_back(msg);
+    requestMessageContainer.data.clear();
+    for (auto msg : request_buffer) {
+        requestMessageContainer.data.push_back(msg);
     }
 
-    switch (gui_vector.front()) {
-        case //from gui:
-            fromGuiMessage.parseVector(gui_vector);
-
-            toDriverMessage.flags = fromGuiMessage.flags;
-            toDriverMessage.march = fromGuiMessage.march;
-            toDriverMessage.lag = fromGuiMessage.lag;
-            toDriverMessage.depth = fromGuiMessage.depth;
-            toDriverMessage.roll = fromGuiMessage.roll;
-            toDriverMessage.pitch = fromGuiMessage.pitch;
-            toDriverMessage.yaw = fromGuiMessage.yaw;
-            for (int i = 0; i < DevAmount; i++) {
-                toDriverMessage.dev[i] = fromGuiMessage.dev[i];
-
-            std::vector<uint8_t> output_vector = toDriverMessage.formVector();
-            }
-        case //from SC
-            fromConfigMessage.parseVector(gui_vector);
-
-            toConfigMessage.flags = fromConfigMessage.flags;
-            toConfigMessage.contour = fromConfigMessage.contour;
-
-            toConfigMessage.march = fromConfigMessage.march;
-            toConfigMessage.lag = fromConfigMessage.lag;
-            toConfigMessage.depth = fromConfigMessage.depth;
-            toConfigMessage.roll = fromConfigMessage.roll;
-            toConfigMessage.pitch = fromConfigMessage.pitch;
-            toConfigMessage.yaw = fromConfigMessage.yaw;
-            
-            toConfigMessage.pJoyUnitCast = fromConfigMessage.pJoyUnitCast;
-            toConfigMessage.pSpeedDyn = fromConfigMessage.pSpeedDyn;
-            toConfigMessage.pErrGain = fromConfigMessage.pErrGain;
-
-            toConfigMessage.posFilterT = fromConfigMessage.posFilterT;
-            toConfigMessage.posFilterK = fromConfigMessage.posFilterK;
-            toConfigMessage.speedFilterT = fromConfigMessage.speedFilterT;
-            toConfigMessage.speedFilterK = fromConfigMessage.speedFilterK;
-
-            toConfigMessage.pid_pGain = fromConfigMessage.pid_pGain;
-            toConfigMessage.pid_iGain = fromConfigMessage.pid_iGain;
-            toConfigMessage.pid_iMax = fromConfigMessage.pid_iMax;
-            toConfigMessage.pid_iMin = fromConfigMessage.pid_iMin;
-            
-            toConfigMessage.pThrustersMin = fromConfigMessage.pThrustersMin;
-            toConfigMessage.pThrustersMax = fromConfigMessage.pThrustersMax;
-
-            std::vector<uint8_t> output_vector = toConfigMessage.formVector();
-    }
-    toDriverMessageContainer.data.clear();
-    for (auto msg : output_vector) {
-        toDriverMessageContainer.data.push_back(msg);
-    }
     // Publish messages
-    toDriverMessagePublisher->publish(toDriverMessageContainer);
+    requestMessagePublisher->publish(requestMessageContainer);
     RCLCPP_INFO(this->get_logger(), "Udp publishing to driver ...");
     try_receive();
 }
@@ -144,7 +68,7 @@ void GuiBridgeReceiver::try_receive() {
     RCLCPP_INFO(this->get_logger(), "Trying to receive from gui...");
     // std::this_thread::sleep_for(std::chrono::milliseconds(500));
     _receive_socket.async_receive_from(
-        boost::asio::buffer(from_gui_buffer), _receive_endpoint,
+        boost::asio::buffer(request_buffer), _receive_endpoint,
         boost::bind(&GuiBridgeReceiver::from_gui_callback, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 }
 

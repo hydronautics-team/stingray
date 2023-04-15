@@ -21,7 +21,8 @@
 #include "stingray_communication_msgs/srv/set_int16.hpp"
 #include "stingray_communication_msgs/srv/set_device_action.hpp"
 #include "stingray_communication_msgs/srv/set_stabilization.hpp"
-#include "messages/messages.h"
+#include "messages/common.h"
+#include "messages/normal.h"
 #include "stingray_utils/json.hpp"
 
 using json = nlohmann::json;
@@ -67,8 +68,8 @@ private:
     std_msgs::msg::UInt8MultiArray outputMessage; // Hardware bridge -> Protocol_bridge
     std_msgs::msg::Float64 depthMessage;
     std_msgs::msg::Float64 yawMessage;
-    ToDriverMessage requestMessage;
-    FromDriverMessage responseMessage;
+    RequestNormalMessage requestMessage;
+    ResponseNormalMessage responseMessage;
     // Other
     rclcpp::TimerBase::SharedPtr publishingTimer; // Timer for publishing messages
 
