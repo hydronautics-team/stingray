@@ -12,35 +12,6 @@
 #define UNUSED(x) (void)(x)
 using json = nlohmann::json;
 
-// TODO: move all const to config
-
-/** Bits to initialize stabilization
- */
-#define SHORE_STABILIZE_DEPTH_BIT 0
-#define SHORE_STABILIZE_ROLL_BIT 1
-#define SHORE_STABILIZE_PITCH_BIT 2
-#define SHORE_STABILIZE_YAW_BIT 3
-#define SHORE_STABILIZE_LAG_BIT 4
-#define SHORE_STABILIZE_MARCH_BIT 5
-#define SHORE_STABILIZE_IMU_BIT 6
-#define SHORE_STABILIZE_SAVE_BIT 7
-
-
-/// Number of the propellers
-static const uint8_t VmaAmount = 8;
-/// Number of the control constants
-static const uint8_t ControlAmount = 7;
-/// Number of the devs
-static const uint8_t DevAmount = 6;
-
-/** Enumerator for constants in the automatic control system
- */
-enum ControlConstantNames { CONTROL_K1 = 0, CONTROL_K2, CONTROL_K3, CONTROL_K4, CONTROL_IBORDERS, CONTROL_PGAIN, CONTROL_IGAIN };
-
-/** Enumerator for devs names
- */
-enum DevNames { DEV_LIGHT = 0, DEV_TILT, DEV_GRAB, DEV_GRAB_ROTATE, DEV_ADDITIONAL_1, DEV_ADDITIONAL_2 };
-
 /** Abstract class for all messages
  */
 struct AbstractMessage {
