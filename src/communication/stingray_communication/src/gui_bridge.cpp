@@ -21,6 +21,9 @@ GuiBridgeSender::~GuiBridgeSender() { _send_socket.close(); }
 void GuiBridgeSender::from_driver_callback(const std_msgs::msg::UInt8MultiArray &msg) {
     RCLCPP_INFO(this->get_logger(), "Received from driver");
 
+    std::string str(msg.data.begin(), msg.data.end());
+    RCLCPP_INFO(this->get_logger(), "Received from driver %s", str.c_str());
+
     boost::system::error_code err;
     _send_socket.send_to(boost::asio::buffer(msg.data), _send_endpoint, 0, err);
     RCLCPP_INFO(this->get_logger(), "Sent to gui %s", err.message().c_str());
@@ -51,6 +54,9 @@ void GuiBridgeReceiver::from_gui_callback(const boost::system::error_code &error
         RCLCPP_ERROR(this->get_logger(), "Receive failed: %s", error.message().c_str());
         return;
     }
+    std::string str(request_buffer.begin(), request_buffer.end());
+    RCLCPP_INFO(this->get_logger(), "Received from gui %s", str.c_str());
+
     RCLCPP_INFO(this->get_logger(), "Received from gui %ld", bytes_transferred);
 
     requestMessageContainer.data.clear();
