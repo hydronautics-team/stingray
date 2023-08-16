@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include "uart_driver.h"
+#include "messages/normal.h"
 
 UartDriver::UartDriver() : Node("UartDriver")
 {
@@ -22,14 +23,14 @@ UartDriver::UartDriver() : Node("UartDriver")
                                                                                            this, _1));
     // Input message container
     inputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-    inputMessage.layout.dim[0].size = ToDriverMessage::length;
-    inputMessage.layout.dim[0].stride = ToDriverMessage::length;
+    inputMessage.layout.dim[0].size = RequestNormalMessage::length;
+    inputMessage.layout.dim[0].stride = RequestNormalMessage::length;
     inputMessage.layout.dim[0].label = "inputMessage";
     inputMessage.data = {0};
     // Outnput message container
     outputMessage.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-    outputMessage.layout.dim[0].size = FromDriverMessage::length;
-    outputMessage.layout.dim[0].stride = FromDriverMessage::length;
+    outputMessage.layout.dim[0].size = ResponseNormalMessage::length;
+    outputMessage.layout.dim[0].stride = ResponseNormalMessage::length;
     outputMessage.layout.dim[0].label = "outputMessage";
     outputMessage.data = {0};
 }
@@ -108,7 +109,7 @@ void UartDriver::portInitialize()
 bool UartDriver::sendData()
 {
     std::vector<uint8_t> msg;
-    for (int i = 0; i < ToDriverMessage::length; i++)
+    for (int i = 0; i < RequestNormalMessage::length; i++)
         msg.push_back(inputMessage.data[i]);
     size_t toWrite = sizeof(uint8_t) * msg.size();
     try
@@ -126,26 +127,29 @@ bool UartDriver::sendData()
 
 bool UartDriver::receiveData()
 {
-    if (port.available() < FromDriverMessage::length)
+    if (port.available() < ResponseNormalMessage::length)
         return false;
     std::vector<uint8_t> answer;
-    port.read(answer, FromDriverMessage::length);
+    port.read(answer, ResponseNormalMessage::length);
     outputMessage.data.clear();
-    for (int i = 0; i < FromDriverMessage::length; i++)
+    for (int i = 0; i < ResponseNormalMessage::length; i++)
         outputMessage.data.push_back(answer[i]);
     RCLCPP_DEBUG(this->get_logger(), "RECEIVE FROM STM");
 
     return true;
 }
 
-/** @brief Parse string bitwise correctly into FromDriverMessage and check 16bit checksum.
+/** @brief Parse string bitwise correctly into ResponseNormalMessage and check 16bit checksum.
  *
  * @param[in]  &input String to parse.
  */
 void UartDriver::inputMessage_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg)
 {
     inputMessage.data.clear();
-    for (int i = 0; i < ToDriverMessage::length; i++)
+    for (auto copy : msg->data) {
+        inputMessage.data.push_back(copy);
+    }
+    for (int i = 0; i < RequestNormalMessage::length; i++)
         inputMessage.data.push_back(msg->data[i]);
     try
     {

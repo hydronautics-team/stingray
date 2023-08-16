@@ -8,7 +8,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "messages/messages.h"
 #include "stingray_utils/json.hpp"
 
 using json = nlohmann::json;

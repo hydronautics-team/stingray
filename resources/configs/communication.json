@@ -17,5 +17,39 @@
             "receive_from_port": 5000
         },
         "hardware_bridge": {}
+    },
+    "constant": {
+        "shore_stabilize": {
+            "depth_bit": 0,
+            "roll_bit": 1,
+            "pitch_bit": 2,
+            "yaw_bit": 3,
+            "lag_bit": 4,
+            "march_bit": 5,
+            "imu_bit": 6,
+            "save_bit": 7
+        },
+        "amount": {
+            "vma": 8,
+            "control": 7,
+            "dev": 6
+        },
+        "ControlConstantNames": {
+            "k1": 0,
+            "k2": 1,
+            "k3": 2,
+            "k4": 3,
+            "iborders": 4,
+            "pgain": 5,
+            "igain": 6
+        },
+        "DevNames": {
+            "light": 0,
+            "tilt": 1,
+            "grab": 2,
+            "grab_rotate": 3,
+            "additional_1": 4,
+            "additional_2": 5
+        }
     }
 }

@@ -12,7 +12,6 @@
 #include <thread>
 #include <vector>
 
-#include "messages/messages.h"
 #include "std_msgs/msg/string.hpp"
 #include "stingray_utils/json.hpp"
 
@@ -29,14 +28,9 @@ class GuiBridgeSender : public rclcpp::Node {
 
    private:
     void from_driver_callback(const std_msgs::msg::UInt8MultiArray &msg);
-    void timerCallback();
 
     // ROS subscribers
-    rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr fromDriverMessageSubscriber;
-
-    // Message containers
-    FromDriverMessage fromDriverMessage;
-    ToGuiMessage toGuiMessage;
+    rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr responseMessageSubscriber;
 
     // get json config
     json ros_config;
@@ -46,8 +40,6 @@ class GuiBridgeSender : public rclcpp::Node {
     boost::asio::io_service &_io_service;
     udp::endpoint _send_endpoint;
     udp::socket _send_socket;
-
-    rclcpp::TimerBase::SharedPtr publishingTimer;  // Timer for publishing messages
 };
 
 class GuiBridgeReceiver : public rclcpp::Node {
@@ -60,12 +52,10 @@ class GuiBridgeReceiver : public rclcpp::Node {
     void from_gui_callback(const boost::system::error_code &error, size_t bytes_transferred);
 
     // ROS publishers
-    rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr toDriverMessagePublisher;
+    rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr requestMessagePublisher;
 
     // Message containers
-    std_msgs::msg::UInt8MultiArray toDriverMessageContainer;
-    ToDriverMessage toDriverMessage;
-    FromGuiMessage fromGuiMessage;
+    std_msgs::msg::UInt8MultiArray requestMessageContainer;
 
     // get json config
     json ros_config;
@@ -75,7 +65,7 @@ class GuiBridgeReceiver : public rclcpp::Node {
     boost::asio::io_service &_io_service;
     udp::endpoint _receive_endpoint;
     udp::socket _receive_socket;
-    boost::array<uint8_t, 1024> from_gui_buffer;
+    boost::array<uint8_t, 1024> request_buffer;
 };
 
 #endif  // STINGRAY_COMMUNICATION_GUI_BRIDGE

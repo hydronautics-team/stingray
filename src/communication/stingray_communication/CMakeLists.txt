@@ -27,22 +27,43 @@ include_directories(
 add_executable(uart_driver
         src/uart_driver.cpp
         include/uart_driver.h
-        src/messages/messages.cpp
-        include/messages/messages.h)
+        src/messages/common.cpp
+        src/messages/config.cpp
+        src/messages/direct.cpp
+        src/messages/normal.cpp
+        include/messages/common.h
+        include/messages/config.h
+        include/messages/direct.h
+        include/messages/normal.h
+        )
 ament_target_dependencies(uart_driver rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
 add_executable(hardware_bridge
         src/hardware_bridge.cpp
         include/hardware_bridge.h
-        src/messages/messages.cpp
-        include/messages/messages.h)
+        src/messages/common.cpp
+        src/messages/config.cpp
+        src/messages/direct.cpp
+        src/messages/normal.cpp
+        include/messages/common.h
+        include/messages/config.h
+        include/messages/direct.h
+        include/messages/normal.h
+        )
 ament_target_dependencies(hardware_bridge rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
 add_executable(gui_bridge
         src/gui_bridge.cpp
         include/gui_bridge.h
-        src/messages/messages.cpp
-        include/messages/messages.h)
+        src/messages/common.cpp
+        src/messages/config.cpp
+        src/messages/direct.cpp
+        src/messages/normal.cpp
+        include/messages/common.h
+        include/messages/config.h
+        include/messages/direct.h
+        include/messages/normal.h
+        )
 ament_target_dependencies(gui_bridge Boost rclcpp std_msgs std_srvs serial stingray_communication_msgs stingray_utils)
 
 install(TARGETS
