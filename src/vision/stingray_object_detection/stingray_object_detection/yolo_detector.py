@@ -92,8 +92,8 @@ class YoloDetector(Node):
         # init SORT tracker
         self.tracker = Tracker(tracker_max_age, tracker_min_hits, tracker_iou_threshold)
 
-        set_enable_object_detection_service = rospy.Service(
-            self.ros_config['services']['set_enable_object_detection'], SetEnableObjectDetection, self.set_enable_object_detection)
+        set_enable_object_detection_service = self.create_service(
+            SetEnableObjectDetection, self.ros_config['services']['set_enable_object_detection'], self.set_enable_object_detection)
 
         self.detection_enabled = {}
         self.objects_array_publishers = {}
@@ -108,7 +108,7 @@ class YoloDetector(Node):
 
             # ROS Topic names
             objects_array_topic = get_objects_topic(input_topic)
-            rospy.loginfo("Node: {}, input topic: {}, output objects topic: {}".format(
+            Node.get_logger().info("Node: {}, input topic: {}, output objects topic: {}".format(
                 node_name, input_topic, objects_array_topic))
 
             # ROS subscribers
