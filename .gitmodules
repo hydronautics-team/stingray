@@ -1,6 +1,3 @@
-[submodule "src/vision/stingray_object_detection/yolov5"]
-	path = src/vision/stingray_object_detection/yolov5
-	url = git@github.com:hydronautics-team/yolov5.git
-[submodule "src/communication/serial"]
-	path = src/communication/serial
-	url = https://github.com/jinmenglei/serial.git
+[submodule "src/stingray_missions"]
+	path = src/stingray_missions
+	url = git@github.com:hydronautics-team/stingray_missions.git
