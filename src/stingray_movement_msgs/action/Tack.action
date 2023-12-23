@@ -1,0 +1,24 @@
+#Goal
+
+uint8 DIRECTION_RIGHT = 1
+uint8 DIRECTION_LEFT = 2
+
+float64 VELOCITY_BY_DEFAULT = 0.5
+
+uint8 number
+uint8 direction
+uint32 lenght
+uint32 width
+float64 velocity
+
+---
+
+#Result
+
+uint8 number
+
+---
+
+#Feedback
+
+uint8 currentNumber
