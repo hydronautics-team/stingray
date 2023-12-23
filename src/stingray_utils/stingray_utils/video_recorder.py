@@ -1,9 +1,5 @@
-<<<<<<<< HEAD:src/utils/stingray_utils/stingray_utils/video_recorder.py
-========
 #!/usr/bin/env python3
 
-from __future__ import print_function
->>>>>>>> origin/master:src/utils/stingray_video_recorder/scripts/video_recorder.py
 import cv2
 import numpy as np
 import datetime
@@ -150,15 +146,9 @@ class VideoRecorder:
         self.node.get_logger().info("[ros-video-recorder] Video Saved. path={}".format(self.output_path))
         self.end_time = time.time()
 
-
-<<<<<<<< HEAD:src/utils/stingray_utils/stingray_utils/video_recorder.py
 def main(*args, **kwargs):
     rclpy.init()
-    node = VideoRecorderNode("stingray_recorder")
-========
-if __name__ == '__main__':
-    rospy.init_node('stingray_video_recorder', anonymous=True)
->>>>>>>> origin/master:src/utils/stingray_video_recorder/scripts/video_recorder.py
+    node = VideoRecorderNode("stingray_video_recorder")
 
     # parameters
     source_topic = node.get_parameter('source_topic').value
