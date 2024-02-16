@@ -1,0 +1,35 @@
+name: SearchVision
+initial_state: ROTATE_CLOCK
+states:
+  ROTATE_CLOCK:
+    transition_event: 
+      type: TopicEvent
+      topic_name: gate_clock
+      data: "gate"
+      count: 2
+      trigger: ok
+    expire_time: 5
+    action: 
+      type: SimpleMove
+      # (surge, sway, depth)
+      linear: (0, 0, 0)
+      # (roll, pitch, yaw)
+      rotation: (0, 0, 15)
+  ROTATE_ANTICLOCK:
+    transition_event: 
+      type: TopicEvent
+      topic_name: gate_anticlock
+      data: "gate_anticlock"
+      count: 2
+      trigger: ok
+    expire_time: 5
+    action: 
+      type: SimpleMove
+      # (surge, sway, depth)
+      linear: (0, 0, 0)
+      # (roll, pitch, yaw)
+      rotation: (0, 0, 15)
+transitions:
+  - { trigger: ok, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: SUCCESS }
+  - { trigger: timeout, source: ROTATE_CLOCK, dest: ROTATE_ANTICLOCK }
+  - { trigger: timeout, source: ROTATE_ANTICLOCK, dest: FAILURE }

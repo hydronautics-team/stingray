@@ -1,0 +1,16 @@
+name: Test
+initial_state: INIT
+states:
+  INIT:
+    inherits: INIT
+  SEARCH_VISION:
+    inherits: SEARCH_VISION
+  SEARCH_VISION_2:
+    inherits: SEARCH_VISION
+transitions:
+  - { trigger: ok, source: INIT, dest: SEARCH_VISION }
+  - { trigger: ok, source: SEARCH_VISION, dest: SEARCH_VISION_2 }
+  - { trigger: ok, source: SEARCH_VISION_2, dest: SUCCESS }
+  - { trigger: timeout, source: SEARCH_VISION, dest: SEARCH_VISION_2 }
+  - { trigger: timeout, source: [INIT, SEARCH_VISION_2], dest: FAILURE }
+  - { trigger: fail, source: "*", dest: FAILURE }
