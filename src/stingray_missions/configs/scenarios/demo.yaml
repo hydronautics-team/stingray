@@ -7,7 +7,6 @@ missions:
     config_name: search_vision
     package_name: stingray_missions
 transitions:
-  - { trigger: ok, source: INIT, dest: SEARCH_VISION }
-  - { trigger: ok, source: SEARCH_VISION, dest: SUCCESS }
-  - { trigger: timeout, source: [INIT, SEARCH_VISION], dest: FAILED }
-  - { trigger: failed, source: [INIT, SEARCH_VISION], dest: FAILED }
+  - { source: INIT, outcome: SUCCESS, dest: SEARCH_VISION }
+  - { source: SEARCH_VISION, outcome: SUCCESS, dest: SUCCESS }
+  - { source: [INIT, SEARCH_VISION], outcome: FAILED, dest: FAILED }

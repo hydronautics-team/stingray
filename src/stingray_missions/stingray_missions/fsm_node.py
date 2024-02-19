@@ -16,6 +16,7 @@ async def ros_loop(node: Node):
 async def fsm_loop(node: Node, fsm: FSM):
     """FSM loop"""
     fsm.load_scenarios_from_packages(package_names=node.get_parameter('package_names').get_parameter_value().string_array_value)
+    # fsm.draw()
     # trigger transition service
     while rclpy.ok():
         await fsm.process_pending_transition()
