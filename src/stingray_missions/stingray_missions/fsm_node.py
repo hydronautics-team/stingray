@@ -3,7 +3,7 @@ import asyncio
 import rclpy
 from rclpy.node import Node
 
-from stingray_missions.fsm import FSM, load_scenario
+from stingray_missions.fsm import FSM
 
 
 async def ros_loop(node: Node):
@@ -13,13 +13,12 @@ async def ros_loop(node: Node):
         await asyncio.sleep(0.1)
 
 
-async def fsm_loop(fsm: FSM):
+async def fsm_loop(node: Node, fsm: FSM):
     """FSM loop"""
-    fsm.initialize(scenario=load_scenario("demo.yaml"))
-    # await fsm.to_IDLE()
+    fsm.load_scenarios_from_packages(package_names=node.get_parameter('package_names').get_parameter_value().string_array_value)
     # trigger transition service
     while rclpy.ok():
-        # await fsm.process_pending_transition()
+        await fsm.process_pending_transition()
         await asyncio.sleep(0.1)
 
 
@@ -35,11 +34,11 @@ def main():
     rclpy.init()
 
     node = rclpy.create_node('stingray_missions')
-    node.declare_parameter("package_name", "stingray_missions")
+    node.declare_parameter(name="package_names", value=["stingray_missions"])
     fsm = FSM(node=node)
     event_loop = asyncio.get_event_loop()
     future = asyncio.wait(
-        [ros_loop(node), fsm_loop(fsm)], return_when=asyncio.FIRST_EXCEPTION
+        [ros_loop(node), fsm_loop(node, fsm)], return_when=asyncio.FIRST_EXCEPTION
     )
     done, _pending = event_loop.run_until_complete(future)
     for task in done:

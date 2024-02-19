@@ -21,10 +21,11 @@ def load_yaml(config_path: str, package_name: str) -> dict:
 
 class AbstractConfig():
     def __init__(self,
-                 name: str
+                 config_name: str,
+                 package_name: str
                  ):
-        self._name = name
-        self._config_items = load_yaml(config_name=name)
+        self._name = config_name
+        self._config_items = load_yaml(config_path=f'configs/{config_name}', package_name=package_name)
         for k, v in self._config_items.items():
             setattr(self, k, v)
 
@@ -37,11 +38,11 @@ class StingrayConfig():
     ros: AbstractConfig
 
     def __init__(self):
-        StingrayConfig.robot = AbstractConfig(name='robot.yaml')
-        StingrayConfig.ros = AbstractConfig(name='ros.yaml')
+        # StingrayConfig.robot = AbstractConfig(config_name='robot.yaml')
+        StingrayConfig.ros = AbstractConfig(config_name='ros.yaml', package_name='stingray_utils')
 
     def __repr__(self) -> str:
         return f'robot: {StingrayConfig.robot}, ros: {StingrayConfig.ros}'
 
 
-# StingrayConfig()
+StingrayConfig()

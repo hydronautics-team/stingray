@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+from glob import glob
+
 
 package_name = 'stingray_utils'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (f'share/{package_name}/configs', glob('configs/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
