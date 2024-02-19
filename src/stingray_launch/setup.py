@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'stingray_missions'
+package_name = 'stingray_launch'
 
 setup(
     name=package_name,
@@ -12,8 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (f'share/{package_name}/configs/missions', glob('configs/missions/*.yaml')),
-        (f'share/{package_name}/configs/scenarios', glob('configs/scenarios/*.yaml')),
+        (os.path.join('share', package_name), glob('launch/*.launch.py'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,7 +23,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'fsm_node = stingray_missions.fsm_node:main',
         ],
     },
 )

@@ -1,4 +1,3 @@
-name: SearchVision
 initial_state: ROTATE_CLOCK
 states:
   ROTATE_CLOCK:

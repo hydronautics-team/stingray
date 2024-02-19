@@ -1,11 +1,11 @@
 initial_mission: INIT
 missions:
   INIT:
-    config: init
-    package: stingray_missions
+    config_name: init
+    package_name: stingray_missions
   SEARCH_VISION:
-    config: search_vision
-    package: stingray_missions
+    config_name: search_vision
+    package_name: stingray_missions
 transitions:
   - { trigger: ok, source: INIT, dest: SEARCH_VISION }
   - { trigger: ok, source: SEARCH_VISION, dest: SUCCESS }

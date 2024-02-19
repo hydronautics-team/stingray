@@ -1,9 +1,10 @@
 from transitions.extensions.asyncio import AsyncMachine
 import logging
 from rclpy.node import Node
+from pathlib import Path
 
-from stingray_missions.stingray_missions.events import TopicEvent
-from stingray_missions.utils import load_mission_config
+from stingray_missions.event import TopicEvent
+from stingray_utils.config import load_yaml
 
 
 logger = logging.getLogger(__name__)
@@ -17,8 +18,9 @@ class StateAction():
         """State class"""
         self.type = type
         self.action = action
-        self.kwargs = kwargs
-        logger.info(f"StateAction Unused kwargs: {kwargs}")
+        if kwargs:
+            logger.warning(f"{self.type} state action unused kwargs: {kwargs}")
+        logger.info(f"{self.type} state action desc loaded")
 
 
 class TransitionEvent():
@@ -29,21 +31,26 @@ class TransitionEvent():
         """State class"""
         self.type = type
         self.trigger = trigger
-        self.kwargs = kwargs
-        logger.info(f"TransitionEvent Unused kwargs: {kwargs}")
+        if kwargs:
+            logger.warning(f"{self.type} transition event unused kwargs: {kwargs}")
+        logger.info(f"{self.type} transition event desc loaded")
 
 
 class StateDescription():
     def __init__(self,
+                 name: str = "",
                  transition_event: dict = {},
                  timeout: float = 5,
                  action: dict = {},
                  **kwargs):
         """State class"""
+        self.name = name.upper()
         self.transition_event = TransitionEvent(**transition_event)
         self.timeout = timeout
         self.action = StateAction(**action)
-        logger.info(f"StateDescription Unused kwargs: {kwargs}")
+        if kwargs:
+            logger.warning(f"{self.name} state unused kwargs: {kwargs}")
+        logger.info(f"{self.name} state desc loaded")
 
 
 class MissionDescription:
@@ -51,38 +58,64 @@ class MissionDescription:
                  name: str = "",
                  initial_state: str = "",
                  states: dict[str, dict] = {},
+                 transitions: list[dict] = {},
                  **kwargs
                  ):
         """Mission class for executing a mission from a config file"""
-        self.name = name
+        self.name = name.upper()
         self.initial_state = initial_state
-        self.states = {k.upper(): StateDescription(**v)
-                       for k, v in states.items()}
-        logger.info(f"MissionDescription Unused kwargs: {kwargs}")
+        self.transitions = transitions
+        self.states = {self.custom_state_name(s_name): StateDescription(name=self.custom_state_name(s_name), **s_params)
+                       for s_name, s_params in states.items()}
+        if kwargs:
+            logger.warning(f"{self.name} mission unused kwargs: {kwargs}")
+        logger.info(f"{self.name} mission desc loaded")
+
+    def custom_state_name(self, name: str):
+        return f"{self.name}|{name}".upper()
 
 
 class ScenarioDescription:
     def __init__(self,
+                 name: str = "",
                  initial_mission: str = "",
                  missions: dict[str, dict] = {},
                  transitions: list[dict] = {},
                  **kwargs
                  ):
         """Mission class for executing a mission from a config file"""
-        self.initial_mission = initial_mission
-        self.transitions = []
-        self.missions = {mission_name.upper(): load_mission_config(**params)
-                         for mission_name, params in missions.items()}
-        for mission_name, params in missions.items():
-            mission = load_mission_config(**params)
+        self.name = name.upper()
+        self.transitions = transitions
+        self.missions = {self.custom_mission_name(m_name): load_mission(custom_name=self.custom_mission_name(m_name), **m_params)
+                         for m_name, m_params in missions.items()}
+        self.initial_mission = self.custom_mission_name(initial_mission)
 
-        logger.info(f"ScenarioDescription Unused kwargs: {kwargs}")
+        if kwargs:
+            logger.warning(f"{self.name} scenario unused kwargs: {kwargs}")
+        logger.info(f"{self.name} scenario desc loaded")
+
+    def custom_mission_name(self, name: str):
+        return f"{self.name}|{name}".upper()
+
+
+def load_mission(config_name: str, package_name="stingray_missions", custom_name: str = None) -> MissionDescription:
+    if custom_name is None:
+        custom_name = Path(config_name).stem
+    return MissionDescription(name=custom_name, **load_yaml(config_path=f'configs/missions/{config_name}', package_name=package_name))
+
+
+def load_scenario(config_name: str, package_name="stingray_missions", custom_name: str = None) -> ScenarioDescription:
+    if custom_name is None:
+        custom_name = Path(config_name).stem
+    return ScenarioDescription(name=custom_name, **load_yaml(config_path=f'configs/scenarios/{config_name}', package_name=package_name))
 
 
 class States:
+    ALL = '*'
     IDLE = 'IDLE'
     SUCCESS = 'SUCCESS'
     FAILED = 'FAILED'
+
 
 class Transitions:
     ok = 'ok'
@@ -92,23 +125,21 @@ class Transitions:
 
 
 class FSM(object):
-    def __init__(self, node: Node, mission_description: dict):
+    def __init__(self, node: Node):
         """Mission class for executing a mission from a config file"""
         self.node = node
-        self.desc = MissionDescription(**mission_description)
         self.events: dict[str, TopicEvent] = {}
         self.expiration_timer = None
 
-        self._setup_fsm(mission_description)
-        logger.info(f"Mission {self.desc.name} created")
+        logger.info(f"FSM created")
 
-    def _setup_fsm(self, scenario: ScenarioDescription):
+    def initialize(self, scenario: ScenarioDescription):
         """Registering the state machine from the config file"""
 
         states = [States.IDLE, States.SUCCESS, States.FAILED]
         transitions = [
-            [Transitions.abort, "*", States.FAILED],
-            [Transitions.reset, "*", States.IDLE],
+            [Transitions.abort, States.ALL, States.FAILED],
+            [Transitions.reset, States.ALL, States.IDLE],
             [Transitions.ok, States.IDLE, scenario.initial_state]]
 
         states += scenario["states"].keys()
@@ -119,7 +150,6 @@ class FSM(object):
             states=states,
             transitions=transitions,
             initial=States.IDLE,
-            # auto_transitions=False,
             after_state_change="execute_state",
             before_state_change="leave_state",
         )
