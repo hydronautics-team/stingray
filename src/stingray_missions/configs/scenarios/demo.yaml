@@ -1,4 +1,4 @@
-initial_mission: INIT
+initial: INIT
 missions:
   INIT:
     config_name: init

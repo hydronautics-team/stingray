@@ -1,4 +1,4 @@
-initial_state: ROTATE_CLOCK
+initial: ROTATE_CLOCK
 states:
   ROTATE_CLOCK:
     transition_event: 

@@ -75,23 +75,23 @@ class StateDescription():
 class MissionDescription:
     def __init__(self,
                  name: str = "",
-                 initial_state: str = "",
+                 initial: str = "",
                  states: dict[str, dict] = {},
-                 transitions: list[dict] = {},
+                 transitions: list[dict[str,str]] = {},
                  **kwargs
                  ):
         """Mission class for executing a mission from a config file"""
         self.name = name.upper()
-        self.initial_state = initial_state
-        self.transitions = transitions
-        self.states = {self.custom_state_name(s_name): StateDescription(name=self.custom_state_name(s_name), **s_params)
+        self.initial_state = self._custom_state_name(initial)
+        self.mission_transitions = transitions
+        self.states = {s_name: StateDescription(name=self._custom_state_name(s_name), **s_params)
                        for s_name, s_params in states.items()}
         if kwargs:
             get_logger("fsm").warning(
                 f"{self.name} mission unused kwargs: {kwargs}")
         get_logger("fsm").info(f"{self.name} mission desc loaded")
 
-    def custom_state_name(self, name: str):
+    def _custom_state_name(self, name: str):
         return f"{self.name}|{name}".upper()
 
     def __repr__(self) -> str:
@@ -100,48 +100,87 @@ class MissionDescription:
                 Mission: {self.name}
                     {states_print}
         """
+    
+    @property
+    def transitions(self) -> list[list[str, str, str]]:
+        transitions = []
+        for transition in self.mission_transitions:
+            trigger = transition['trigger']
+            source = transition['source']
+            dest = transition['dest']
+            if dest not in State.list:
+                dest = self._custom_state_name(dest)
+            transitions.append([trigger, source, dest])
+        return transitions
 
 
 class ScenarioDescription:
     def __init__(self,
                  name: str = "",
-                 initial_mission: str = "",
+                 initial: str = "",
                  missions: dict[str, dict] = {},
                  transitions: list[dict] = {},
                  **kwargs
                  ):
         """Mission class for executing a mission from a config file"""
         self.name = name.upper()
-        self.transitions = transitions
-        self.missions = {self.custom_mission_name(m_name): load_mission(custom_name=self.custom_mission_name(m_name), **m_params)
+        self.scenario_transitions = transitions
+        self.missions = {self._custom_mission_name(m_name): load_mission(custom_name=self._custom_mission_name(m_name), **m_params)
                          for m_name, m_params in missions.items()}
-        self.initial_mission = self.custom_mission_name(initial_mission)
+        self.initial_mission = self._custom_mission_name(initial)
 
         if kwargs:
             get_logger("fsm").warning(
                 f"{self.name} scenario unused kwargs: {kwargs}")
         get_logger("fsm").info(f"{self.name} scenario desc loaded")
 
-    def custom_mission_name(self, name: str):
+    def _custom_mission_name(self, name: str):
         return f"{self.name}|{name}".upper()
 
     def __repr__(self) -> str:
-        missions_print = "\n".join([f"{mission}" for mission in self.missions.values()])
+        missions_print = "\n".join([f"{mission}" for mission in self.missions])
 
         return f"""
         Scenario: {self.name}
             {missions_print}
         """
+    
+    @property
+    def initial_state(self) -> str:
+        return self.missions[self.initial_mission].initial_state
+    
+    @property
+    def states(self) -> list[str]:
+        """Return all states in the scenario"""
+        states = []
+        for mission in self.missions:
+            states.extend(mission.states)
+        return states
+    
+    @property
+    def transitions(self) -> list[list[str,str,str]]:
+        scenario_transitions = [
+            [self.name, scenario.initial, scenario.initial]
+        ]
+        for mission in self.missions:
+            mission_transitions = mission.transitions
+
+    
 
 
-class States:
+
+class State:
     ALL = "*"
     IDLE = "IDLE"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
+    @property
+    def list(self):
+        return [State.ALL, State.IDLE, State.SUCCESS, State.FAILED]
 
-class Transitions:
+
+class Transition:
     ok = "ok"
     abort = "abort"
     reset = "reset"
@@ -160,17 +199,17 @@ class FSM(object):
         self.events: dict[str, TopicEvent] = {}
         self.expiration_timer = None
 
-        states = [States.IDLE, States.SUCCESS, States.FAILED]
+        states = [State.IDLE, State.SUCCESS, State.FAILED]
         transitions = [
-            [Transitions.abort, States.ALL, States.FAILED],
-            [Transitions.reset, States.ALL, States.IDLE],
+            [Transition.abort, State.ALL, State.FAILED],
+            [Transition.reset, State.ALL, State.IDLE],
         ]
 
         self.machine = AsyncMachine(
             model=self,
             states=states,
             transitions=transitions,
-            initial=States.IDLE,
+            initial=State.IDLE,
             after_state_change="execute_state",
             before_state_change="leave_state",
         )
@@ -195,16 +234,18 @@ class FSM(object):
             pakage_path = get_package_share_directory(package_name)
             configs = Path(pakage_path, "configs/scenarios").glob("*.yaml")
             for config in configs:
-                self._register_scenario(load_scenario(
-                    config_name=config.name, package_name=package_name))
+                scenario = load_scenario(
+                    config_name=config.name, package_name=package_name)
+                self.machine.add_states(scenario.states)
+                scenario_transitions = [
+                    [scenario.name, State.IDLE, scenario.initial]
+                ] + scenario.transitions
+                self.machine.add_transitions(scenario_transitions)
+                # self._register_events(scenario.events)
+                get_logger("fsm").info(f"Registered scenario {scenario}")
+                get_logger("fsm").info(f"States: {self.machine.states}")
 
-    def _register_scenario(self, scenario: ScenarioDescription):
-        """Registering the scenario from the config file"""
-        get_logger("fsm").info(f"Register scenario {scenario}")
-
-        # self.machine.add_states(scenario.states)
-        # self.machine.add_transitions(scenario.transitions)
-        # self._register_events(scenario.events)
+    
 
     def _register_events(self, states: dict):
         for state, args in states.items():

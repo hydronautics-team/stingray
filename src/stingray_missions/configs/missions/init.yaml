@@ -1,4 +1,4 @@
-initial_state: THRUSTER_PRE_INIT_INDICATION
+initial: THRUSTER_PRE_INIT_INDICATION
 states:
   THRUSTER_PRE_INIT_INDICATION:
     action:
@@ -35,5 +35,4 @@ transitions:
       dest: THRUSTER_AFTER_IMU_INDICATION,
     }
   - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: SUCCESS }
-  - { trigger: failed, source: "*", dest: FAILED }
   - { trigger: timeout, source: "*", dest: FAILED }
