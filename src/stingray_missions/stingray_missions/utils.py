@@ -8,7 +8,7 @@ except ImportError:
     from yaml import Loader
 
 
-def load_mission_config(name: str = "init.yaml", package_name="stingray_missions"):
+def load_mission_config(name: str = "init.yaml", package_name="stingray_missions") -> dict:
     stingray_missions_path = RosPack().get_path(package_name)
     with open(Path(stingray_missions_path, name), 'r') as f:
         return yaml.load(f, Loader=Loader)

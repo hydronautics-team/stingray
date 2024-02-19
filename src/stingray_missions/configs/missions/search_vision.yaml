@@ -8,7 +8,7 @@ states:
       data: "gate"
       count: 2
       trigger: ok
-    expire_time: 5
+    timeout: 5
     action: 
       type: SimpleMove
       # (surge, sway, depth)
@@ -22,7 +22,7 @@ states:
       data: "gate_anticlock"
       count: 2
       trigger: ok
-    expire_time: 5
+    timeout: 5
     action: 
       type: SimpleMove
       # (surge, sway, depth)
@@ -31,5 +31,6 @@ states:
       rotation: (0, 0, 15)
 transitions:
   - { trigger: ok, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: SUCCESS }
+  - { trigger: failed, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: FAILED }
   - { trigger: timeout, source: ROTATE_CLOCK, dest: ROTATE_ANTICLOCK }
-  - { trigger: timeout, source: ROTATE_ANTICLOCK, dest: FAILURE }
+  - { trigger: timeout, source: ROTATE_ANTICLOCK, dest: FAILED }

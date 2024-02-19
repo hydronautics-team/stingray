@@ -1,16 +1,13 @@
-name: Test
-initial_state: INIT
-states:
+initial_mission: INIT
+missions:
   INIT:
-    inherits: INIT
+    config: init
+    package: stingray_missions
   SEARCH_VISION:
-    inherits: SEARCH_VISION
-  SEARCH_VISION_2:
-    inherits: SEARCH_VISION
+    config: search_vision
+    package: stingray_missions
 transitions:
   - { trigger: ok, source: INIT, dest: SEARCH_VISION }
-  - { trigger: ok, source: SEARCH_VISION, dest: SEARCH_VISION_2 }
-  - { trigger: ok, source: SEARCH_VISION_2, dest: SUCCESS }
-  - { trigger: timeout, source: SEARCH_VISION, dest: SEARCH_VISION_2 }
-  - { trigger: timeout, source: [INIT, SEARCH_VISION_2], dest: FAILURE }
-  - { trigger: fail, source: "*", dest: FAILURE }
+  - { trigger: ok, source: SEARCH_VISION, dest: SUCCESS }
+  - { trigger: timeout, source: [INIT, SEARCH_VISION], dest: FAILED }
+  - { trigger: failed, source: [INIT, SEARCH_VISION], dest: FAILED }

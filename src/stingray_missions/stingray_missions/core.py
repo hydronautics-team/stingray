@@ -2,7 +2,8 @@ from transitions.extensions.asyncio import AsyncMachine
 import logging
 from rclpy.node import Node
 
-from stingray_missions.event import TopicEvent
+from stingray_missions.stingray_missions.events import TopicEvent
+from stingray_missions.utils import load_mission_config
 
 
 logger = logging.getLogger(__name__)
@@ -35,12 +36,12 @@ class TransitionEvent():
 class StateDescription():
     def __init__(self,
                  transition_event: dict = {},
-                 expire_time: float = 5,
+                 timeout: float = 5,
                  action: dict = {},
                  **kwargs):
         """State class"""
         self.transition_event = TransitionEvent(**transition_event)
-        self.expire_time = expire_time
+        self.timeout = timeout
         self.action = StateAction(**action)
         logger.info(f"StateDescription Unused kwargs: {kwargs}")
 
@@ -49,7 +50,7 @@ class MissionDescription:
     def __init__(self,
                  name: str = "",
                  initial_state: str = "",
-                 states: dict = {},
+                 states: dict[str, dict] = {},
                  **kwargs
                  ):
         """Mission class for executing a mission from a config file"""
@@ -58,6 +59,36 @@ class MissionDescription:
         self.states = {k.upper(): StateDescription(**v)
                        for k, v in states.items()}
         logger.info(f"MissionDescription Unused kwargs: {kwargs}")
+
+
+class ScenarioDescription:
+    def __init__(self,
+                 initial_mission: str = "",
+                 missions: dict[str, dict] = {},
+                 transitions: list[dict] = {},
+                 **kwargs
+                 ):
+        """Mission class for executing a mission from a config file"""
+        self.initial_mission = initial_mission
+        self.transitions = []
+        self.missions = {mission_name.upper(): load_mission_config(**params)
+                         for mission_name, params in missions.items()}
+        for mission_name, params in missions.items():
+            mission = load_mission_config(**params)
+
+        logger.info(f"ScenarioDescription Unused kwargs: {kwargs}")
+
+
+class States:
+    IDLE = 'IDLE'
+    SUCCESS = 'SUCCESS'
+    FAILED = 'FAILED'
+
+class Transitions:
+    ok = 'ok'
+    abort = 'abort'
+    reset = 'reset'
+    timeout = 'timeout'
 
 
 class FSM(object):
@@ -71,38 +102,29 @@ class FSM(object):
         self._setup_fsm(mission_description)
         logger.info(f"Mission {self.desc.name} created")
 
-    def _setup_fsm(self, mission_description: dict):
+    def _setup_fsm(self, scenario: ScenarioDescription):
         """Registering the state machine from the config file"""
 
-        self.IDLE_STATE = 'IDLE'
-        self.SUCCESS_STATE = 'SUCCESS'
-        self.FAILURE_STATE = 'FAILURE'
-        self.go_transition = 'go'
-        self.ok_transition = 'ok'
-        self.abort_transition = 'abort'
-        self.reset_transition = 'reset'
-        self.timeout_transition = 'timeout'
-
-        states = [self.IDLE_STATE, self.SUCCESS_STATE, self.FAILURE_STATE]
+        states = [States.IDLE, States.SUCCESS, States.FAILED]
         transitions = [
-            [self.abort_transition, "*", self.FAILURE_STATE],
-            [self.reset_transition, "*", self.IDLE_STATE],
-            [self.go_transition, self.IDLE_STATE, mission_description['initial_state']]]
+            [Transitions.abort, "*", States.FAILED],
+            [Transitions.reset, "*", States.IDLE],
+            [Transitions.ok, States.IDLE, scenario.initial_state]]
 
-        states += mission_description["states"].keys()
-        transitions += mission_description["transitions"]
+        states += scenario["states"].keys()
+        transitions += scenario["transitions"]
 
         self.machine = AsyncMachine(
             model=self,
             states=states,
             transitions=transitions,
-            initial=self.IDLE_STATE,
-            auto_transitions=False,
+            initial=States.IDLE,
+            # auto_transitions=False,
             after_state_change="execute_state",
             before_state_change="leave_state",
         )
 
-        self._parse_events(mission_description["states"])
+        self._parse_events(scenario["states"])
 
     def _parse_events(self, states: dict):
         for state, args in states.items():
@@ -127,8 +149,8 @@ class FSM(object):
         else:
             raise ValueError("Event type not supported")
 
-    async def on_enter_FAILURE(self):
-        """Executing on entering the FAILURE state"""
+    async def on_enter_FAILED(self):
+        """Executing on entering the FAILED state"""
         for event in self.events.values():
             await event.unsubscribe(self.node)
         logger.info("Mission failed")
@@ -146,7 +168,7 @@ class FSM(object):
         if self.state in self.events:
             await self.events[self.state].subscribe(self.node)
         try:
-            timeout_value = self.desc.states[self.state].expire_time
+            timeout_value = self.desc.states[self.state].timeout
             self.expiration_timer = self.node.create_timer(
                 timeout_value, self.countdown)
             logger.info(
@@ -171,5 +193,5 @@ class FSM(object):
     async def countdown(self):
         """Countdown for the mission"""
         logger.info(
-            f"State {self.state} expired. Triggering {self.timeout_transition}")
-        await self.trigger(self.timeout_transition)
+            f"State {self.state} expired. Triggering {self.timeout}")
+        await self.trigger(self.timeout)
