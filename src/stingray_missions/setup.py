@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'fsm_node = stingray_missions.fsm_node:main',
+            'qr_launcher = stingray_missions.qr_launcher:main',
         ],
     },
 )

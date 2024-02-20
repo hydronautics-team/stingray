@@ -16,9 +16,28 @@ def generate_launch_description():
             # respawn=True,
             # respawn_delay=1,
         ),
+
         Node(
             package='rqt_gui',
             executable='rqt_gui',
             name='rqt_gui',
+        ),
+        Node(
+            package='stingray_missions',
+            executable='qr_launcher',
+            name='qr_launcher'
+        ),
+        Node(
+            package='zbar_ros',
+            executable='barcode_reader',
+            name='qr_reader'
+        ),
+        Node(
+            package='usb_cam',
+            executable='usb_cam_node_exe',
+            name='camera_driver',
+            remappings=[
+                ('/image_raw', '/image'),
+            ]
         ),
     ])

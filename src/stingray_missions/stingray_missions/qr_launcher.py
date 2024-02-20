@@ -1,5 +1,6 @@
 import sys
 from stingray_interfaces.srv import TransitionSrv
+from stingray_utils.config import StingrayConfig
 
 import rclpy
 from rclpy.node import Node
@@ -10,7 +11,7 @@ class MissionLibraryClient(Node):
 
     def __init__(self):
         super().__init__('mission_library_client')
-        self.cli = self.create_client(TransitionSrv, 'Console_print')
+        self.cli = self.create_client(TransitionSrv, StingrayConfig.ros.services["stingray_missions"]["transition"])
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service not available, waiting again...')
         self.get_logger().info('Service avaible, waiting qr-code')
@@ -31,7 +32,7 @@ class MissionLibraryClient(Node):
 
     def send_request(self, com):
         self.got_msg = False
-        self.req.command = com
+        self.req.transition = com
         self.future = self.cli.call_async(self.req)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
@@ -43,7 +44,7 @@ def main():
 
     while rclpy.ok():
         if(ml_client.got_msg):
-            service_responce = ml_client.send_request(ml_client.command).response
+            service_responce = ml_client.send_request(ml_client.command).ok
             if(service_responce):
                 ml_client.get_logger().info("Launch successful")
             else:
