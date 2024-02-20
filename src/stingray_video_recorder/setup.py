@@ -1,8 +1,6 @@
 from setuptools import find_packages, setup
-from glob import glob
 
-
-package_name = 'stingray_utils'
+package_name = 'stingray_video_recorder'
 
 setup(
     name=package_name,
@@ -12,16 +10,17 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (f'share/{package_name}/configs', glob('configs/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='vladushked',
-    maintainer_email='vladik1209@gmail.com',
+    maintainer='sea_jackal',
+    maintainer_email='v.dmitriy-lipetsk@yandex.ru',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'video_recorder = stingray_video_recorder.video_recorder:main'
+        ],
     },
 )

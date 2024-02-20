@@ -1,0 +1,15 @@
+{
+    "ros.distro": "iron",
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/iron/lib/python3.10/site-packages",
+        "/opt/ros/iron/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/opt/ros/iron/lib/python3.10/site-packages",
+        "/opt/ros/iron/local/lib/python3.10/dist-packages",
+        "./install/ram_interfaces/local/lib/python3.10/dist-packages",
+        "install/stingray_interfaces/lib/python3.10/site-packages",
+        "./src/stingray_utils",
+        "./src/stingray_missions",
+    ]
+}

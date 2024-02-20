@@ -1,0 +1,12 @@
+initial: INIT
+missions:
+  INIT:
+    config_name: init
+    package_name: stingray_missions
+  SEARCH_VISION:
+    config_name: search_vision
+    package_name: stingray_missions
+transitions:
+  - { source: INIT, outcome: OK, dest: SEARCH_VISION }
+  - { source: SEARCH_VISION, outcome: OK, dest: OK }
+  - { source: [INIT, SEARCH_VISION], outcome: FAILED, dest: FAILED }

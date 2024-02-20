@@ -1,8 +1,8 @@
 from setuptools import find_packages, setup
+import os
 from glob import glob
 
-
-package_name = 'stingray_utils'
+package_name = 'stingray_launch'
 
 setup(
     name=package_name,
@@ -12,7 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (f'share/{package_name}/configs', glob('configs/*.yaml')),
+        (os.path.join('share', package_name), glob('launch/*.launch.py'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,6 +22,7 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+        ],
     },
 )

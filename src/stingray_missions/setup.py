@@ -1,8 +1,8 @@
 from setuptools import find_packages, setup
+import os
 from glob import glob
 
-
-package_name = 'stingray_utils'
+package_name = 'stingray_missions'
 
 setup(
     name=package_name,
@@ -12,7 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (f'share/{package_name}/configs', glob('configs/*.yaml')),
+        (f'share/{package_name}/configs/missions', glob('configs/missions/*.yaml')),
+        (f'share/{package_name}/configs/scenarios', glob('configs/scenarios/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,6 +23,8 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'fsm_node = stingray_missions.fsm_node:main',
+        ],
     },
 )
