@@ -274,7 +274,11 @@ class FSM(object):
         if self.pending_transition:
             pending = self.pending_transition
             self.pending_transition = None
-            await self.trigger(pending)
+            if pending in self.machine.get_triggers(self.state):
+                await self.trigger(pending)
+            else:
+                get_logger("fsm").error(
+                    f"Transition {pending} not found in {self.state}. Valid transitions: {self.machine.get_triggers(self.state)}")
 
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
@@ -288,9 +292,6 @@ class FSM(object):
                 self.machine.add_transitions(scenario.transitions)
                 # self._register_events(scenario.events)
                 get_logger("fsm").info(f"Registered scenario {scenario}")
-                get_logger("fsm").info(f"States: {self.machine.states}")
-                get_logger("fsm").info(
-                    f"Transitions: {self.machine.get_transitions()}")
 
     def _register_events(self, states: dict):
         for state, args in states.items():
