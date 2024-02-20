@@ -249,8 +249,9 @@ class FSM(object):
     def _initialize_machine(self, scenarios_packages: list[str]):
         self.machine = AsyncGraphMachine(
             model=self,
-            states=[State.IDLE, State.OK, State.FAILED],
+            states=[State.IDLE, State.OK, State.FAILED, State.ABORTED],
             initial=State.IDLE,
+            auto_transitions=False,
             after_state_change="execute_state",
             before_state_change="leave_state",
         )
@@ -330,22 +331,18 @@ class FSM(object):
 
     async def execute_state(self):
         """Executing as soon as the state is entered"""
-        get_logger("fsm").info(f"Executing {self.state}")
-        get_logger("fsm").info(
-            f"Transitions: {self.machine.get_triggers(self.state)}")
+        get_logger("fsm").info(f"{self.state} executing ... Transitions: {self.machine.get_triggers(self.state)}")
         if self.state in self.events:
             await self.events[self.state].subscribe(self.node)
-        try:
-            timeout_value = self.desc.states[self.state].timeout
-            self.expiration_timer = self.node.create_timer(
-                timeout_value, self.countdown)
-            get_logger("fsm").info(
-                f"State {self.state} will expire in {timeout_value} seconds")
-        except KeyError:
-            get_logger("fsm").info(
-                f"No expiration time for state {self.state}")
-
-        get_logger("fsm").info(f"{self.state} started")
+        # try:
+        #     timeout_value = self.desc.states[self.state].timeout
+        #     self.expiration_timer = self.node.create_timer(
+        #         timeout_value, self.countdown)
+        #     get_logger("fsm").info(
+        #         f"State {self.state} will expire in {timeout_value} seconds")
+        # except KeyError:
+        #     get_logger("fsm").info(
+        #         f"No expiration time for state {self.state}")
 
     async def leave_state(self):
         """Executing before leaving the state"""
