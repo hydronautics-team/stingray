@@ -34,5 +34,5 @@ transitions:
       source: ENABLE_STABILIZATION,
       dest: THRUSTER_AFTER_IMU_INDICATION,
     }
-  - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: SUCCESS }
+  - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: OK }
   - { trigger: timeout, source: "*", dest: FAILED }

@@ -15,8 +15,7 @@ async def ros_loop(node: Node):
 
 async def fsm_loop(node: Node, fsm: FSM):
     """FSM loop"""
-    fsm.load_scenarios_from_packages(package_names=node.get_parameter('package_names').get_parameter_value().string_array_value)
-    # fsm.draw()
+    fsm.draw()
     # trigger transition service
     while rclpy.ok():
         await fsm.process_pending_transition()
@@ -36,7 +35,7 @@ def main():
 
     node = rclpy.create_node('stingray_missions')
     node.declare_parameter(name="package_names", value=["stingray_missions"])
-    fsm = FSM(node=node)
+    fsm = FSM(node=node, scenarios_packages=node.get_parameter('package_names').get_parameter_value().string_array_value)
     event_loop = asyncio.get_event_loop()
     future = asyncio.wait(
         [ros_loop(node), fsm_loop(node, fsm)], return_when=asyncio.FIRST_EXCEPTION

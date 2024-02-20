@@ -1,4 +1,4 @@
-from transitions.extensions.asyncio import AsyncMachine
+# from transitions.extensions.asyncio import AsyncMachine
 from transitions.extensions.factory import AsyncGraphMachine
 import logging
 from rclpy.node import Node
@@ -84,9 +84,26 @@ class MissionDescription:
         """Mission class for executing a mission from a config file"""
         self.name = name.upper()
         self.initial_state = self._custom_state_name(initial)
-        self.mission_transitions = transitions
-        self.states = {s_name: StateDescription(name=self._custom_state_name(s_name), **s_params)
-                       for s_name, s_params in states.items()}
+        self.states = [StateDescription(name=self._custom_state_name(s_name), **s_params)
+                       for s_name, s_params in states.items()]
+        self.mission_transitions = []
+        for transition in transitions:
+            trigger = transition['trigger']
+            if isinstance(transition['source'], list):
+                source = [self._custom_state_name(
+                    state) for state in transition['source']]
+            else:
+                if transition['source'] == State.ALL:
+                    source = [state.name for state in self.states]
+                else:
+                    source = self._custom_state_name(transition['source'])
+            if transition['dest'] in State.aslist():
+                dest = transition['dest']
+            else:
+                dest = self._custom_state_name(transition['dest'])
+            self.mission_transitions.append(
+                {'trigger': trigger, 'source': source, 'dest': dest})
+
         if kwargs:
             get_logger("fsm").warning(
                 f"{self.name} mission unused kwargs: {kwargs}")
@@ -97,33 +114,25 @@ class MissionDescription:
 
     def __repr__(self) -> str:
         states_print = "\n".join(
-            [f"{state}" for state in self.states.values()])
+            [f"{state}" for state in self.states])
         return f"""
                 Mission: {self.name}
                     {states_print}
         """
 
-    def set_success_outcome(self, state: str):
+    def set_OK_outcome(self, state: str):
         for transition in self.mission_transitions:
-            if transition['dest'] == State.SUCCESS:
+            if transition['dest'] == State.OK:
                 transition['dest'] = state
 
-    def set_failed_outcome(self, state: str):
+    def set_FAILED_outcome(self, state: str):
         for transition in self.mission_transitions:
             if transition['dest'] == State.FAILED:
                 transition['dest'] = state
 
     @property
     def transitions(self) -> list[list[str, str, str]]:
-        transitions = []
-        for transition in self.mission_transitions:
-            trigger = transition['trigger']
-            source = transition['source']
-            dest = transition['dest']
-            if dest not in State.aslist():
-                dest = self._custom_state_name(dest)
-            transitions.append([trigger, source, dest])
-        return transitions
+        return [[transition['trigger'], transition['source'], transition['dest']] for transition in self.mission_transitions]
 
 
 class ScenarioDescription:
@@ -167,34 +176,34 @@ class ScenarioDescription:
         """Return all states in the scenario"""
         states = []
         for mission in self.missions.values():
-            states.extend(mission.states)
+            states.extend([state.name for state in mission.states])
         return states
 
     @property
     def transitions(self) -> list[list[str, str, str]]:
         scenario_transitions = [
-            [self.name, State.IDLE, self.initial_state]
+            [self.name.lower(), State.IDLE, self.initial_state]
         ]
         for transition in self.scenario_transitions:
             source = transition['source']
             outcome = transition['outcome']
             dest = transition['dest']
             if dest not in State.aslist():
-                if outcome == State.SUCCESS:
+                if outcome == State.OK:
                     if isinstance(source, list):
                         for mission in source:
-                            self.missions[self._custom_mission_name(mission)].set_success_outcome(
+                            self.missions[self._custom_mission_name(mission)].set_OK_outcome(
                                 self.missions[self._custom_mission_name(dest)].initial_state)
                     else:
-                        self.missions[self._custom_mission_name(source)].set_success_outcome(
+                        self.missions[self._custom_mission_name(source)].set_OK_outcome(
                             self.missions[self._custom_mission_name(dest)].initial_state)
                 elif outcome == State.FAILED:
                     if isinstance(source, list):
                         for mission in source:
-                            self.missions[self._custom_mission_name(mission)].set_failed_outcome(
+                            self.missions[self._custom_mission_name(mission)].set_FAILED_outcome(
                                 self.missions[self._custom_mission_name(dest)].initial_state)
                     else:
-                        self.missions[self._custom_mission_name(source)].set_failed_outcome(
+                        self.missions[self._custom_mission_name(source)].set_FAILED_outcome(
                             self.missions[self._custom_mission_name(dest)].initial_state)
         for mission in self.missions.values():
             scenario_transitions.extend(mission.transitions)
@@ -205,49 +214,55 @@ class ScenarioDescription:
 class State:
     ALL = "*"
     IDLE = "IDLE"
-    SUCCESS = "SUCCESS"
+    OK = "OK"
     FAILED = "FAILED"
+    ABORTED = "ABORTED"
 
     @staticmethod
     def aslist():
-        return [State.ALL, State.IDLE, State.SUCCESS, State.FAILED]
+        return [State.ALL, State.IDLE, State.OK, State.FAILED, State.ABORTED]
 
 
 class Transition:
     ok = "ok"
+    fail = "fail"
     abort = "abort"
     reset = "reset"
     timeout = "timeout"
 
 
 class FSM(object):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, scenarios_packages: list[str]):
         """FSM class for executing scenarios and missions"""
         self.node = node
         self.pending_transition = None
+        self.events: dict[str, TopicEvent] = {}
+        self.expiration_timer = None
 
         self.transition_srv = self.node.create_service(
             TransitionSrv, StingrayConfig.ros.services["stingray_missions"]["transition"], self._transition_callback)
 
-        self.events: dict[str, TopicEvent] = {}
-        self.expiration_timer = None
+        self._initialize_machine(scenarios_packages)
 
-        states = [State.IDLE, State.SUCCESS, State.FAILED]
-        transitions = [
-            [Transition.abort, State.ALL, State.FAILED],
-            [Transition.reset, State.ALL, State.IDLE],
-        ]
+        get_logger("fsm").info(f"FSM created")
 
+    def _initialize_machine(self, scenarios_packages: list[str]):
         self.machine = AsyncGraphMachine(
             model=self,
-            states=states,
-            transitions=transitions,
+            states=[State.IDLE, State.OK, State.FAILED],
             initial=State.IDLE,
             after_state_change="execute_state",
             before_state_change="leave_state",
         )
 
-        get_logger("fsm").info(f"FSM created")
+        self._register_scenarios_from_packages(
+            package_names=scenarios_packages)
+
+        global_transitions = [
+            [Transition.abort, State.ALL, State.ABORTED],
+            [Transition.reset, [State.ABORTED, State.FAILED, State.OK], State.IDLE],
+        ]
+        self.machine.add_transitions(global_transitions)
 
     def _transition_callback(self, request: TransitionSrv.Request, response: TransitionSrv.Response):
         self.pending_transition = request.transition
@@ -261,7 +276,7 @@ class FSM(object):
             self.pending_transition = None
             await self.trigger(pending)
 
-    def load_scenarios_from_packages(self, package_names: list[str]):
+    def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
         for package_name in package_names:
             pakage_path = get_package_share_directory(package_name)
@@ -274,7 +289,8 @@ class FSM(object):
                 # self._register_events(scenario.events)
                 get_logger("fsm").info(f"Registered scenario {scenario}")
                 get_logger("fsm").info(f"States: {self.machine.states}")
-                get_logger("fsm").info(f"Transitions: {self.machine.get_transitions()}")
+                get_logger("fsm").info(
+                    f"Transitions: {self.machine.get_transitions()}")
 
     def _register_events(self, states: dict):
         for state, args in states.items():
@@ -347,11 +363,10 @@ class FSM(object):
         get_logger("fsm").info(
             f"State {self.state} expired. Triggering {self.timeout}")
         await self.trigger(self.timeout)
-    
+
     def draw(self):
         self.machine.get_combined_graph().draw("fsm_graph.png", prog="dot")
         get_logger("fsm").info(f"FSM graph saved to fsm_graph.png")
-        
 
 
 def load_mission(config_name: str, package_name="stingray_missions", custom_name: str = None) -> MissionDescription:
