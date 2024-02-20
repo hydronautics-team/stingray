@@ -2,12 +2,12 @@ initial: ROTATE_CLOCK
 states:
   ROTATE_CLOCK:
     transition_event: 
-      type: TopicEvent
-      topic_name: gate_clock
+      type: StringEvent
+      topic_name: /stingray/demo
       data: "gate"
       count: 2
       trigger: ok
-    timeout: 5
+    timeout: 60
     action: 
       type: SimpleMove
       # (surge, sway, depth)
@@ -16,12 +16,12 @@ states:
       rotation: (0, 0, 15)
   ROTATE_ANTICLOCK:
     transition_event: 
-      type: TopicEvent
-      topic_name: gate_anticlock
+      type: StringEvent
+      topic_name: /stingray/demo2
       data: "gate_anticlock"
       count: 2
       trigger: ok
-    timeout: 5
+    timeout: 60
     action: 
       type: SimpleMove
       # (surge, sway, depth)
