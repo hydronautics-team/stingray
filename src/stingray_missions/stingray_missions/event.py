@@ -2,6 +2,7 @@ from rclpy.node import Node
 from rclpy.subscription import Subscription
 from rclpy.logging import get_logger
 from std_msgs.msg import String
+from stingray_object_detection_msgs.msg import Object, ObjectsArray
 
 
 class SubscriptionEvent:
@@ -63,16 +64,16 @@ class ObjectDetectionEvent(SubscriptionEvent):
         )
         get_logger('event').info(f"Subscribed to {self.topic}")
 
-    # TODO
-    def _msg_callback(self, msg: String):
+    def _msg_callback(self, msg: ObjectsArray):
         """Callback function for the topic subscription"""
-        get_logger('event').info(f"Message received: {msg.data}")
-        if msg.data == self.data:
-            get_logger('event').info(f"Message matches: {self.data}")
-            self._counter += 1
-            if self._counter >= self.count:
-                get_logger('event').info(f"Message count reached: {self.count}. Triggering: {self.trigger}")
+        get_logger('event').info(f"Message received")
+        for obj in msg.objects:
+            if obj.name == self.data:
+                get_logger('event').info(f"Message matches: {self.data}")
+                self._counter += 1
+                if self._counter >= self.count:
+                    get_logger('event').info(f"Object count reached: {self.count}. Triggering: {self.trigger}")
+                    self._counter = 0
+                    self._transition_fn(self.trigger)
+            else:
                 self._counter = 0
-                self._transition_fn(self.trigger)
-        else:
-            self._counter = 0
