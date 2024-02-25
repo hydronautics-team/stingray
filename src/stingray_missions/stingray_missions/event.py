@@ -51,3 +51,28 @@ class StringEvent(SubscriptionEvent):
                 self._transition_fn(self.trigger)
         else:
             self._counter = 0
+
+class ObjectDetectionEvent(SubscriptionEvent):
+    def __init__(self, transition_fn, topic: str, data: str, trigger: str, count: int = 0):
+        super().__init__(transition_fn, topic, data, trigger, count)
+
+    def subscribe(self, node: Node):
+        """Subscribing to the topic"""
+        self.subscription = node.create_subscription(
+            String, self.topic, self._msg_callback, 10
+        )
+        get_logger('event').info(f"Subscribed to {self.topic}")
+
+    # TODO
+    def _msg_callback(self, msg: String):
+        """Callback function for the topic subscription"""
+        get_logger('event').info(f"Message received: {msg.data}")
+        if msg.data == self.data:
+            get_logger('event').info(f"Message matches: {self.data}")
+            self._counter += 1
+            if self._counter >= self.count:
+                get_logger('event').info(f"Message count reached: {self.count}. Triggering: {self.trigger}")
+                self._counter = 0
+                self._transition_fn(self.trigger)
+        else:
+            self._counter = 0

@@ -2,7 +2,7 @@ initial: ROTATE_CLOCK
 states:
   ROTATE_CLOCK:
     transition_event: 
-      type: StringEvent
+      type: ObjectDetectionEvent
       topic_name: /stingray/demo
       data: "gate"
       count: 2
@@ -16,7 +16,7 @@ states:
       rotation: (0, 0, 15)
   ROTATE_ANTICLOCK:
     transition_event: 
-      type: StringEvent
+      type: ObjectDetectionEvent
       topic_name: /stingray/demo2
       data: "gate_anticlock"
       count: 2
