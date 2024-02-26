@@ -2,7 +2,7 @@ initial: THRUSTER_PRE_INIT_INDICATION
 states:
   THRUSTER_PRE_INIT_INDICATION:
     action:
-      type: InitIndication
+      type: ThrusterIndication
       duration: 0.5
   RESET_IMU:
     action:

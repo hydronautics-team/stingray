@@ -6,24 +6,9 @@ from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 
 from stingray_missions.event import StringEvent, SubscriptionEvent
+from stingray_missions.action import StateAction, create_action
 from stingray_utils.config import load_yaml, StingrayConfig
 from stingray_interfaces.srv import TransitionSrv
-
-
-class StateAction():
-    def __init__(self,
-                 type: str = "",
-                 action: str = "",
-                 **kwargs):
-        """State class"""
-        self.type = type
-        self.action = action
-        if kwargs:
-            get_logger("fsm").warning(
-                f"{self.type} state action unused kwargs: {kwargs}")
-
-    def __repr__(self) -> str:
-        return f"type: {self.type}"
 
 
 class TransitionEvent():
@@ -63,7 +48,7 @@ class StateDescription():
             self.transition_event = None
         self.timeout = timeout
         if action:
-            self.action = StateAction(**action)
+            self.action = create_action(action)
         else:
             self.action = None
         if kwargs:
@@ -242,6 +227,8 @@ class FSM(object):
         """FSM class for executing scenarios and missions"""
         self.node = node
         self.pending_transition = None
+        self.pending_action: StateAction = None
+        self.registered_states: dict[str, StateDescription] = {}
         self.events: dict[str, SubscriptionEvent] = {}
         self.expiration_timer = None
 
@@ -271,12 +258,31 @@ class FSM(object):
         ]
         self.machine.add_transitions(global_transitions)
 
+        self.registered_states[State.FAILED] = StateDescription(
+            name=State.FAILED,
+            action=StateAction(
+                type=""
+            )
+        )
+        self.registered_states[State.ABORTED] = StateDescription(
+            name=State.ABORTED,
+            action=StateAction(
+                type=""
+            )
+        )
+        self.registered_states[State.OK] = StateDescription(
+            name=State.OK,
+            action=StateAction(
+                type=""
+            )
+        )
+
     def _transition_callback(self, request: TransitionSrv.Request, response: TransitionSrv.Response):
         self.pending_transition = request.transition
         response.ok = True
 
         return response
-    
+
     def add_pending_transition(self, transition: str):
         if not self.pending_transition:
             self.pending_transition = transition
@@ -294,9 +300,21 @@ class FSM(object):
                 get_logger("fsm").error(
                     f"Transition {pending} not found in {self.state}. Valid transitions: {self.machine.get_triggers(self.state)}")
 
+    def add_pending_action(self, action: StateAction):
+        if not self.pending_action:
+            self.pending_action = action
+        else:
+            get_logger("fsm").error(
+                f"FSM already has a pending action {self.pending_action}")
+
+    async def process_pending_action(self):
+        if self.pending_action:
+            pending = self.pending_action
+            self.pending_action = None
+            get_logger("fsm").info(f"Executing pending action {pending}")
+
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
-        self.registered_states: dict[str, StateDescription] = {}
         for package_name in package_names:
             pakage_path = get_package_share_directory(package_name)
             configs = Path(pakage_path, "configs/scenarios").glob("*.yaml")
@@ -322,10 +340,12 @@ class FSM(object):
                         trigger=state.transition_event.trigger,
                         count=state.transition_event.count,
                     )
-                    get_logger("fsm").info(f"Event {state.transition_event.type} registered for state {state.name}")
+                    get_logger("fsm").info(
+                        f"Event {state.transition_event.type} registered for state {state.name}")
                 else:
-                    raise ValueError(f"Event type not supported: {state.transition_event.type}")
-        
+                    raise ValueError(
+                        f"Event type not supported: {state.transition_event.type}")
+
     async def on_enter_ABORTED(self):
         """Executing on entering the ABORTED state"""
         for event in self.events.values():
@@ -363,6 +383,8 @@ class FSM(object):
             get_logger("fsm").warning(
                 f"State will not expire")
 
+        self.add_pending_action(self.registered_states[self.state].action)
+
     async def leave_state(self):
         """Executing before leaving the state"""
         if self.state in self.events:
@@ -370,7 +392,8 @@ class FSM(object):
         if self.expiration_timer:
             if not self.expiration_timer.is_ready():
                 self.expiration_timer.cancel()
-                get_logger("fsm").info(f"Cancel expiration timer for {self.state}")
+                get_logger("fsm").info(
+                    f"Cancel expiration timer for {self.state}")
             self.node.destroy_timer(self.expiration_timer)
             self.expiration_timer = None
         get_logger("fsm").info(f"{self.state} ended")
