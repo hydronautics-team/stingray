@@ -15,7 +15,7 @@ class StateAction():
     def __repr__(self) -> str:
         return f"type: {self.type}"
 
-    def execute(self):
+    def execute(self) -> bool:
         raise NotImplementedError(
             f"execute method not implemented for {self.type} state action")
 
@@ -31,7 +31,7 @@ class DurationAction(StateAction):
     def __repr__(self) -> str:
         return f"type: {self.type}, duration: {self.duration}"
 
-    def execute(self):
+    def execute(self) -> bool:
         get_logger("fsm").info(
             f"Executing {self.type} state action for {self.duration} seconds")
         time.sleep(self.duration)
@@ -47,7 +47,7 @@ class InitIMUAction(DurationAction):
     def __repr__(self) -> str:
         return f"type: {self.type}, duration: {self.duration}"
 
-    def execute(self):
+    def execute(self) -> bool:
         get_logger("fsm").info(f"Initializing IMU")
         return super().execute()
 
@@ -74,8 +74,42 @@ class EnableStabilizationAction(StateAction):
     def __repr__(self) -> str:
         return f"type: {self.type}, surge: {self.surge}, sway: {self.sway}, depth: {self.depth}, roll: {self.roll}, pitch: {self.pitch}, yaw: {self.yaw}"
 
-    def execute(self):
+    def execute(self) -> bool:
         get_logger("fsm").info(f"Enabling stabilization")
+        return True
+
+
+class ThrusterIndicationAction(StateAction):
+    def __init__(self,
+                 type: str = "ThrusterIndication",
+                 repeat: int = 1,
+                 **kwargs):
+        super().__init__(type=type, **kwargs)
+        self.repeat = repeat
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, repeat: {self.repeat}"
+
+    def execute(self) -> bool:
+        get_logger("fsm").info(f"Thruster indication")
+        return True
+    
+
+class MoveAction(StateAction):
+    def __init__(self,
+                 type: str = "Move",
+                 linear: tuple[float,float,float] = (0,0,0),
+                 angular: tuple[float,float,float] = (0,0,0),
+                 **kwargs):
+        super().__init__(type=type, **kwargs)
+        self.linear = linear
+        self.angular = angular
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, linear: {self.linear}, angular: {self.angular}"
+
+    def execute(self) -> bool:
+        get_logger("fsm").info(f"Move")
         return True
 
 
@@ -86,6 +120,11 @@ def create_action(action: dict) -> StateAction:
         return InitIMUAction(**action)
     elif action['type'] == "EnableStabilization":
         return EnableStabilizationAction(**action)
+    elif action['type'] == "ThrusterIndication":
+        return ThrusterIndicationAction(**action)
+    elif action['type'] == "Move":
+        return MoveAction(**action)
     else:
-        raise NotImplementedError(f"Action type {action['type']} not implemented")
+        raise NotImplementedError(
+            f"Action type {action['type']} not implemented")
     return None

@@ -3,7 +3,7 @@ states:
   THRUSTER_PRE_INIT_INDICATION:
     action:
       type: ThrusterIndication
-      duration: 0.5
+      repeat: 3
   RESET_IMU:
     action:
       type: InitIMU
@@ -19,9 +19,8 @@ states:
       yaw: true
   THRUSTER_AFTER_IMU_INDICATION:
     action:
-      type: Surge
-      value: 100
-      duration: 0.1
+      type: ThrusterIndication
+      repeat: 1
     timeout: 5
 transitions:
   - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: RESET_IMU }

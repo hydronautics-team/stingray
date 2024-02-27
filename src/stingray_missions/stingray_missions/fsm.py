@@ -38,7 +38,7 @@ class StateDescription():
                  name: str = "",
                  transition_event: dict = None,
                  timeout: float = None,
-                 action: dict = None,
+                 action: dict | StateAction = None,
                  **kwargs):
         """State class"""
         self.name = name.upper()
@@ -48,7 +48,13 @@ class StateDescription():
             self.transition_event = None
         self.timeout = timeout
         if action:
-            self.action = create_action(action)
+            if isinstance(action, dict):
+                self.action = create_action(action)
+            elif isinstance(action, StateAction):
+                self.action = action
+            else:
+                raise NotImplementedError(
+                    f"Action type {action} not implemented")
         else:
             self.action = None
         if kwargs:
@@ -212,6 +218,14 @@ class State:
     @staticmethod
     def aslist():
         return [State.ALL, State.IDLE, State.OK, State.FAILED, State.ABORTED]
+    
+    @staticmethod
+    def state_description(state: str):
+        if state in State.aslist():
+            return StateDescription(name=state)
+        else:
+            raise ValueError(f"Invalid state: {state}")
+        return None
 
 
 class Transition:
@@ -252,30 +266,17 @@ class FSM(object):
         self._register_scenarios_from_packages(
             package_names=scenarios_packages)
 
+        # add global transitions
         global_transitions = [
             [Transition.abort, State.ALL, State.ABORTED],
             [Transition.reset, [State.ABORTED, State.FAILED, State.OK], State.IDLE],
         ]
         self.machine.add_transitions(global_transitions)
 
-        self.registered_states[State.FAILED] = StateDescription(
-            name=State.FAILED,
-            action=StateAction(
-                type=""
-            )
-        )
-        self.registered_states[State.ABORTED] = StateDescription(
-            name=State.ABORTED,
-            action=StateAction(
-                type=""
-            )
-        )
-        self.registered_states[State.OK] = StateDescription(
-            name=State.OK,
-            action=StateAction(
-                type=""
-            )
-        )
+        # remember global states
+        self.registered_states[State.FAILED] = State.state_description(State.FAILED)
+        self.registered_states[State.ABORTED] = State.state_description(State.ABORTED)
+        self.registered_states[State.OK] = State.state_description(State.OK)
 
     def _transition_callback(self, request: TransitionSrv.Request, response: TransitionSrv.Response):
         self.pending_transition = request.transition
@@ -311,7 +312,11 @@ class FSM(object):
         if self.pending_action:
             pending = self.pending_action
             self.pending_action = None
-            get_logger("fsm").info(f"Executing pending action {pending}")
+            result = pending.execute()
+            if result:
+                self.add_pending_transition(Transition.ok)
+            else:
+                self.add_pending_transition(Transition.fail)
 
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
@@ -387,8 +392,11 @@ class FSM(object):
 
     async def leave_state(self):
         """Executing before leaving the state"""
+
+        # unsubscribe event
         if self.state in self.events:
             self.events[self.state].unsubscribe(self.node)
+        # stop expiration timer
         if self.expiration_timer:
             if not self.expiration_timer.is_ready():
                 self.expiration_timer.cancel()
@@ -396,6 +404,9 @@ class FSM(object):
                     f"Cancel expiration timer for {self.state}")
             self.node.destroy_timer(self.expiration_timer)
             self.expiration_timer = None
+        # stop action
+        self.pending_action = None
+
         get_logger("fsm").info(f"{self.state} ended")
 
     async def _state_expired(self):
