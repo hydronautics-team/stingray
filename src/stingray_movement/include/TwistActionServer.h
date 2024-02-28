@@ -6,6 +6,7 @@
 #include "AbstractActionServer.h"
 #include "stingray_core_interfaces/srv/set_twist.hpp"
 #include "stingray_core_interfaces/msg/uv_state.hpp"
+#include "AsyncTimer.h"
 
 using namespace std::chrono_literals;
 
@@ -26,8 +27,15 @@ public:
 
 private:
     void uvStateCallback(const stingray_core_interfaces::msg::UVState &msg);
+    bool isTwistDone(const std::shared_ptr<const stingray_interfaces::action::TwistAction_Goal> goal);
     rclcpp::Subscription<stingray_core_interfaces::msg::UVState>::SharedPtr uvStateSub;
     rclcpp::Client<stingray_core_interfaces::srv::SetTwist>::SharedPtr twistSrvClient;
+
+    float depth_tolerance = 0.2;
+    float yaw_tolerance = 0.2;
+    float pitch_tolerance = 0.2;
+    float roll_tolerance = 0.2;
+    float max_depth = 0.5;
 
     float current_depth;
     float current_yaw;

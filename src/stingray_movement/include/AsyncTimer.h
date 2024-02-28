@@ -33,6 +33,6 @@ public:
   bool isBusy() {
     return busy;
   };
-
+};
 
 #endif //SRC_STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_COMMON_ASYNCTIMER_H_

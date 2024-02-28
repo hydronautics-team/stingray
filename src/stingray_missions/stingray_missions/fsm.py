@@ -1,5 +1,6 @@
 # from transitions.extensions.asyncio import AsyncMachine
 from transitions.extensions.factory import AsyncGraphMachine
+import asyncio
 from rclpy.node import Node
 from rclpy.logging import get_logger
 from pathlib import Path
@@ -7,7 +8,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from stingray_missions.event import StringEvent, SubscriptionEvent
 from stingray_missions.action import StateAction, create_action
-from stingray_utils.config import load_yaml, StingrayConfig
+from stingray_utils.config import load_yaml
 from stingray_interfaces.srv import TransitionSrv
 
 
@@ -35,6 +36,7 @@ class TransitionEvent():
 
 class StateDescription():
     def __init__(self,
+                 node: Node,
                  name: str = "",
                  transition_event: dict = None,
                  timeout: float = None,
@@ -49,7 +51,7 @@ class StateDescription():
         self.timeout = timeout
         if action:
             if isinstance(action, dict):
-                self.action = create_action(action)
+                self.action = create_action(node=node, action=action)
             elif isinstance(action, StateAction):
                 self.action = action
             else:
@@ -74,6 +76,7 @@ class StateDescription():
 
 class MissionDescription:
     def __init__(self,
+                 node: Node,
                  name: str = "",
                  initial: str = "",
                  states: dict[str, dict] = {},
@@ -83,7 +86,7 @@ class MissionDescription:
         """Mission class for executing a mission from a config file"""
         self.name = name.upper()
         self.initial_state = self._custom_state_name(initial)
-        self.states = [StateDescription(name=self._custom_state_name(s_name), **s_params)
+        self.states = [StateDescription(node=node, name=self._custom_state_name(s_name), **s_params)
                        for s_name, s_params in states.items()]
         self.mission_transitions = []
         for transition in transitions:
@@ -135,6 +138,7 @@ class MissionDescription:
 
 class ScenarioDescription:
     def __init__(self,
+                 node: Node,
                  name: str = "",
                  initial: str = "",
                  missions: dict[str, dict] = {},
@@ -144,7 +148,7 @@ class ScenarioDescription:
         """Mission class for executing a mission from a config file"""
         self.name = name.upper()
         self.scenario_transitions = transitions
-        self.missions = {self._custom_mission_name(m_name): load_mission(custom_name=self._custom_mission_name(m_name), **m_params)
+        self.missions = {self._custom_mission_name(m_name): load_mission(node=node, custom_name=self._custom_mission_name(m_name), **m_params)
                          for m_name, m_params in missions.items()}
         self.initial_mission = self._custom_mission_name(initial)
 
@@ -218,11 +222,11 @@ class State:
     @staticmethod
     def aslist():
         return [State.ALL, State.IDLE, State.OK, State.FAILED, State.ABORTED]
-    
+
     @staticmethod
-    def state_description(state: str):
+    def state_description(node: Node, state: str):
         if state in State.aslist():
-            return StateDescription(name=state)
+            return StateDescription(node=node, name=state)
         else:
             raise ValueError(f"Invalid state: {state}")
         return None
@@ -245,9 +249,17 @@ class FSM(object):
         self.registered_states: dict[str, StateDescription] = {}
         self.events: dict[str, SubscriptionEvent] = {}
         self.expiration_timer = None
+        self.stopped = False
+
+        self.lock_coroutine = asyncio.Lock()
+
+        self.node.declare_parameter('twist_action', '/stingray/actions/twist')
+        self.node.declare_parameter('transition_srv', '/stingray/services/transition')
 
         self.transition_srv = self.node.create_service(
-            TransitionSrv, StingrayConfig.ros.services["stingray_missions"]["transition"], self._transition_callback)
+            TransitionSrv, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
+        
+
 
         self._initialize_machine(scenarios_packages)
 
@@ -274,12 +286,18 @@ class FSM(object):
         self.machine.add_transitions(global_transitions)
 
         # remember global states
-        self.registered_states[State.FAILED] = State.state_description(State.FAILED)
-        self.registered_states[State.ABORTED] = State.state_description(State.ABORTED)
-        self.registered_states[State.OK] = State.state_description(State.OK)
+        self.registered_states[State.FAILED] = State.state_description(
+            node=self.node,
+            state=State.FAILED)
+        self.registered_states[State.ABORTED] = State.state_description(
+            node=self.node,
+            state=State.ABORTED)
+        self.registered_states[State.OK] = State.state_description(
+            node=self.node,
+            state=State.OK)
 
     def _transition_callback(self, request: TransitionSrv.Request, response: TransitionSrv.Response):
-        self.pending_transition = request.transition
+        self.add_pending_transition(request.transition)
         response.ok = True
 
         return response
@@ -293,13 +311,12 @@ class FSM(object):
 
     async def process_pending_transition(self):
         if self.pending_transition:
-            pending = self.pending_transition
-            self.pending_transition = None
-            if pending in self.machine.get_triggers(self.state):
-                await self.trigger(pending)
+            if self.pending_transition in self.machine.get_triggers(self.state):
+                await self.trigger(self.pending_transition)
             else:
+                self.pending_transition = None
                 get_logger("fsm").error(
-                    f"Transition {pending} not found in {self.state}. Valid transitions: {self.machine.get_triggers(self.state)}")
+                    f"Transition {self.pending_transition} not found in {self.state}. Valid transitions: {self.machine.get_triggers(self.state)}")
 
     def add_pending_action(self, action: StateAction):
         if not self.pending_action:
@@ -310,13 +327,15 @@ class FSM(object):
 
     async def process_pending_action(self):
         if self.pending_action:
-            pending = self.pending_action
+            result = await self.pending_action.execute()
             self.pending_action = None
-            result = pending.execute()
-            if result:
-                self.add_pending_transition(Transition.ok)
+            if not self.stopped:
+                if result:
+                    self.add_pending_transition(Transition.ok)
+                else:
+                    self.add_pending_transition(Transition.fail)
             else:
-                self.add_pending_transition(Transition.fail)
+                self.stopped = False
 
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
@@ -325,7 +344,9 @@ class FSM(object):
             configs = Path(pakage_path, "configs/scenarios").glob("*.yaml")
             for config in configs:
                 scenario = load_scenario(
-                    config_name=config.name, package_name=package_name)
+                    node=self.node,
+                    config_name=config.name,
+                    package_name=package_name)
                 self.machine.add_states(
                     [state.name for state in scenario.states])
                 self.registered_states.update(
@@ -387,8 +408,10 @@ class FSM(object):
         else:
             get_logger("fsm").warning(
                 f"State will not expire")
-
-        self.add_pending_action(self.registered_states[self.state].action)
+        if self.registered_states[self.state].action:
+            get_logger("fsm").info(
+                f"Register action for {self.state}")
+            self.add_pending_action(self.registered_states[self.state].action)
 
     async def leave_state(self):
         """Executing before leaving the state"""
@@ -405,7 +428,11 @@ class FSM(object):
             self.node.destroy_timer(self.expiration_timer)
             self.expiration_timer = None
         # stop action
-        self.pending_action = None
+        if self.pending_action:
+            self.pending_action.stop()
+            self.stopped = True
+            self.pending_action = None
+        self.pending_transition = None
 
         get_logger("fsm").info(f"{self.state} ended")
 
@@ -420,13 +447,13 @@ class FSM(object):
         get_logger("fsm").info(f"FSM graph saved to fsm_graph.png")
 
 
-def load_mission(config_name: str, package_name="stingray_missions", custom_name: str = None) -> MissionDescription:
+def load_mission(node: Node, config_name: str, package_name="stingray_missions", custom_name: str = None) -> MissionDescription:
     if custom_name is None:
         custom_name = Path(config_name).stem
-    return MissionDescription(name=custom_name, **load_yaml(config_path=f"configs/missions/{config_name}", package_name=package_name))
+    return MissionDescription(node=node, name=custom_name, **load_yaml(config_path=f"configs/missions/{config_name}", package_name=package_name))
 
 
-def load_scenario(config_name: str, package_name="stingray_missions", custom_name: str = None) -> ScenarioDescription:
+def load_scenario(node: Node, config_name: str, package_name="stingray_missions", custom_name: str = None) -> ScenarioDescription:
     if custom_name is None:
         custom_name = Path(config_name).stem
-    return ScenarioDescription(name=custom_name, **load_yaml(config_path=f"configs/scenarios/{config_name}", package_name=package_name))
+    return ScenarioDescription(node=node, name=custom_name, **load_yaml(config_path=f"configs/scenarios/{config_name}", package_name=package_name))

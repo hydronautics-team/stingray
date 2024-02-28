@@ -24,8 +24,42 @@ void TwistActionServer::uvStateCallback(const stingray_core_interfaces::msg::UVS
     yaw_stabilization = msg.yaw_stabilization;
 };
 
+bool TwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::TwistAction_Goal> goal) {
+    bool depth_done = false;
+    bool roll_done = false;
+    bool pitch_done = false;
+    bool yaw_done = false;
+
+    if (depth_stabilization) {
+        auto depth_delta = abs(current_depth - goal->depth);
+        depth_done = depth_delta < depth_tolerance;
+    } else {
+        depth_done = true;
+    }
+    if (roll_stabilization) {
+        auto roll_delta = abs(current_roll - goal->roll);
+        roll_done = roll_delta < roll_tolerance;
+    } else {
+        roll_done = true;
+    }
+    if (pitch_stabilization) {
+        auto pitch_delta = abs(current_pitch - goal->pitch);
+        pitch_done = pitch_delta < pitch_tolerance;
+    } else {
+        pitch_done = true;
+    }
+    if (yaw_stabilization) {
+        auto yaw_delta = abs(current_yaw - goal->yaw);
+        yaw_done = yaw_delta < yaw_tolerance;
+    } else {
+        yaw_done = true;
+    }
+    return depth_done && roll_done && pitch_done && yaw_done;
+};
+
 void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::TwistAction>> goal_handle) {
 
+    RCLCPP_INFO(_node->get_logger(), "Execute");
 
     auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
 
@@ -34,18 +68,25 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
             RCLCPP_ERROR(_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
             return;
         }
-        RCLCPP_ERROR(_node->get_logger(), "Service %s not available!", _node->get_parameter("set_twist_srv").as_string());
+        RCLCPP_ERROR(_node->get_logger(), "Service %s not available!", _node->get_parameter("set_twist_srv").as_string().c_str());
         return;
+    } else {
+        RCLCPP_INFO(_node->get_logger(), "Service %s available!", _node->get_parameter("set_twist_srv").as_string().c_str());
     }
+
+    // get goal data
     const auto goal = goal_handle->get_goal();
     auto goal_result = std::make_shared<stingray_interfaces::action::TwistAction::Result>();
+    goal_result->done = false;
 
     // check duration
     if (goal->duration < 0.0) {
+        goal_result->done = false;
         goal_handle->abort(goal_result);
         RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
         return;
     }
+    RCLCPP_INFO(_node->get_logger(), "Duration: %f", goal->duration);
 
     // send service request
     twistSrvRequest->surge = goal->surge;
@@ -55,26 +96,62 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvRequest->pitch = goal->pitch;
     twistSrvRequest->yaw = goal->yaw;
 
-    auto twistSrvResult = twistSrvClient->async_send_request(twistSrvRequest);
+    // check if service done
+    twistSrvClient->async_send_request(twistSrvRequest).wait();
+
+    // if (rclcpp::spin_until_future_complete(_node, twistSrvClient->async_send_request(twistSrvRequest)) != rclcpp::FutureReturnCode::SUCCESS) {
+    //     goal_handle->abort(goal_result);
+    //     RCLCPP_ERROR(_node->get_logger(), "Unable to set twist");
+    //     return;
+    // } else {
+    //     RCLCPP_INFO(_node->get_logger(), "Set twist request sent");
+    // }
 
     // check if service done
-    auto twistSrvResultCode = rclcpp::spin_until_future_complete(_node, twistSrvResult);
-    if (twistSrvResultCode != rclcpp::FutureReturnCode::SUCCESS) {
-        goal_handle->abort(goal_result);
-        RCLCPP_ERROR(_node->get_logger(), "Unable to set twist");
-        return;
+
+    rclcpp::Rate checkRate(100ms);
+    AsyncTimer timer(goal->duration);
+    timer.start();
+
+    while (rclcpp::ok()) {
+        if (!timer.isBusy() || isTwistDone(goal)) {
+            break;
+        }
+        if (goal_handle->is_canceling()) {
+            goal_result->done = false;
+            goal_handle->canceled(goal_result);
+            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+            break;
+        }
+        // rclcpp::spin_some(_node);
+        checkRate.sleep();
     }
 
-    // rclcpp::Rate checkRate(5);
-    // AsyncTimer timer(goal->duration);
+    // stop maneuvr service request
+    twistSrvRequest->surge = 0.0;
+    twistSrvRequest->sway = 0.0;
+    if (!depth_stabilization)
+        twistSrvRequest->depth = 0.0;
+    if (!roll_stabilization)
+        twistSrvRequest->roll = 0.0;
+    if (!pitch_stabilization)
+        twistSrvRequest->pitch = 0.0;
+    if (!yaw_stabilization)
+        twistSrvRequest->yaw = 0.0;
 
-
-    // timer.start();
-    // bool preempted = false;
-    // while (timer.isBusy() && !preempted) {
-    //     preempted = actionServer.isPreemptRequested() || !rclcpp::ok();
-    //     checkRate.sleep();
+    twistSrvClient->async_send_request(twistSrvRequest).wait();
+    // check if service done
+    // if (rclcpp::spin_until_future_complete(_node, twistSrvClient->async_send_request(twistSrvRequest)) != rclcpp::FutureReturnCode::SUCCESS) {
+    //     goal_handle->abort(goal_result);
+    //     RCLCPP_ERROR(_node->get_logger(), "Unable to set twist");
+    //     return;
     // }
+
+    if (rclcpp::ok()) {
+        goal_result->done = true;
+        goal_handle->succeed(goal_result);
+        RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
+    }
 
 };
 

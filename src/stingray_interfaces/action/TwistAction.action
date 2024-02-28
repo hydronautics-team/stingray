@@ -7,7 +7,7 @@ float32 yaw
 float32 duration
 ---
 # Result
-std_msgs/Empty empty
+bool done
 ---
 # Feedback
 std_msgs/Empty empty

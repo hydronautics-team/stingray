@@ -10,10 +10,12 @@ states:
     timeout: 60
     action: 
       type: Move
-      # (surge, sway, depth)
-      linear: (0, 0, 0)
-      # (roll, pitch, yaw)
-      angular: (0, 0, 15)
+      surge: 0.0
+      sway: 0.0
+      depth: 0.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 15
   ROTATE_ANTICLOCK:
     transition_event: 
       type: StringEvent
@@ -24,10 +26,12 @@ states:
     timeout: 60
     action: 
       type: Move
-      # (surge, sway, depth)
-      linear: (0, 0, 0)
-      # (roll, pitch, yaw)
-      angular: (0, 0, 15)
+      surge: 0.0
+      sway: 0.0
+      depth: 0.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: -15
 transitions:
   - { trigger: ok, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: OK }
   - { trigger: failed, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: FAILED }

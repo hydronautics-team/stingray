@@ -7,7 +7,7 @@ states:
   RESET_IMU:
     action:
       type: InitIMU
-      duration: 1
+      duration: 600
   ENABLE_STABILIZATION:
     action:
       type: EnableStabilization
