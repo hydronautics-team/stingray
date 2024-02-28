@@ -6,8 +6,9 @@ states:
       repeat: 3
   RESET_IMU:
     action:
-      type: InitIMU
+      type: ResetIMU
       duration: 1
+      timeout: 5
   ENABLE_STABILIZATION:
     action:
       type: EnableStabilization

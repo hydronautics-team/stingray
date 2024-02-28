@@ -5,6 +5,7 @@ from rclpy.node import Node
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
 from stingray_core_interfaces.srv import SetStabilization
+from std_srvs.srv import Trigger
 
 
 class StateAction():
@@ -69,18 +70,34 @@ class DurationAction(StateAction):
         return True
 
 
-class InitIMUAction(DurationAction):
+class ResetIMUAction(DurationAction):
     def __init__(self,
                  node: Node,
-                 type: str = "InitIMU",
+                 type: str = "ResetIMU",
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
+
+        self.reset_imu_client = self.node.create_client(
+            Trigger, self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value)
+        
+        while not self.reset_imu_client.wait_for_service(timeout_sec=1.0):
+            get_logger('action').info(
+                f"{self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} not available, waiting again...")
 
     def __repr__(self) -> str:
         return f"type: {self.type}, duration: {self.duration}"
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
+        try:
+            self.future: Trigger.Response = await asyncio.wait_for(self.reset_imu_client.call_async(Trigger.Request()), timeout=1.0)
+            if not self.future.success:
+                get_logger('action').error(
+                    f"Error while waiting for {self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value}: {self.future.message}")
+                return False
+        except asyncio.TimeoutError:
+            get_logger('action').error(f"Wait for {self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} timed out")
+            return False
         return await super().execute()
 
 
@@ -92,11 +109,8 @@ class EnableStabilizationAction(StateAction):
                  roll: bool = False,
                  pitch: bool = False,
                  yaw: bool = False,
-                 timeout: float = 10.0,
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
-
-        self.timeout = timeout
 
         self.srv_request = SetStabilization.Request()
         self.srv_request.depth_stabilization = depth
@@ -117,7 +131,7 @@ class EnableStabilizationAction(StateAction):
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
         try:
-            self.future: SetStabilization.Response = await asyncio.wait_for(self.set_stabilization_client.call_async(self.srv_request), timeout=self.timeout)
+            self.future: SetStabilization.Response = await asyncio.wait_for(self.set_stabilization_client.call_async(self.srv_request), timeout=1.0)
             if not self.future.success:
                 get_logger('action').error(
                     f"Error while waiting for {self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value}: {self.future.message}")
@@ -203,8 +217,8 @@ class MoveAction(StateAction):
 def create_action(node: Node, action: dict) -> StateAction:
     if action['type'] == "Duration":
         return DurationAction(node=node, **action)
-    elif action['type'] == "InitIMU":
-        return InitIMUAction(node=node, **action)
+    elif action['type'] == "ResetIMU":
+        return ResetIMUAction(node=node, **action)
     elif action['type'] == "EnableStabilization":
         return EnableStabilizationAction(node=node, **action)
     elif action['type'] == "ThrusterIndication":

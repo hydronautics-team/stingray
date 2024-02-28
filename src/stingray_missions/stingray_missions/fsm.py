@@ -254,6 +254,7 @@ class FSM(object):
         self.lock_coroutine = asyncio.Lock()
 
         self.node.declare_parameter('twist_action', '/stingray/actions/twist')
+        self.node.declare_parameter('reset_imu_srv', '/stingray/services/reset_imu')
         self.node.declare_parameter(
             'transition_srv', '/stingray/services/transition')
         self.node.declare_parameter(

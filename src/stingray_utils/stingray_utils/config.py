@@ -44,5 +44,3 @@ class StingrayConfig():
     def __repr__(self) -> str:
         return f'robot: {StingrayConfig.robot}, ros: {StingrayConfig.ros}'
 
-
-StingrayConfig()
