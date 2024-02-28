@@ -7,21 +7,21 @@ states:
   RESET_IMU:
     action:
       type: InitIMU
-      duration: 600
+      duration: 1
   ENABLE_STABILIZATION:
     action:
       type: EnableStabilization
-      surge: false
-      sway: false
       depth: true
       roll: false
       pitch: false
       yaw: true
+      timeout: 1
+    timeout: 2
   THRUSTER_AFTER_IMU_INDICATION:
     action:
       type: ThrusterIndication
       repeat: 1
-    timeout: 5
+    timeout: 2
 transitions:
   - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: RESET_IMU }
   - { trigger: ok, source: RESET_IMU, dest: ENABLE_STABILIZATION }

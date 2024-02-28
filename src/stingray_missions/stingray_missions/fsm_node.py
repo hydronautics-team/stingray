@@ -10,7 +10,7 @@ async def ros_loop(node: Node):
     """ROS loop for spinning the node"""
     while rclpy.ok():
         rclpy.spin_once(node, timeout_sec=0)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1e-4)
 
 
 async def fsm_loop(fsm: FSM):
@@ -19,15 +19,14 @@ async def fsm_loop(fsm: FSM):
     # trigger transition service
     while rclpy.ok():
         await fsm.process_pending_transition()
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(1e-4)
 
 
 async def state_action_loop(fsm: FSM):
     """Loop for executing grasp"""
     while rclpy.ok():
-        if fsm.pending_action:
-            await fsm.process_pending_action()
-        await asyncio.sleep(0.1)
+        await fsm.process_pending_action()
+        await asyncio.sleep(1e-4)
 
 
 def main():

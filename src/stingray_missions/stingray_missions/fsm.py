@@ -249,17 +249,18 @@ class FSM(object):
         self.registered_states: dict[str, StateDescription] = {}
         self.events: dict[str, SubscriptionEvent] = {}
         self.expiration_timer = None
-        self.stopped = False
+        self.wait_action_done_event = asyncio.Event()
 
         self.lock_coroutine = asyncio.Lock()
 
         self.node.declare_parameter('twist_action', '/stingray/actions/twist')
-        self.node.declare_parameter('transition_srv', '/stingray/services/transition')
+        self.node.declare_parameter(
+            'transition_srv', '/stingray/services/transition')
+        self.node.declare_parameter(
+            'set_stabilization_srv', '/stingray/services/set_stabilization')
 
         self.transition_srv = self.node.create_service(
             TransitionSrv, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
-        
-
 
         self._initialize_machine(scenarios_packages)
 
@@ -286,6 +287,9 @@ class FSM(object):
         self.machine.add_transitions(global_transitions)
 
         # remember global states
+        self.registered_states[State.IDLE] = State.state_description(
+            node=self.node,
+            state=State.IDLE)
         self.registered_states[State.FAILED] = State.state_description(
             node=self.node,
             state=State.FAILED)
@@ -321,21 +325,25 @@ class FSM(object):
     def add_pending_action(self, action: StateAction):
         if not self.pending_action:
             self.pending_action = action
+            # get_logger("fsm").info(
+            #     f"Added pending action {self.pending_action}")
         else:
             get_logger("fsm").error(
                 f"FSM already has a pending action {self.pending_action}")
 
     async def process_pending_action(self):
         if self.pending_action:
+            self.wait_action_done_event.clear()
             result = await self.pending_action.execute()
-            self.pending_action = None
-            if not self.stopped:
+            get_logger("fsm").info(
+                f"{self.pending_action.type} result: {result}, stopped: {self.pending_action.stopped}")
+            if not self.pending_action.stopped:
                 if result:
                     self.add_pending_transition(Transition.ok)
                 else:
                     self.add_pending_transition(Transition.fail)
-            else:
-                self.stopped = False
+            self.pending_action = None
+            self.wait_action_done_event.set()
 
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
@@ -394,6 +402,7 @@ class FSM(object):
         """Executing as soon as the state is entered"""
         get_logger("fsm").info(
             f"{self.state} executing ... Transitions: {self.machine.get_triggers(self.state)}")
+        self.pending_transition = None
 
         # register event
         if self.state in self.events:
@@ -405,9 +414,6 @@ class FSM(object):
                 f"Register timeout for {self.registered_states[self.state].timeout} seconds")
             self.expiration_timer = self.node.create_timer(
                 self.registered_states[self.state].timeout, self._state_expired)
-        else:
-            get_logger("fsm").warning(
-                f"State will not expire")
         if self.registered_states[self.state].action:
             get_logger("fsm").info(
                 f"Register action for {self.state}")
@@ -415,6 +421,7 @@ class FSM(object):
 
     async def leave_state(self):
         """Executing before leaving the state"""
+        get_logger("fsm").info(f"Start leaving {self.state}")
 
         # unsubscribe event
         if self.state in self.events:
@@ -427,12 +434,14 @@ class FSM(object):
                     f"Cancel expiration timer for {self.state}")
             self.node.destroy_timer(self.expiration_timer)
             self.expiration_timer = None
-        # stop action
-        if self.pending_action:
+        # stop action and wait until executed
+        if self.pending_action and not self.pending_action.executed:
             self.pending_action.stop()
-            self.stopped = True
-            self.pending_action = None
-        self.pending_transition = None
+            try:
+                await asyncio.wait_for(self.wait_action_done_event.wait(), timeout=5)
+                self.wait_action_done_event.clear()
+            except asyncio.TimeoutError:
+                self.add_pending_transition(Transition.timeout)
 
         get_logger("fsm").info(f"{self.state} ended")
 
@@ -440,7 +449,7 @@ class FSM(object):
         """Countdown for the mission"""
         get_logger("fsm").info(
             f"State {self.state} expired!")
-        await self.trigger(Transition.timeout)
+        self.add_pending_transition(Transition.timeout)
 
     def draw(self):
         self.machine.get_combined_graph().draw("fsm_graph.png", prog="dot")
