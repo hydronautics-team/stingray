@@ -15,7 +15,7 @@ async def ros_loop(node: Node):
 
 async def fsm_loop(fsm: FSM):
     """FSM loop"""
-    fsm.draw()
+    # fsm.draw()
     # trigger transition service
     while rclpy.ok():
         await fsm.process_pending_transition()
