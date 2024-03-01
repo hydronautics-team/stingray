@@ -188,7 +188,7 @@ Contain nodes for working with lifter device.
 FSM package allows you to create a missions for robot.
 - `AUVController` class is a high-level mission controller. 
 - `AUVMission` allows you to create custom missions.
-- `TopicEvent` listens to the topic and triggers the event when the message is received. Allows you to create custom events.
+- `SubscriptionEvent` listens to the topic and triggers the event when the message is received. Allows you to create custom events.
 
 Use `ObjectDetectionEvent` to trigger the event when the object is detected.
 

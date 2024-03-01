@@ -1,24 +1,29 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>stingray_movement</name>
   <version>0.1.0</version>
   <description>Package contains basic action servers for movement of the vehicle for Stingray platform.</description>
 
   <maintainer email="rentgeny@mail.ru">Timur Akhtyamov</maintainer>
-
+  <maintainer email="vladushked@yandex.ru">Vladislav Plotnikov</maintainer>
 
   <license>MIT</license>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>rospy</depend>
-  <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>actionlib</depend>
-  <depend>actionlib_msgs</depend>
-  <depend>stingray_drivers_msgs</depend>
-  <depend>stingray_movement_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>rclcpp_components</depend>
+
+  <depend>stingray_core_interfaces</depend>
+  <depend>stingray_interfaces</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 
 </package>

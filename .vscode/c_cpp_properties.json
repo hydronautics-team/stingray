@@ -1,20 +1,33 @@
 {
-  "configurations": [
-    {
-      "browse": {
-        "databaseFilename": "${default}",
-        "limitSymbolsToIncludedHeaders": false
-      },
-      "includePath": [
-        "/opt/ros/iron/include/**",
-        "/usr/include/**"
-      ],
-      "name": "ROS",
-      "intelliSenseMode": "gcc-x64",
-      "compilerPath": "/usr/bin/gcc",
-      "cStandard": "gnu11",
-      "cppStandard": "c++14"
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/opt/ros/iron/include/**",
+                    "/usr/include/**",
+                    "/home/vladushked/hydronautics/stingray_core"
+                ]
+            },
+            "includePath": [
+                "/opt/ros/iron/include/**",
+                "/usr/include/**",
+                "${workspaceFolder}/src/stingray_movement/include",
+                "${workspaceFolder}/install/stingray_interfaces/include/stingray_interfaces",
+                "${workspaceFolder}/src/stingray_core/src/stingray_communication/include",
+                "${workspaceFolder}/install/stingray_core_interfaces/include/stingray_core_interfaces",
+                "${workspaceFolder}/src/stingray_core/src/serial/include",
+                "/opt/ros/iron/include/geometry_msgs",
+                "/opt/ros/iron/include/rclcpp_action"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "c++14",
+            "compilerPathInCppPropertiesJson": "/usr/bin/gcc",
+            "mergeConfigurations": false
+        }
+    ],
+    "version": 4
 }

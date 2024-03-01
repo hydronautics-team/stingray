@@ -1,9 +1,6 @@
-[submodule "src/stingray_missions"]
-	path = src/stingray_missions
-	url = git@github.com:hydronautics-team/stingray_missions.git
-[submodule "src/src/zbar_ros"]
-	path = src/src/zbar_ros
-	url = git@github.com:ros-drivers/zbar_ros.git
+[submodule "src/stingray_core"]
+	path = src/stingray_core
+	url = git@github.com:hydronautics-team/stingray_core.git
 [submodule "src/zbar_ros"]
 	path = src/zbar_ros
 	url = git@github.com:ros-drivers/zbar_ros.git
