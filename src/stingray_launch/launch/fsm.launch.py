@@ -48,7 +48,7 @@ def generate_launch_description():
             executable='usb_cam_node_exe',
             name='camera_driver',
             remappings=[
-                ('/image_raw', '/image'),
+                ('/image_raw', '/stingray/topics/camera/front'),
             ]
         ),
     ])
