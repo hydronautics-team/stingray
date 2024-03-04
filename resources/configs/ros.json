@@ -12,7 +12,8 @@
         "pinger_flare": "/stingray/topics/position/pinger_flare",
         "gazebo_velocity": "/cmd_vel",
         "gazebo_odometry": "/odom",
-        "marker": "/marker_box"
+        "marker": "/marker_box",
+        "updown": "/stingray/topics/devices/updown"
     },
     "services": {
         "set_horizontal_move": "/stingray/services/control/set_horizontal_move",
@@ -34,7 +35,6 @@
             "align": "/stingray/actions/movement/align",
             "align_low_level": "/stingray/actions/movement/align_low_level",
             "tack": "/stingray/actions/movement/tack"
-        },
-        "updown": "/stingray/actions/devices/updown"
+        }
     }
 }
