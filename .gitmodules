@@ -1,0 +1,3 @@
+[submodule "src/stingray_core"]
+	path = src/stingray_core
+	url = git@github.com:hydronautics-team/stingray_core.git

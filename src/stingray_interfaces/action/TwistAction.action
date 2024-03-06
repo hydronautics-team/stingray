@@ -1,0 +1,13 @@
+float32 surge 
+float32 sway
+float32 depth
+float32 roll
+float32 pitch
+float32 yaw
+float32 duration
+---
+# Result
+bool done
+---
+# Feedback
+std_msgs/Empty empty
