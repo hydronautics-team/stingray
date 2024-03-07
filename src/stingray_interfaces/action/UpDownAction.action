@@ -8,9 +8,10 @@ int32 velocity
 uint32 pause_common
 uint32 pause_optional
 bool to_be_opened
+float32 duration
 ---
 # Result
 bool success
 ---
 # Feedback
-bool isFinished
+bool is_finished

@@ -13,6 +13,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/TransitionSrv.srv"
   "action/TwistAction.action"
+  "action/UpDownAction.action"
   DEPENDENCIES std_msgs
 )
 

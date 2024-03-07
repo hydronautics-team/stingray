@@ -1,12 +1,12 @@
 #ifndef PROJECT_UPDOWNSERVER_H
 #define PROJECT_UPDOWNSERVER_H
 
-#include <stingray_interfaces/action/UpDownAction.hpp>
+#include <stingray_interfaces/action/up_down_action.hpp>
 
-#include "stingray_movement/include/AbstractActionServer.h"
+#include "../../stingray_movement/include/AbstractActionServer.h"
 #include "stingray_core_interfaces/srv/set_device_action.hpp"
 #include "stingray_core_interfaces/msg/device_state.hpp"
-#include "AsyncTimer.h"
+#include "../../stingray_movement/include/AsyncTimer.h"
 
 //#include <ament_index_cpp/get_package_share_directory.hpp>
 

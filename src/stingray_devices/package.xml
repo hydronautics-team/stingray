@@ -20,6 +20,7 @@
 
   <depend>stingray_core_interfaces</depend>
   <depend>stingray_interfaces</depend>
+  <depend>stingray_movement</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
