@@ -5,14 +5,14 @@
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
                     "/opt/ros/iron/include/**",
-                    "/usr/include/**",
-                    "/home/vladushked/hydronautics/stingray_core"
+                    "/usr/include/**"
                 ]
             },
             "includePath": [
                 "/opt/ros/iron/include/**",
                 "/usr/include/**",
                 "${workspaceFolder}/src/stingray_movement/include",
+                "${workspaceFolder}/src/stingray_utils/include",
                 "${workspaceFolder}/install/stingray_interfaces/include/stingray_interfaces",
                 "${workspaceFolder}/src/stingray_core/src/stingray_communication/include",
                 "${workspaceFolder}/install/stingray_core_interfaces/include/stingray_core_interfaces",
@@ -24,7 +24,7 @@
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu11",
-            "cppStandard": "c++14",
+            "cppStandard": "c++20",
             "compilerPathInCppPropertiesJson": "/usr/bin/gcc",
             "mergeConfigurations": false
         }
