@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from ament_index_python import get_package_share_directory
 
@@ -14,6 +15,9 @@ from launch_ros.actions import PushRosNamespace
 
 transition_srv = '/stingray/services/transition'
 zbar_topic = '/stingray/topics/zbar'
+twist_action = '/stingray/topics/zbar'
+reset_imu_srv = '/stingray/topics/zbar'
+set_stabilization_srv = '/stingray/topics/zbar'
 
 def generate_launch_description():
     transition_srv_arg = DeclareLaunchArgument(
@@ -22,21 +26,36 @@ def generate_launch_description():
     zbar_topic_arg = DeclareLaunchArgument(
         "zbar_topic", default_value='/stingray/topics/zbar'
     )
+    twist_action_arg = DeclareLaunchArgument(
+        "twist_action", default_value='/stingray/actions/twist'
+    )
+    reset_imu_srv_arg = DeclareLaunchArgument(
+        "reset_imu_srv", default_value='/stingray/services/reset_imu'
+    )
+    set_stabilization_srv_arg = DeclareLaunchArgument(
+        "set_stabilization_srv", default_value='/stingray/services/set_stabilization'
+    )
     # load ros config
     return LaunchDescription([
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(str(Path(
-        #         get_package_share_directory('stingray_core_launch'), 'auv.launch.py')))),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(str(Path(
+                get_package_share_directory('stingray_core_launch'), 'auv.launch.py')))),
         transition_srv_arg,
         zbar_topic_arg,
+        twist_action_arg,
+        reset_imu_srv_arg,
+        set_stabilization_srv_arg,
         Node(
             package='stingray_missions',
             executable='fsm_node',
             name='fsm_node',
-            # respawn=True,
-            # respawn_delay=1,
+            parameters=[
+                {'transition_srv': LaunchConfiguration("transition_srv")},
+                {'twist_action': LaunchConfiguration("transition_srv")},
+                {'reset_imu_srv': LaunchConfiguration("reset_imu_srv")},
+                {'set_stabilization_srv': LaunchConfiguration("set_stabilization_srv")},
+            ]
         ),
-
         # Node(
         #     package='stingray_movement',
         #     executable='twist_action_server',
