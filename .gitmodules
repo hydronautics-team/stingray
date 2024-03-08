@@ -1,3 +1,6 @@
 [submodule "src/stingray_core"]
 	path = src/stingray_core
 	url = git@github.com:hydronautics-team/stingray_core.git
+[submodule "src/zbar_ros"]
+	path = src/zbar_ros
+	url = git@github.com:ros-drivers/zbar_ros.git
