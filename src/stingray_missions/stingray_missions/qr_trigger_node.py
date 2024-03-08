@@ -1,4 +1,4 @@
-from stingray_interfaces.srv import TransitionSrv
+from stingray_interfaces.srv import SetTransition
 
 import time
 import rclpy
@@ -16,7 +16,7 @@ class TransitionTriggerNode(Node):
         self.declare_parameter(
             'zbar_topic', '/stingray/topics/zbar')
 
-        self.transition_client = self.create_client(TransitionSrv, self.get_parameter(
+        self.transition_client = self.create_client(SetTransition, self.get_parameter(
             'transition_srv').get_parameter_value().string_value)
         while not self.transition_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service not available, waiting again...')
@@ -46,7 +46,7 @@ class TransitionTriggerNode(Node):
             self.saved_transition = msg.data
 
     def send_request(self):
-        self.future = self.transition_client.call_async(TransitionSrv.Request(transition=self.saved_transition))
+        self.future = self.transition_client.call_async(SetTransition.Request(transition=self.saved_transition))
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result().ok
     

@@ -1,4 +1,4 @@
-#include "../include/EnableDeviceNode.h"
+#include <EnableDeviceNode.h>
 
 UpDownServer::UpDownServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<stingray_interfaces::action::UpDownAction, stingray_interfaces::action::UpDownAction_Goal>(_node, actionName) {
 

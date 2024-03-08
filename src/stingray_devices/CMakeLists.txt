@@ -15,7 +15,7 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(stingray_core_interfaces REQUIRED)
 find_package(stingray_interfaces REQUIRED)
-find_package(stingray_movement REQUIRED)
+find_package(stingray_utils REQUIRED)
 
 include_directories(
         include
@@ -24,7 +24,7 @@ include_directories(
 add_executable(EnableDeviceNode 
         src/EnableDeviceNode.cpp 
         include/EnableDeviceNode.h)
-ament_target_dependencies(EnableDeviceNode rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_movement)
+ament_target_dependencies(EnableDeviceNode rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 install(TARGETS
         EnableDeviceNode
