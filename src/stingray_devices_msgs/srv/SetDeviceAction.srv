@@ -1,7 +1,0 @@
-# Request
-uint8 device
-int32 value
----
-# Response
-bool success
-string message
