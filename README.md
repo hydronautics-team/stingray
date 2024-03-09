@@ -165,7 +165,7 @@ Provide the name of the package with weights: `WEIGHTS_PACKAGE_NAME`.
 
 # Packages
 
-## stingray_communication
+## stingray_core_communication
 
 Nodes:
 - harware_bridge - abstract bridge node between hardware and ros
