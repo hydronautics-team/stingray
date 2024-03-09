@@ -4,3 +4,6 @@
 [submodule "src/zbar_ros"]
 	path = src/zbar_ros
 	url = git@github.com:ros-drivers/zbar_ros.git
+[submodule "src/stingray_object_detection/ultralytics"]
+	path = src/stingray_object_detection/ultralytics
+	url = https://github.com/ultralytics/ultralytics.git
