@@ -23,7 +23,7 @@ set(utils_SRCS
     include/stingray_utils/AsyncTimer.h
 )
 add_library(${PROJECT_NAME} ${utils_SRCS})
-ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces)
+target_link_libraries(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces)
 
 include_directories(include)
 
@@ -40,7 +40,7 @@ ament_export_libraries(${PROJECT_NAME})
 
 ## Install headers
 install(
-        DIRECTORY include/stingray_utils
+        DIRECTORY include/${PROJECT_NAME}
         DESTINATION include)
 
 ament_export_dependencies(rosidl_default_runtime)
