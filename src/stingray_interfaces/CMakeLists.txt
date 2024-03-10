@@ -13,6 +13,9 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/TransitionSrv.srv"
   "action/TwistAction.action"
+  "msg/Object.msg"
+  "msg/ObjectsArray.msg"
+  "srv/SetEnableObjectDetection.srv"
   DEPENDENCIES std_msgs
 )
 
