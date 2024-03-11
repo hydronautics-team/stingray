@@ -37,10 +37,10 @@ install(TARGETS
         ${PROJECT_NAME}
         DESTINATION lib/${PROJECT_NAME}
         EXPORT ${PROJECT_NAME}
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
+        # LIBRARY DESTINATION lib
+        # ARCHIVE DESTINATION lib
+        # RUNTIME DESTINATION bin
+        # INCLUDES DESTINATION include
 )
 
 
