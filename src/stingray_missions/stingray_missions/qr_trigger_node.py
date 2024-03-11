@@ -35,30 +35,17 @@ class TransitionTriggerNode(Node):
         if (self.saved_transition == msg.data):
             self.msg_repeated += 1
             if (self.msg_repeated > 5):
-                service_responce = self.send_request()
-                if (service_responce):
-                    self.get_logger().info("Launch successful")
-                else:
-                    self.get_logger().error("Launch unsuccesful")
+                self.send_request()
                 self.msg_repeated = 0
+                time.sleep(5)
         else:
             self.msg_repeated = 0
             self.saved_transition = msg.data
 
     def send_request(self):
         self.future = self.transition_client.call_async(SetTransition.Request(transition=self.saved_transition))
-        rclpy.spin_until_future_complete(self, self.future)
-        return self.future.result().ok
-    
-    def run(self):
-        while rclpy.ok():
-            service_responce = self.send_request(self.saved_transition)
-            if (service_responce):
-                self.get_logger().info("Launch successful")
-            else:
-                self.get_logger().error("Launch unsuccesful")
-            rclpy.spin_once(self, timeout_sec=0.1)
-            time.sleep(1e-1)
+        # rclpy.spin_until_future_complete(self, self.future)
+        # return self.future.result().ok
 
 
 def main():
