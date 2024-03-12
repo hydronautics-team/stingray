@@ -1,6 +1,6 @@
-#include <EnableDeviceNode.h>
+#include <OpenCloseActionServer.h>
 
-UpDownServer::UpDownServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<stingray_interfaces::action::UpDownAction, stingray_interfaces::action::UpDownAction_Goal>(_node, actionName) {
+OpenCloseActionServer::OpenCloseActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<stingray_interfaces::action::UpDownAction, stingray_interfaces::action::UpDownAction_Goal>(_node, actionName) {
 
     _node->declare_parameter("device_enable_topic", "/stingray/topics/devices/updown");
     _node->declare_parameter("set_enable_device", "/stingray/services/devices/updown");
@@ -10,16 +10,16 @@ UpDownServer::UpDownServer(std::shared_ptr<rclcpp::Node> _node, const std::strin
     // ROS subscribers
     lowLevelSub = _node->create_subscription<stingray_core_interfaces::msg::DeviceState>(
         _node->get_parameter("device_enable_topic").as_string(), 1000,
-        std::bind(&UpDownServer::deviceStateCallback, this, std::placeholders::_1));
+        std::bind(&OpenCloseActionServer::deviceStateCallback, this, std::placeholders::_1));
 };
 
-void UpDownServer::deviceStateCallback(const stingray_core_interfaces::msg::DeviceState &msg) {
+void OpenCloseActionServer::deviceStateCallback(const stingray_core_interfaces::msg::DeviceState &msg) {
     current_device = msg.device;
     current_velocity = msg.velocity;
     current_opened = msg.is_opened;
 };
 
-bool UpDownServer::isSwitchDone(const std::shared_ptr<const stingray_interfaces::action::UpDownAction_Goal> goal) {
+bool OpenCloseActionServer::isSwitchDone(const std::shared_ptr<const stingray_interfaces::action::UpDownAction_Goal> goal) {
     bool device_correct = false;
     bool velocity_done = false;
     bool open_done = false;
@@ -34,7 +34,7 @@ bool UpDownServer::isSwitchDone(const std::shared_ptr<const stingray_interfaces:
     return device_correct && velocity_done && open_done;
 };
 
-void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::UpDownAction>> goal_handle) {
+void OpenCloseActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::UpDownAction>> goal_handle) {
 
     auto stingray_comRequest = std::make_shared<stingray_core_interfaces::srv::SetDeviceAction::Request>();
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
     std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("updown_device");
     node->declare_parameter("updown_action", "/stingray/actions/devices/updown");
-    UpDownServer server = UpDownServer(node, node->get_parameter("updown_action").as_string());
+    OpenCloseActionServer server = OpenCloseActionServer(node, node->get_parameter("updown_action").as_string());
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;

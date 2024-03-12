@@ -21,13 +21,13 @@ include_directories(
         include
 )
 
-add_executable(EnableDeviceNode 
-        src/EnableDeviceNode.cpp 
-        include/EnableDeviceNode.h)
-ament_target_dependencies(EnableDeviceNode rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+add_executable(OpenCloseActionServer 
+        src/OpenCloseActionServer.cpp 
+        include/OpenCloseActionServer.h)
+ament_target_dependencies(OpenCloseActionServer rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 install(TARGETS
-        EnableDeviceNode
+        OpenCloseActionServer
         DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
