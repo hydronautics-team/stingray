@@ -6,13 +6,13 @@
 #include <stingray_utils/AsyncTimer.h>
 
 #include <stingray_core_interfaces/srv/set_device_action.hpp>
-#include <stingray_core_interfaces/msg/device_state.hpp>
-#include <stingray_interfaces/action/up_down_action.hpp>
+#include <stingray_core_interfaces/msg/open_close_state.hpp>
+#include <stingray_interfaces/action/open_close_action.hpp>
 
 using namespace std::chrono_literals;
 
 
-class OpenCloseActionServer : AbstractActionServer<stingray_interfaces::action::OpenCloseAction, stingray_interfaces::action::OpenCloseAction_Goal>{
+class OpenCloseActionServer : AbstractActionServer<stingray_interfaces::action::OpenCloseAction, stingray_interfaces::action::OpenCloseAction_Goal> {
 
 protected:
 
@@ -24,14 +24,13 @@ public:
     ~OpenCloseActionServer() = default;
 
 private:
-    void deviceStateCallback(const stingray_core_interfaces::msg::DeviceState &msg);
+    void openCloseStateCallback(const stingray_core_interfaces::msg::OpenCloseState &msg);
     bool isSwitchDone(const std::shared_ptr<const stingray_interfaces::action::OpenCloseAction_Goal> goal);
-    rclcpp::Subscription<stingray_core_interfaces::msg::DeviceState>::SharedPtr lowLevelSub;
-    rclcpp::Client<stingray_core_interfaces::srv::SetDeviceAction>::SharedPtr stingray_comClient;
-    
+    rclcpp::Subscription<stingray_core_interfaces::msg::OpenCloseState>::SharedPtr lowLevelSub;
+    rclcpp::Client<stingray_core_interfaces::srv::SetDeviceAction>::SharedPtr setDeviceSrvClient;
+
     int current_device;
-    int current_velocity;
-    bool current_opened;
+    bool current_is_opened;
 };
 
 

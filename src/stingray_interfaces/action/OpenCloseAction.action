@@ -4,10 +4,11 @@
 # uint8 DEVICE_LIFTER=2
 
 int32 device
-bool openclose
+bool open
+float64 timeout
 ---
 # Result
-bool success
+bool done
 ---
 # Feedback
 std_msgs/Empty empty
