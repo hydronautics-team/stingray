@@ -91,7 +91,7 @@ void DeviceActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoal
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
-    std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("updown_device");
+    std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("device_action_server");
     node->declare_parameter("device_action", "/stingray/actions/device");
     DeviceActionServer server = DeviceActionServer(node, node->get_parameter("device_action").as_string());
     rclcpp::spin(node);

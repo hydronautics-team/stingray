@@ -13,16 +13,19 @@ from launch.substitutions import TextSubstitution
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 
-transition_srv = '/stingray/services/transition'
-zbar_topic = '/stingray/topics/zbar'
-twist_action = '/stingray/topics/zbar'
-reset_imu_srv = '/stingray/topics/zbar'
-set_stabilization_srv = '/stingray/topics/zbar'
-
 
 def generate_launch_description():
+    # camera
     front_camera_topic_arg = DeclareLaunchArgument(
         "front_camera_topic", default_value='/stingray/topics/front_camera'
+    )
+    front_camera_path_arg = DeclareLaunchArgument(
+        "front_camera_path", default_value='/dev/video0'
+    )
+
+    # missions
+    package_names_arg = DeclareLaunchArgument(
+        "package_names", default_value=["stingray_missions"]
     )
     transition_srv_arg = DeclareLaunchArgument(
         "transition_srv", default_value='/stingray/services/transition'
@@ -30,22 +33,50 @@ def generate_launch_description():
     zbar_topic_arg = DeclareLaunchArgument(
         "zbar_topic", default_value='/stingray/topics/zbar'
     )
+
+    # movement
     twist_action_arg = DeclareLaunchArgument(
         "twist_action", default_value='/stingray/actions/twist'
     )
+    uv_state_topic_arg = DeclareLaunchArgument(
+        "uv_state_topic", default_value='/stingray/topics/uv_state'
+    )
+    set_twist_srv_arg = DeclareLaunchArgument(
+        "set_twist_srv", default_value='/stingray/services/set_twist'
+    )
+
+    # devices
+    device_action_arg = DeclareLaunchArgument(
+        "device_action", default_value='/stingray/actions/device'
+    )
+    device_state_array_topic_arg = DeclareLaunchArgument(
+        "device_state_array_topic", default_value='/stingray/topics/device_state_array'
+    )
+    set_device_srv_arg = DeclareLaunchArgument(
+        "set_device_srv", default_value='/stingray/services/set_device'
+    )
+
+    # core
     reset_imu_srv_arg = DeclareLaunchArgument(
         "reset_imu_srv", default_value='/stingray/services/reset_imu'
     )
     set_stabilization_srv_arg = DeclareLaunchArgument(
         "set_stabilization_srv", default_value='/stingray/services/set_stabilization'
     )
+
     # load ros config
     return LaunchDescription([
-        
         front_camera_topic_arg,
+        front_camera_path_arg,
+        package_names_arg,
         transition_srv_arg,
         zbar_topic_arg,
         twist_action_arg,
+        uv_state_topic_arg,
+        set_twist_srv_arg,
+        device_action_arg,
+        device_state_array_topic_arg,
+        set_device_srv_arg,
         reset_imu_srv_arg,
         set_stabilization_srv_arg,
         Node(
@@ -53,8 +84,10 @@ def generate_launch_description():
             executable='fsm_node',
             name='fsm_node',
             parameters=[
+                {'package_names': LaunchConfiguration("package_names")},
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
+                {'device_action': LaunchConfiguration("device_action")},
                 {'reset_imu_srv': LaunchConfiguration("reset_imu_srv")},
                 {'set_stabilization_srv': LaunchConfiguration(
                     "set_stabilization_srv")},
@@ -66,6 +99,24 @@ def generate_launch_description():
             package='stingray_movement',
             executable='twist_action_server',
             name='twist_action_server',
+            parameters=[
+                {'twist_action': LaunchConfiguration("twist_action")},
+                {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
+                {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
+            ],
+            respawn=True,
+            respawn_delay=1,
+        ),
+        Node(
+            package='stingray_devices',
+            executable='device_action_server',
+            name='device_action_server',
+            parameters=[
+                {'device_action': LaunchConfiguration("device_action")},
+                {'device_state_array_topic': LaunchConfiguration(
+                    "device_state_array_topic")},
+                {'set_device_srv': LaunchConfiguration("set_device_srv")},
+            ],
             respawn=True,
             respawn_delay=1,
         ),
@@ -98,12 +149,11 @@ def generate_launch_description():
             remappings=[
                 ('/image_raw', LaunchConfiguration("front_camera_topic")),
             ],
+            parameters=[
+                {'video_device': LaunchConfiguration("front_camera_path")},
+                # {'camera_name': "/front"},
+            ],
             respawn=True,
             respawn_delay=1,
-        ),
-        Node(
-            package='rqt_gui',
-            executable='rqt_gui',
-            name='rqt_gui',
         ),
     ])
