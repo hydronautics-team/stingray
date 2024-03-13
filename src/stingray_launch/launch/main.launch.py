@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from ament_index_python import get_package_share_directory
@@ -25,7 +24,7 @@ def generate_launch_description():
 
     # missions
     package_names_arg = DeclareLaunchArgument(
-        "package_names", default_value='[stingray_missions stingray_missions]'
+        "package_names", default_value='stingray_missions stingray_missions'
     )
     transition_srv_arg = DeclareLaunchArgument(
         "transition_srv", default_value='/stingray/services/transition'
@@ -57,11 +56,33 @@ def generate_launch_description():
     )
 
     # core
+    # hardware bridge
+    # topic names
+    driver_request_topic_arg = DeclareLaunchArgument(
+        "driver_request_topic", default_value='/stingray/topics/driver_request'
+    )
+    driver_response_topic_arg = DeclareLaunchArgument(
+        "driver_response_topic", default_value='/stingray/topics/driver_response'
+    )
+
+    # service names
+  
+    set_stabilization_srv_arg = DeclareLaunchArgument(
+        "set_stabilization_srv", default_value='/stingray/services/set_stabilization'
+    )
     reset_imu_srv_arg = DeclareLaunchArgument(
         "reset_imu_srv", default_value='/stingray/services/reset_imu'
     )
-    set_stabilization_srv_arg = DeclareLaunchArgument(
-        "set_stabilization_srv", default_value='/stingray/services/set_stabilization'
+    enable_thrusters_srv_arg = DeclareLaunchArgument(
+        "enable_thrusters_srv", default_value='/stingray/services/enable_thrusters'
+    )
+
+    # uart driver
+    device_arg = DeclareLaunchArgument(
+        "device", default_value="/dev/ttyS0"
+    )
+    baudrate_arg = DeclareLaunchArgument(
+        "baudrate", default_value="115200"
     )
 
     # load ros config
@@ -77,14 +98,39 @@ def generate_launch_description():
         device_action_arg,
         device_state_array_topic_arg,
         set_device_srv_arg,
+        driver_request_topic_arg,
+        driver_response_topic_arg,
         reset_imu_srv_arg,
         set_stabilization_srv_arg,
+        enable_thrusters_srv_arg,
+        set_device_srv_arg,
+        device_arg,
+        baudrate_arg,
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(str(Path(
+                get_package_share_directory('stingray_core_launch'), 'uart.launch.py'))),
+            launch_arguments={
+                'driver_request_topic': LaunchConfiguration("driver_request_topic"),
+                'uv_state_topic': LaunchConfiguration("uv_state_topic"),
+                'device_state_array_topic': LaunchConfiguration("device_state_array_topic"),
+                'driver_response_topic': LaunchConfiguration("driver_response_topic"),
+                'set_twist_srv': LaunchConfiguration("set_twist_srv"),
+                'set_stabilization_srv': LaunchConfiguration("set_stabilization_srv"),
+                'reset_imu_srv': LaunchConfiguration("reset_imu_srv"),
+                'enable_thrusters_srv': LaunchConfiguration("enable_thrusters_srv"),
+                'set_device_srv': LaunchConfiguration("set_device_srv"),
+                'driver_request_topic': LaunchConfiguration("driver_request_topic"),
+                'driver_response_topic': LaunchConfiguration("driver_response_topic"),
+                'device': LaunchConfiguration("device"),
+                'baudrate': LaunchConfiguration("baudrate"),
+            }.items(),
+        ),
         Node(
             package='stingray_missions',
             executable='fsm_node',
             name='fsm_node',
             parameters=[
-                # {'package_names': LaunchConfiguration("package_names")},
+                {'package_names': LaunchConfiguration("package_names")},
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
                 {'device_action': LaunchConfiguration("device_action")},
