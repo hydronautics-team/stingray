@@ -21,13 +21,13 @@ include_directories(
         include
 )
 
-add_executable(DeviceActionServer 
+add_executable(device_action_server 
         src/DeviceActionServer.cpp 
         include/DeviceActionServer.h)
-ament_target_dependencies(DeviceActionServer rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+ament_target_dependencies(device_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 install(TARGETS
-        DeviceActionServer
+        device_action_server
         DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

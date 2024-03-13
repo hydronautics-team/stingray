@@ -25,7 +25,7 @@ def generate_launch_description():
 
     # missions
     package_names_arg = DeclareLaunchArgument(
-        "package_names", default_value=["stingray_missions"]
+        "package_names", default_value='[stingray_missions stingray_missions]'
     )
     transition_srv_arg = DeclareLaunchArgument(
         "transition_srv", default_value='/stingray/services/transition'
@@ -84,7 +84,7 @@ def generate_launch_description():
             executable='fsm_node',
             name='fsm_node',
             parameters=[
-                {'package_names': LaunchConfiguration("package_names")},
+                # {'package_names': LaunchConfiguration("package_names")},
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
                 {'device_action': LaunchConfiguration("device_action")},
