@@ -11,6 +11,9 @@ cap = cv2.VideoCapture('/home/shakuevda/Desktop/SAUVC/stingray_testDetect/front_
 cap.set(3, 640)
 cap.set(4, 480)
 
+f = open('log.txt', 'w')
+
+
 while True:
     _, img = cap.read()
     
@@ -49,7 +52,17 @@ while True:
             object_msg.bottom_right_x = int(right)
             object_msg.bottom_right_y = int(bottom)
             print(object_msg)
+            str_name = str(object_msg.name)
+            str_confidence = str(object_msg.confidence)
+            str_top_left_x = str(object_msg.top_left_x)
+            str_top_left_y = str(object_msg.top_left_y)
+            str_bottom_right_y = str(object_msg.bottom_right_y)
+            str_bottom_right_x = str(object_msg.bottom_right_x)
+            string = str_name + ' ' + str_confidence + ' ' + str_top_left_x + ' ' + str_top_left_y + ' ' + str_bottom_right_x + ' ' + str_bottom_right_y + '\n'
+            f.write(string)
 
+
+            
     img = annotator.result()  
     cv2.imshow('YOLO V8 Detection', img)     
     if cv2.waitKey(1) & 0xFF == ord(' '):
