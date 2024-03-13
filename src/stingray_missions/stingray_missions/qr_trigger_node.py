@@ -26,7 +26,7 @@ class TransitionTriggerNode(Node):
             String,
             self.get_parameter('zbar_topic').get_parameter_value().string_value,
             self.qr_callback,
-            10)
+            1)
         self.saved_transition = None
         self.msg_repeated = 0
 

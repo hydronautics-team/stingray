@@ -21,7 +21,17 @@ void DeviceActionServer::deviceStateCallback(const stingray_core_interfaces::msg
 };
 
 bool DeviceActionServer::isSwitchDone(const std::shared_ptr<const stingray_interfaces::action::DeviceAction_Goal> goal) {
-    return currentDeviceStates[goal->device].value == goal->value;
+    bool value_correct = false;
+    if (currentDeviceStates.empty()) {
+        RCLCPP_ERROR(_node->get_logger(), "No device states");
+        return false;
+    }
+    if (currentDeviceStates.size() < goal->device + 1) {
+        RCLCPP_ERROR(_node->get_logger(), "Device not found. Device states size: %d", currentDeviceStates.size());
+        return false;
+    }
+    value_correct = (currentDeviceStates[goal->device].value == goal->value);
+    return value_correct;
 };
 
 void DeviceActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::DeviceAction>> goal_handle) {
@@ -62,31 +72,27 @@ void DeviceActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoal
 
     while (rclcpp::ok()) {
         if (!timer.isBusy()) {
+            RCLCPP_ERROR(_node->get_logger(), "Timeout reached during device action!");
             goal_result->success = false;
             goal_handle->abort(goal_result);
-            RCLCPP_ERROR(_node->get_logger(), "Timeout reached while open/close device!");
             return;
         }
         if (isSwitchDone(goal)) {
-            break;
+            RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
+            goal_result->success = true;
+            goal_handle->succeed(goal_result);
+            return;
         }
 
         if (goal_handle->is_canceling()) {
+            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
             goal_result->success = false;
             goal_handle->canceled(goal_result);
-            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
             return;
         }
         // rclcpp::spin_some(_node);
         checkRate.sleep();
     }
-
-    if (rclcpp::ok()) {
-        goal_result->success = true;
-        goal_handle->succeed(goal_result);
-        RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
-    }
-
 };
 
 int main(int argc, char *argv[]) {

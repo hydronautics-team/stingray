@@ -174,7 +174,7 @@ class ThrusterIndicationAction(StateAction):
                 return False
             get_logger("action").info(f"Thruster indication {i+1}/{self.repeat}")
             result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
-            asyncio.sleep(self.goal.duration)
+            await asyncio.sleep(self.goal.duration)
         self.executed = True
         return result.result.success
 
@@ -221,15 +221,15 @@ class SetDeviceValueAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "SetDeviceValue",
-                 device: int = 0,
-                 value: int = 0,
+                 device: int = 0.0,
+                 value: int = 0.0,
                  timeout: float = 0.0,
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
         self.goal = DeviceAction.Goal()
-        self.goal.device = device
-        self.goal.value = value
-        self.goal.timeout = timeout
+        self.goal.device = int(device)
+        self.goal.value = int(value)
+        self.goal.timeout = float(timeout)
 
         self.device_action_client = AsyncActionClient(
             self.node, DeviceAction, self.node.get_parameter('device_action').get_parameter_value().string_value)

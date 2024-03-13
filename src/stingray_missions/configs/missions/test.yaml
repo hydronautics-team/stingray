@@ -12,8 +12,8 @@ states:
   DEVICE_OPEN:
     action:
       type: SetDeviceValue
-      device: 0
-      value: 1
+      device: 0.0
+      value: 1.0
       timeout: 5
     timeout: 10
   THRUSTER_AFTER_IMU_INDICATION:
