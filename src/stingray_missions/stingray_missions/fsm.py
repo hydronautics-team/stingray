@@ -309,6 +309,8 @@ class FSM(object):
     def add_pending_transition(self, transition: str):
         if not self.pending_transition:
             self.pending_transition = transition
+            get_logger("fsm").info(
+                f"Added pending transition {self.pending_transition}")
         else:
             get_logger("fsm").error(
                 f"FSM already has a pending transition {self.pending_transition}")
@@ -318,9 +320,9 @@ class FSM(object):
             if self.pending_transition in self.machine.get_triggers(self.state):
                 await self.trigger(self.pending_transition)
             else:
-                self.pending_transition = None
                 get_logger("fsm").error(
                     f"Transition {self.pending_transition} not found in {self.state}. Valid transitions: {self.machine.get_triggers(self.state)}")
+                self.pending_transition = None
 
     def add_pending_action(self, action: StateAction):
         if not self.pending_action:
@@ -439,9 +441,12 @@ class FSM(object):
             self.pending_action.stop()
             try:
                 await asyncio.wait_for(self.wait_action_success_event.wait(), timeout=5)
-                self.wait_action_success_event.clear()
             except asyncio.TimeoutError:
+                get_logger("fsm").error(
+                    f"Stopping {self.pending_action.type} timed out")
+                self.pending_action = None
                 self.add_pending_transition(Transition.timeout)
+            self.wait_action_success_event.clear()
 
         get_logger("fsm").info(f"{self.state} ended")
 

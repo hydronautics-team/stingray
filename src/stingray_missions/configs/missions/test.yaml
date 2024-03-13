@@ -27,3 +27,4 @@ transitions:
   - { trigger: ok, source: DEVICE_OPEN, dest: THRUSTER_AFTER_IMU_INDICATION }
   - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: OK }
   - { trigger: timeout, source: "*", dest: FAILED }
+  - { trigger: fail, source: "*", dest: FAILED }

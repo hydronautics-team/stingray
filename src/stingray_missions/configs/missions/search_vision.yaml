@@ -34,6 +34,6 @@ states:
       yaw: -15
 transitions:
   - { trigger: ok, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: OK }
-  - { trigger: failed, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: FAILED }
+  - { trigger: fail, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: FAILED }
   - { trigger: timeout, source: ROTATE_CLOCK, dest: ROTATE_ANTICLOCK }
   - { trigger: timeout, source: ROTATE_ANTICLOCK, dest: FAILED }

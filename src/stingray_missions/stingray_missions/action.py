@@ -247,7 +247,6 @@ class SetDeviceValueAction(StateAction):
         self.executed = True
         return result.result.success
 
-
 def create_action(node: Node, action: dict) -> StateAction:
     if action['type'] == "Duration":
         return DurationAction(node=node, **action)
