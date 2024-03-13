@@ -175,7 +175,7 @@ class ThrusterIndicationAction(StateAction):
             result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
             asyncio.sleep(self.goal.duration)
         self.executed = True
-        return result.result.done
+        return result.result.success
 
 
 class MoveAction(StateAction):
@@ -214,7 +214,7 @@ class MoveAction(StateAction):
         get_logger("action").info(f"Executing {self.type} state action")
         result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
         self.executed = True
-        return result.result.done
+        return result.result.success
 
 
 def create_action(node: Node, action: dict) -> StateAction:

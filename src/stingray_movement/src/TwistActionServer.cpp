@@ -73,11 +73,11 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     // get goal data
     const auto goal = goal_handle->get_goal();
     auto goal_result = std::make_shared<stingray_interfaces::action::TwistAction::Result>();
-    goal_result->done = false;
+    goal_result->success = false;
 
     // check duration
     if (goal->duration < 0.0) {
-        goal_result->done = false;
+        goal_result->success = false;
         goal_handle->abort(goal_result);
         RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
         return;
@@ -91,7 +91,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvRequest->pitch = goal->pitch;
     twistSrvRequest->yaw = goal->yaw;
 
-    // check if service done
+    // check if service success
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     rclcpp::Rate checkRate(10ms);
@@ -103,7 +103,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
             break;
         }
         if (goal_handle->is_canceling()) {
-            goal_result->done = false;
+            goal_result->success = false;
             goal_handle->canceled(goal_result);
             RCLCPP_INFO(_node->get_logger(), "Goal canceled");
             return;
@@ -127,7 +127,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     if (rclcpp::ok()) {
-        goal_result->done = true;
+        goal_result->success = true;
         goal_handle->succeed(goal_result);
         RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
     }

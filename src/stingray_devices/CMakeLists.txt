@@ -21,13 +21,13 @@ include_directories(
         include
 )
 
-add_executable(OpenCloseActionServer 
-        src/OpenCloseActionServer.cpp 
-        include/OpenCloseActionServer.h)
-ament_target_dependencies(OpenCloseActionServer rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+add_executable(DeviceActionServer 
+        src/DeviceActionServer.cpp 
+        include/DeviceActionServer.h)
+ament_target_dependencies(DeviceActionServer rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 install(TARGETS
-        OpenCloseActionServer
+        DeviceActionServer
         DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

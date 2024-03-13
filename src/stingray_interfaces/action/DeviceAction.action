@@ -3,12 +3,12 @@
 # uint8 DEVICE_DROPPER=1
 # uint8 DEVICE_LIFTER=2
 
-int32 device
-bool open
-float64 timeout
+uint8 device
+int32 value
+float32 timeout
 ---
 # Result
-bool done
+bool success
 ---
 # Feedback
 std_msgs/Empty empty

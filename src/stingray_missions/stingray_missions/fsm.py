@@ -248,7 +248,7 @@ class FSM(object):
         self.registered_states: dict[str, StateDescription] = {}
         self.events: dict[str, SubscriptionEvent] = {}
         self.expiration_timer = None
-        self.wait_action_done_event = asyncio.Event()
+        self.wait_action_success_event = asyncio.Event()
 
         self.lock_coroutine = asyncio.Lock()
 
@@ -333,7 +333,7 @@ class FSM(object):
 
     async def process_pending_action(self):
         if self.pending_action:
-            self.wait_action_done_event.clear()
+            self.wait_action_success_event.clear()
             result = await self.pending_action.execute()
             get_logger("fsm").info(
                 f"{self.pending_action.type} result: {result}, stopped: {self.pending_action.stopped}")
@@ -343,7 +343,7 @@ class FSM(object):
                 else:
                     self.add_pending_transition(Transition.fail)
             self.pending_action = None
-            self.wait_action_done_event.set()
+            self.wait_action_success_event.set()
 
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
@@ -438,8 +438,8 @@ class FSM(object):
         if self.pending_action and not self.pending_action.executed:
             self.pending_action.stop()
             try:
-                await asyncio.wait_for(self.wait_action_done_event.wait(), timeout=5)
-                self.wait_action_done_event.clear()
+                await asyncio.wait_for(self.wait_action_success_event.wait(), timeout=5)
+                self.wait_action_success_event.clear()
             except asyncio.TimeoutError:
                 self.add_pending_transition(Transition.timeout)
 
