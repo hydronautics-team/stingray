@@ -14,6 +14,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetTransition.srv"
   "action/TwistAction.action"
   "action/DeviceAction.action"
+  "msg/Bbox.msg"
+  "msg/BboxArray.msg"
+  "srv/SetEnableObjectDetection.srv"
   DEPENDENCIES std_msgs
 )
 

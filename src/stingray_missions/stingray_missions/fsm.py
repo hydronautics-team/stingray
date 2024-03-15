@@ -5,7 +5,7 @@ from rclpy.logging import get_logger
 from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 
-from stingray_missions.event import StringEvent, SubscriptionEvent
+from stingray_missions.event import StringEvent, ObjectDetectionEvent, SubscriptionEvent
 from stingray_missions.action import StateAction, create_action
 from stingray_utils.config import load_yaml
 from stingray_interfaces.srv import SetTransition
@@ -378,6 +378,16 @@ class FSM(object):
                     )
                     get_logger("fsm").info(
                         f"Event {state.transition_event.type} registered for state {state.name}")
+                # TODO
+                elif state.transition_event.type == "ObjectDetectionEvent":
+                    self.events[state.name] = ObjectDetectionEvent(
+                        transition_fn=self.add_pending_transition,
+                        topic=state.transition_event.topic_name,
+                        data=state.transition_event.data,
+                        trigger=state.transition_event.trigger,
+                        count=state.transition_event.count,
+                    )
+                    get_logger("fsm").info(f"Event {state.transition_event.type} registered for state {state.name}")
                 else:
                     raise ValueError(
                         f"Event type not supported: {state.transition_event.type}")

@@ -55,6 +55,20 @@ def generate_launch_description():
         "set_device_srv", default_value='/stingray/services/set_device'
     )
 
+    # object detection
+    image_topic_list_arg = DeclareLaunchArgument(
+        "image_topic_list", default_value='/stingray/topics/front_camera'
+    )
+    set_enable_object_detection_srv_arg = DeclareLaunchArgument(
+        "set_enable_object_detection_srv", default_value='/stingray/services/set_twist'
+    )
+    weights_pkg_name_arg = DeclareLaunchArgument(
+        "weights_pkg_name", default_value='stingray_object_detection'
+    )
+    debug_arg = DeclareLaunchArgument(
+        "debug", default_value='True'
+    )
+
     # core
     # hardware bridge
     # topic names
@@ -66,7 +80,6 @@ def generate_launch_description():
     )
 
     # service names
-  
     set_stabilization_srv_arg = DeclareLaunchArgument(
         "set_stabilization_srv", default_value='/stingray/services/set_stabilization'
     )
@@ -84,6 +97,7 @@ def generate_launch_description():
     baudrate_arg = DeclareLaunchArgument(
         "baudrate", default_value="115200"
     )
+    
 
     # load ros config
     return LaunchDescription([
@@ -106,6 +120,10 @@ def generate_launch_description():
         set_device_srv_arg,
         device_arg,
         baudrate_arg,
+        image_topic_list_arg,
+        set_enable_object_detection_srv_arg,
+        weights_pkg_name_arg,
+        debug_arg,
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(Path(
                 get_package_share_directory('stingray_core_launch'), 'uart.launch.py'))),
@@ -184,6 +202,19 @@ def generate_launch_description():
             remappings=[
                 ('/image', LaunchConfiguration("front_camera_topic")),
                 ('/barcode', LaunchConfiguration("zbar_topic")),
+            ],
+            respawn=True,
+            respawn_delay=1,
+        ),
+        Node(
+            package='stingray_object_detection',
+            executable='yolov5_detector',
+            name='yolov5_detector',
+            parameters=[
+                {'weights_pkg_name': LaunchConfiguration("weights_pkg_name")},
+                {'image_topic_list': LaunchConfiguration("image_topic_list")},
+                {'set_enable_object_detection_srv': LaunchConfiguration("set_enable_object_detection_srv")},
+                {'debug': LaunchConfiguration("debug")},
             ],
             respawn=True,
             respawn_delay=1,
