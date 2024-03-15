@@ -4,6 +4,7 @@ import asyncio
 from rclpy.node import Node
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
+from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
 from stingray_core_interfaces.srv import SetStabilization
 from std_srvs.srv import Trigger
 
@@ -154,7 +155,7 @@ class ThrusterIndicationAction(StateAction):
 
         self.goal = TwistAction.Goal()
         self.goal.surge = 10.0
-        self.goal.duration = 0.2
+        self.goal.duration = 0.5
 
         self.twist_action_client = AsyncActionClient(
             self.node, TwistAction, self.node.get_parameter('twist_action').get_parameter_value().string_value)
@@ -173,8 +174,9 @@ class ThrusterIndicationAction(StateAction):
                 return False
             get_logger("action").info(f"Thruster indication {i+1}/{self.repeat}")
             result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
+            await asyncio.sleep(self.goal.duration)
         self.executed = True
-        return result.result.done
+        return result.result.success
 
 
 class MoveAction(StateAction):
@@ -187,6 +189,7 @@ class MoveAction(StateAction):
                  roll: float = 0.0,
                  pitch: float = 0.0,
                  yaw: float = 0.0,
+                 duration: float = 0.0,
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
         self.goal = TwistAction.Goal()
@@ -196,12 +199,13 @@ class MoveAction(StateAction):
         self.goal.roll = float(roll)
         self.goal.pitch = float(pitch)
         self.goal.yaw = float(yaw)
+        self.goal.duration = float(duration)
 
         self.twist_action_client = AsyncActionClient(
             self.node, TwistAction, self.node.get_parameter('twist_action').get_parameter_value().string_value)
 
     def __repr__(self) -> str:
-        return f"type: {self.type}, surge: {self.goal.surge}, sway: {self.goal.sway}, depth: {self.goal.depth}, roll: {self.goal.roll}, pitch: {self.goal.pitch}, yaw: {self.goal.yaw}"
+        return f"type: {self.type}, surge: {self.goal.surge}, sway: {self.goal.sway}, depth: {self.goal.depth}, roll: {self.goal.roll}, pitch: {self.goal.pitch}, yaw: {self.goal.yaw}, duration: {self.goal.duration}"
 
     def stop(self):
         self.twist_action_client.cancel()
@@ -211,8 +215,37 @@ class MoveAction(StateAction):
         get_logger("action").info(f"Executing {self.type} state action")
         result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
         self.executed = True
-        return result.result.done
+        return result.result.success
+    
+class SetDeviceValueAction(StateAction):
+    def __init__(self,
+                 node: Node,
+                 type: str = "SetDeviceValue",
+                 device: int = 0.0,
+                 value: int = 0.0,
+                 timeout: float = 0.0,
+                 **kwargs):
+        super().__init__(node=node, type=type, **kwargs)
+        self.goal = DeviceAction.Goal()
+        self.goal.device = int(device)
+        self.goal.value = int(value)
+        self.goal.timeout = float(timeout)
 
+        self.device_action_client = AsyncActionClient(
+            self.node, DeviceAction, self.node.get_parameter('device_action').get_parameter_value().string_value)
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, device: {self.goal.device}, value: {self.goal.value}"
+
+    def stop(self):
+        self.device_action_client.cancel()
+        return super().stop()
+    
+    async def execute(self) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action")
+        result: TwistAction_GetResult_Response = await self.device_action_client.send_goal_async(self.goal);
+        self.executed = True
+        return result.result.success
 
 def create_action(node: Node, action: dict) -> StateAction:
     if action['type'] == "Duration":
@@ -225,6 +258,8 @@ def create_action(node: Node, action: dict) -> StateAction:
         return ThrusterIndicationAction(node=node, **action)
     elif action['type'] == "Move":
         return MoveAction(node=node, **action)
+    elif action['type'] == "SetDeviceValue":
+        return SetDeviceValueAction(node=node, **action)
     else:
         raise NotImplementedError(
             f"Action type {action['type']} not implemented")

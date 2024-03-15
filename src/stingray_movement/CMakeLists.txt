@@ -6,7 +6,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -16,18 +16,19 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(stingray_core_interfaces REQUIRED)
 find_package(stingray_interfaces REQUIRED)
+find_package(stingray_utils REQUIRED)
+
 
 include_directories(
         include
 )
 
 add_executable(twist_action_server
-        include/AsyncTimer.h
-        include/AbstractActionServer.h
+        
         include/TwistActionServer.h
         src/TwistActionServer.cpp
         )
-ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces)
+ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 install(TARGETS
         twist_action_server
