@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from stingray_resources.utils import load_config
 
 
 def get_objects_topic(camera_topic: str) -> str:
