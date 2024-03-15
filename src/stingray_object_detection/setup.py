@@ -5,7 +5,7 @@ package_name = 'stingray_object_detection'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, "yolov5"],
+    # packages=[package_name, "yolov5"],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
