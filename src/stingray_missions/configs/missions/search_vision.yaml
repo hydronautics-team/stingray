@@ -3,11 +3,11 @@ states:
   ROTATE_CLOCK:
     transition_event: 
       type: ObjectDetectionEvent
-      topic_name: /stingray/demo
-      data: "gate"
-      count: 2
-      trigger: ok
-    timeout: 2
+      topic_name: /stingray/topics/front_camera/objects
+      data: red_bowl
+      count: 5
+      trigger: found
+    timeout: 60
     action: 
       type: Move
       surge: 0.0
@@ -19,11 +19,11 @@ states:
   ROTATE_ANTICLOCK:
     transition_event: 
       type: ObjectDetectionEvent
-      topic_name: /stingray/demo2
-      data: "gate_anticlock"
-      count: 2
-      trigger: ok
-    timeout: 15
+      topic_name: /stingray/topics/front_camera/objects
+      data: red_bowl
+      count: 5
+      trigger: found
+    timeout: 60
     action: 
       type: Move
       surge: 0.0
@@ -33,7 +33,7 @@ states:
       pitch: 0.0
       yaw: -15
 transitions:
-  - { trigger: ok, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: OK }
+  - { trigger: found, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: OK }
   - { trigger: fail, source: [ROTATE_CLOCK, ROTATE_ANTICLOCK], dest: FAILED }
   - { trigger: timeout, source: ROTATE_CLOCK, dest: ROTATE_ANTICLOCK }
   - { trigger: timeout, source: ROTATE_ANTICLOCK, dest: FAILED }

@@ -3,8 +3,9 @@
 import rclpy
 from rclpy.logging import get_logger
 from rclpy.node import Node
+from rclpy.publisher import Publisher
 from cv_bridge import CvBridge, CvBridgeError
-from stingray_interfaces.msg import Object, ObjectsArray
+from stingray_interfaces.msg import Bbox, BboxArray
 from stingray_interfaces.srv import SetEnableObjectDetection
 from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
@@ -14,8 +15,6 @@ import sys
 import torch
 
 import numpy as np
-# sys.path.insert(1, f'{get_package_share_directory("stingray_object_detection")}/yolov5')
-# get_logger('dsf').info(f'Yolov5 detector path: {sys.path}')
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import check_img_size, non_max_suppression, scale_boxes
 from yolov5.utils.plots import Annotator, colors
@@ -72,7 +71,6 @@ class YoloDetector(Node):
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "config.yaml")
 
-        self.get_logger().info(f'weights_path: {self.weights_path}, config_path: {self.config_path}')
 
         image_topic_list_str = self.get_parameter(
             'image_topic_list').get_parameter_value().string_value
@@ -97,9 +95,9 @@ class YoloDetector(Node):
         self.set_enable_object_detection_service = self.create_service(
             SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
 
-        self.detection_enabled = {}
-        self.objects_array_publishers = {}
-        self.image_publishers = {}
+        self.detection_enabled: dict[str, bool] = {}
+        self.objects_array_publishers: dict[str, Publisher] = {}
+        self.image_publishers: dict[str, Publisher] = {}
 
         for input_topic in image_topic_list:
 
@@ -121,7 +119,7 @@ class YoloDetector(Node):
 
             # ROS publishers
             objects_array_pub = self.create_publisher(
-                ObjectsArray, objects_array_topic, 10)
+                BboxArray, objects_array_topic, 10)
             self.objects_array_publishers[input_topic] = objects_array_pub
 
             if self.debug:
@@ -176,7 +174,7 @@ class YoloDetector(Node):
             img (_type_): cv2 image
 
         Returns:
-            ObjectsArray: ros msg array with bboxes
+            BboxArray: ros msg array with bboxes
             cv2 image: image with visualized bboxes
         """
         with torch.no_grad():
@@ -210,7 +208,7 @@ class YoloDetector(Node):
             # objects = self.deleteMultipleObjects(pred)
 
             # Process predictions
-            objects_array_msg = ObjectsArray()
+            objects_array_msg = BboxArray()
 
             for i, det in enumerate(pred):  # per image
                 im0 = img.copy()
@@ -224,30 +222,24 @@ class YoloDetector(Node):
                     # for cpu and gpu machines
                     det = det.cpu().detach().numpy()
                     dots = np.asarray(det).reshape(-1, 6)
-                    self.get_logger().info(f'det: {det}')
 
                     # update tracking objects
                     dots_tracked = self.tracker.update(dots)
 
-                    self.get_logger().info(f'dots_tracked: {dots_tracked}')
                     for *xyxy, c, id in reversed(dots_tracked):
                         label = self.names[int(c)]
                         if self.debug:
                             annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label + ' ' + str(int(id)),
                                                 color=colors(int(c), True))
 
-                        # rospy.loginfo("conf type: {0}".format(type(float(conf.cpu().detach().numpy()))))
-                        # rospy.loginfo("conf: {0}".format(conf.cpu().detach().numpy()))
-                        # rospy.loginfo("xyxy[0] type: {0}".format(type(xyxy[0].cpu().detach().numpy())))
-                        # rospy.loginfo("xyxy[0]: {0}".format(xyxy[0].cpu().detach().numpy()))
-
-                        object_msg = Object()
-                        object_msg.name = label + ' ' + str(int(id))
+                        object_msg = Bbox()
+                        object_msg.id = int(id)
+                        object_msg.name = label
                         object_msg.top_left_x = int(xyxy[0])
                         object_msg.top_left_y = int(xyxy[1])
                         object_msg.bottom_right_x = int(xyxy[2])
                         object_msg.bottom_right_y = int(xyxy[3])
-                        objects_array_msg.objects.append(object_msg)
+                        objects_array_msg.bboxes.append(object_msg)
 
             # Stream results
             return objects_array_msg, annotator.result()
@@ -265,7 +257,6 @@ class YoloDetector(Node):
             try:
                 # convert ROS image to OpenCV image
                 cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
-                self.get_logger().info(f'image: {cv_image.shape}')
 
                 # detect our objects
                 objects_array_msg, drawed_image = self.detector(cv_image)
@@ -273,14 +264,16 @@ class YoloDetector(Node):
                 # publish results
                 self.objects_array_publishers[topic].publish(objects_array_msg)
                 if self.debug:
-                    self.get_logger().info(f'Publish image')
 
                     ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                     # publish output image
                     self.image_publishers[topic].publish(ros_image)
 
             except CvBridgeError as e:
-                self.get_logger().error(e)
+                self.get_logger().error(f'CV Bridge error: {e}')
+            except Exception as e:
+                self.get_logger().error(f'Error: {e}')
+            
 
 
 def main():
