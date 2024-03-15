@@ -5,9 +5,8 @@ from rclpy.logging import get_logger
 from rclpy.node import Node
 import rospkg
 from cv_bridge import CvBridge, CvBridgeError
-from stingray_object_detection_msgs.msg import Object, ObjectsArray
-from stingray_object_detection_msgs.srv import SetEnableObjectDetection, SetEnableObjectDetectionResponse, SetEnableObjectDetectionRequest
-from stingray_resources.utils import load_config
+from stingray_interfaces.msg import Object, ObjectsArray
+from stingray_interfaces.srv import SetEnableObjectDetection
 from stingray_object_detection.utils import get_objects_topic, get_debug_image_topic
 from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
@@ -60,9 +59,6 @@ class YoloDetector(Node):
             tracker_min_hits (int, optional): hits to start track object. Defaults to 20.
             tracker_iou_threshold (float, optional): IOU threshold for SORT-tracker. Defaults to 0.3.
         """
-        # configs
-        self.ros_config = load_config()
-
         super().__init__(self.ros_config["nodes"]["object_detection"])
         
         # get weights path

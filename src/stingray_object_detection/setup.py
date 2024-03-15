@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 package_name = 'stingray_object_detection'
 
 setup(
     name=package_name,
     version='0.0.0',
-    # packages=[package_name, "yolov5"],
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'yolo_detector = stingray_object_detection.yolo_detector:main',
+            'yolov5_detector = stingray_object_detection.yolov5_detector:main',
         ],
     },
 )
