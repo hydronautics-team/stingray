@@ -59,9 +59,9 @@ class YoloDetector(Node):
             self.image_sub = self.create_subscription(
                 Image,
                 input_topic,
-                self.image_callback,
+                lambda x: self.image_callback(x, input_topic),
                 1,
-                callback_args=input_topic)
+            )
 
             # ROS publishers
             objects_array_pub = self.create_publisher(
@@ -95,10 +95,9 @@ class YoloDetector(Node):
                 # t2 = time_sync()
                 # self.dt[0] += t2 - t1
 
-
-
                 # self.get_logger().info("get new im !!!OMG!!!", im)
                 results = self.model.predict(im)
+                objects_array_msg = ObjectsArray()
 
                 for r in results:
                     
@@ -134,18 +133,18 @@ class YoloDetector(Node):
                         object_msg.bottom_right_x = int(right)
                         object_msg.bottom_right_y = int(bottom)
 
-                        objects_array_msg = ObjectsArray()
                         objects_array_msg.objects.append(object_msg)
 
                         print(object_msg)
-
+                        
+                self.objects_array_publishers[topic].publish(objects_array_msg)
                         
                 results_im = annotator.result() 
+                ros_image = self.bridge.cv2_to_imgmsg(results_im, "bgr8")
+                self.image_publishers[topic].publish(ros_image)
 
-                self.objects_array_publishers[topic].publish(objects_array_msg)
 
-                # publish output image
-                self.image_publishers[topic].publish(results_im)
+
 
 
 def main():
