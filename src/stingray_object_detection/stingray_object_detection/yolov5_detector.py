@@ -224,16 +224,32 @@ class YoloDetector(Node):
                     dots = np.asarray(det).reshape(-1, 6)
 
                     # update tracking objects
-                    dots_tracked = self.tracker.update(dots)
+                    # dots_tracked = self.tracker.update(dots)
 
-                    for *xyxy, c, id in reversed(dots_tracked):
-                        label = self.names[int(c)]
+                    # for *xyxy, c, id in reversed(dots_tracked):
+                    #     label = self.names[int(c)]
+                    #     if self.debug:
+                    #         annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label + ' ' + str(int(id)),
+                    #                             color=colors(int(c), True))
+
+                    #     object_msg = Bbox()
+                    #     object_msg.id = int(id)
+                    #     object_msg.name = label
+                    #     object_msg.top_left_x = int(xyxy[0])
+                    #     object_msg.top_left_y = int(xyxy[1])
+                    #     object_msg.bottom_right_x = int(xyxy[2])
+                    #     object_msg.bottom_right_y = int(xyxy[3])
+                    #     objects_array_msg.bboxes.append(object_msg)
+
+                    for *xyxy, score, label_id in reversed(dots):
+                        # self.get_logger().info(f"xyxy: {xyxy}, score: {score}, label: {label}")
+                        label = self.names[int(label_id)]
                         if self.debug:
-                            annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label + ' ' + str(int(id)),
-                                                color=colors(int(c), True))
+                            annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label,
+                                                color=colors(int(label_id), True))
 
                         object_msg = Bbox()
-                        object_msg.id = int(id)
+                        object_msg.id = 0
                         object_msg.name = label
                         object_msg.top_left_x = int(xyxy[0])
                         object_msg.top_left_y = int(xyxy[1])
