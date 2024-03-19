@@ -1,4 +1,4 @@
-#include "../include/EnableDeviceNode.h"
+#include <EnableDeviceNode.h>
 
 UpDownServer::UpDownServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<stingray_interfaces::action::UpDownAction, stingray_interfaces::action::UpDownAction_Goal>(_node, actionName) {
 
@@ -16,7 +16,7 @@ UpDownServer::UpDownServer(std::shared_ptr<rclcpp::Node> _node, const std::strin
 void UpDownServer::deviceStateCallback(const stingray_core_interfaces::msg::DeviceState &msg) {
     current_device = msg.device;
     current_velocity = msg.velocity;
-    current_opened = msg.opened;
+    current_opened = msg.is_opened;
 };
 
 bool UpDownServer::isSwitchDone(const std::shared_ptr<const stingray_interfaces::action::UpDownAction_Goal> goal) {
@@ -29,7 +29,7 @@ bool UpDownServer::isSwitchDone(const std::shared_ptr<const stingray_interfaces:
     auto velocity_delta = abs(current_velocity - goal->velocity);
     velocity_done = velocity_delta < velocity_tolerance;
 
-    open_done = (current_opened == goal->opened);
+    open_done = (current_opened == goal->to_be_opened);
     
     return device_correct && velocity_done && open_done;
 };
@@ -50,11 +50,11 @@ void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
     // get goal data
     const auto goal = goal_handle->get_goal();
     auto goal_result = std::make_shared<stingray_interfaces::action::UpDownAction::Result>();
-    goal_result->done = false;
+    goal_result->success = false;
 
     // check duration
     if (goal->duration < 0.0) {
-        goal_result->done = false;
+        goal_result->success = false;
         goal_handle->abort(goal_result);
         RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
         return;
@@ -63,7 +63,7 @@ void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
     // send service request
     stingray_comRequest->device = goal->device;
     stingray_comRequest->velocity = goal->velocity;
-    stingray_comRequest->opened = goal->opened;
+    stingray_comRequest->to_be_opened = goal->to_be_opened;
 
     // check if service done
     stingray_comClient->async_send_request(stingray_comRequest).wait();
@@ -77,7 +77,7 @@ void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
             break;
         }
         if (goal_handle->is_canceling()) {
-            goal_result->done = false;
+            goal_result->success = false;
             goal_handle->canceled(goal_result);
             RCLCPP_INFO(_node->get_logger(), "Goal canceled");
             return;
@@ -87,7 +87,7 @@ void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
     }
 
     if(goal->pause_optional > 0){
-        RCLCPP_INFO("Keeping lifter down for %f ms", goal->pause_optional);
+        RCLCPP_INFO(_node->get_logger(), "Keeping lifter down for %d ms", goal->pause_optional);
         stingray_comRequest->velocity = 0.0;
         stingray_comClient->async_send_request(stingray_comRequest).wait();
         AsyncTimer timer_opt(goal->pause_optional * 1000);
@@ -98,7 +98,7 @@ void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
                 break;
             }
             if (goal_handle->is_canceling()) {
-                goal_result->done = false;
+                goal_result->success = false;
                 goal_handle->canceled(goal_result);
                 RCLCPP_INFO(_node->get_logger(), "Goal canceled");
                 return;
@@ -114,7 +114,7 @@ void UpDownServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
     stingray_comClient->async_send_request(stingray_comRequest).wait();
 
     if (rclcpp::ok()) {
-        goal_result->done = true;
+        goal_result->success = true;
         goal_handle->succeed(goal_result);
         RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
     }

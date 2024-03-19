@@ -1,4 +1,3 @@
-# from transitions.extensions.asyncio import AsyncMachine
 from transitions.extensions.factory import AsyncGraphMachine
 import asyncio
 from rclpy.node import Node
@@ -9,7 +8,7 @@ from ament_index_python.packages import get_package_share_directory
 from stingray_missions.event import StringEvent, SubscriptionEvent
 from stingray_missions.action import StateAction, create_action
 from stingray_utils.config import load_yaml
-from stingray_interfaces.srv import TransitionSrv
+from stingray_interfaces.srv import SetTransition
 
 
 class TransitionEvent():
@@ -261,7 +260,7 @@ class FSM(object):
             'set_stabilization_srv', '/stingray/services/set_stabilization')
 
         self.transition_srv = self.node.create_service(
-            TransitionSrv, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
+            SetTransition, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
 
         self._initialize_machine(scenarios_packages)
 
@@ -301,7 +300,7 @@ class FSM(object):
             node=self.node,
             state=State.OK)
 
-    def _transition_callback(self, request: TransitionSrv.Request, response: TransitionSrv.Response):
+    def _transition_callback(self, request: SetTransition.Request, response: SetTransition.Response):
         self.add_pending_transition(request.transition)
         response.ok = True
 

@@ -91,7 +91,15 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "version": "cpp"
+        "version": "cpp",
+        "ranges": "cpp",
+        "*.inc": "cpp",
+        "*.ipp": "cpp",
+        "regex": "cpp"
     },
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "/home/super_ubuntu22/stingray/build/stingray_core_interfaces/stingray_core_interfaces__py",
+    "ros.isolateEnvironment": null,
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
