@@ -13,8 +13,8 @@ states:
     action:
       type: EnableStabilization
       depth: true
-      roll: false
-      pitch: false
+      roll: true
+      pitch: true
       yaw: true
     timeout: 10
   WAIT_SUBMERGE:
