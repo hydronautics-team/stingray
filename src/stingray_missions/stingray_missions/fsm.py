@@ -1,3 +1,4 @@
+from __future__ import annotations
 from transitions.extensions.factory import AsyncGraphMachine
 import asyncio
 from rclpy.node import Node
