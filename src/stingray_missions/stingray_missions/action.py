@@ -155,7 +155,7 @@ class ThrusterIndicationAction(StateAction):
 
         self.goal = TwistAction.Goal()
         self.goal.surge = 10.0
-        self.goal.duration = 0.5
+        self.goal.duration = 0.3
 
         self.twist_action_client = AsyncActionClient(
             self.node, TwistAction, self.node.get_parameter('twist_action').get_parameter_value().string_value)
