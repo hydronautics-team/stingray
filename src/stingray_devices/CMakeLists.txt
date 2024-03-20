@@ -5,7 +5,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -21,13 +21,13 @@ include_directories(
         include
 )
 
-add_executable(EnableDeviceNode 
-        src/EnableDeviceNode.cpp 
-        include/EnableDeviceNode.h)
-ament_target_dependencies(EnableDeviceNode rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+add_executable(device_action_server 
+        src/DeviceActionServer.cpp 
+        include/DeviceActionServer.h)
+ament_target_dependencies(device_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 install(TARGETS
-        EnableDeviceNode
+        device_action_server
         DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

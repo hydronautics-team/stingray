@@ -8,28 +8,34 @@ states:
     action:
       type: ResetIMU
       duration: 1
-      timeout: 5
+    timeout: 10
   ENABLE_STABILIZATION:
     action:
       type: EnableStabilization
       depth: true
-      roll: false
-      pitch: false
+      roll: true
+      pitch: true
       yaw: true
-      timeout: 1
-    timeout: 2
+    timeout: 10
+  WAIT_SUBMERGE:
+    action:
+      type: Duration
+      duration: 5.0
+    timeout: 10
   THRUSTER_AFTER_IMU_INDICATION:
     action:
       type: ThrusterIndication
       repeat: 1
-    timeout: 2
+    timeout: 10
 transitions:
   - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: RESET_IMU }
   - { trigger: ok, source: RESET_IMU, dest: ENABLE_STABILIZATION }
   - {
       trigger: ok,
       source: ENABLE_STABILIZATION,
-      dest: THRUSTER_AFTER_IMU_INDICATION,
+      dest: WAIT_SUBMERGE,
     }
+  - { trigger: ok, source: WAIT_SUBMERGE, dest: THRUSTER_AFTER_IMU_INDICATION }
   - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: OK }
   - { trigger: timeout, source: "*", dest: FAILED }
+  - { trigger: fail, source: "*", dest: FAILED }

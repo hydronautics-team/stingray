@@ -3,34 +3,27 @@
 import rclpy
 from rclpy.logging import get_logger
 from rclpy.node import Node
-import rospkg
+from rclpy.publisher import Publisher
 from cv_bridge import CvBridge, CvBridgeError
-from stingray_object_detection_msgs.msg import Object, ObjectsArray
-from stingray_object_detection_msgs.srv import SetEnableObjectDetection, SetEnableObjectDetectionResponse, SetEnableObjectDetectionRequest
-from stingray_resources.utils import load_config
-from stingray_object_detection.utils import get_objects_topic, get_debug_image_topic
+from stingray_interfaces.msg import Bbox, BboxArray
+from stingray_interfaces.srv import SetEnableObjectDetection
 from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
+from ament_index_python import get_package_share_directory
 import os
 import sys
 import torch
 
 import numpy as np
 from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.general import (
-    check_img_size, non_max_suppression, scale_coords)
+from yolov5.utils.general import check_img_size, non_max_suppression, scale_boxes
 from yolov5.utils.plots import Annotator, colors
 from yolov5.utils.torch_utils import select_device, time_sync
 from yolov5.utils.augmentations import letterbox
 
 
-
-
 class YoloDetector(Node):
     def __init__(self,
-                 weights_pkg_name,
-                 image_topic_list,
-                 debug=False,
                  imgsz=(640, 640),
                  conf_thres=0.25,
                  iou_thres=0.45,
@@ -60,74 +53,79 @@ class YoloDetector(Node):
             tracker_min_hits (int, optional): hits to start track object. Defaults to 20.
             tracker_iou_threshold (float, optional): IOU threshold for SORT-tracker. Defaults to 0.3.
         """
-        # configs
-        self.ros_config = load_config()
+        super().__init__('yolov5_detector')
 
-        super().__init__(self.ros_config["nodes"]["object_detection"])
-        
+        self.declare_parameter(
+            'weights_pkg_name', 'stingray_object_detection')
+        self.declare_parameter(
+            'image_topic_list', '/stingray/topics/front_camera')
+        self.declare_parameter(
+            'debug', True)
+        self.declare_parameter(
+            'set_enable_object_detection_srv', '/stingray/services/set_enable_object_detection')
+
         # get weights path
-        self.weights_pkg_path = rospkg.RosPack().get_path(weights_pkg_name)
+        self.weights_pkg_path = f'{get_package_share_directory(self.get_parameter("weights_pkg_name").get_parameter_value().string_value)}'
         self.weights_path = os.path.join(
             self.weights_pkg_path, "weights", "best.pt")
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "config.yaml")
 
-        self.image_topic_list = image_topic_list.split(" ")
-        self.debug = debug
+
+        image_topic_list_str = self.get_parameter(
+            'image_topic_list').get_parameter_value().string_value
+        image_topic_list = set(image_topic_list_str.strip('[]').split(' '))
+        self.debug = self.get_parameter(
+            'debug').get_parameter_value().bool_value
 
         self.imgsz = imgsz
         self.conf_thres = conf_thres
         self.iou_thres = iou_thres
         self.max_det = max_det
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
         self.classes = classes
         self.agnostic_nms = agnostic_nms
         self.line_thickness = line_thickness
 
-        
-
-        # get node name
-        node_name = self.ros_config["nodes"]["object_detection"]
-        self.get_logger().info("{} node initializing".format(node_name))
         # init SORT tracker
-        self.tracker = Tracker(tracker_max_age, tracker_min_hits, tracker_iou_threshold)
+        self.tracker = Tracker(
+            tracker_max_age, tracker_min_hits, tracker_iou_threshold)
 
-        set_enable_object_detection_service = self.create_service(
-            SetEnableObjectDetection, self.ros_config['services']['set_enable_object_detection'], self.set_enable_object_detection)
+        self.set_enable_object_detection_service = self.create_service(
+            SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
 
-        self.detection_enabled = {}
-        self.objects_array_publishers = {}
-        self.image_publishers = {}
+        self.detection_enabled: dict[str, bool] = {}
+        self.objects_array_publishers: dict[str, Publisher] = {}
+        self.image_publishers: dict[str, Publisher] = {}
 
-
-
-        for input_topic in self.image_topic_list:
+        for input_topic in image_topic_list:
 
             # disable detection by default
-            self.detection_enabled[input_topic] = False
+            self.detection_enabled[input_topic] = True
 
             # ROS Topic names
-            objects_array_topic = get_objects_topic(input_topic)
-            Node.get_logger().info("Node: {}, input topic: {}, output objects topic: {}".format(
-                node_name, input_topic, objects_array_topic))
+            objects_array_topic = f"{input_topic}/objects"
+            self.get_logger().info(
+                f"input topic: {input_topic}, output objects topic: {objects_array_topic}")
 
             # ROS subscribers
             self.image_sub = self.create_subscription(
                 Image,
                 input_topic,
-                self.image_callback,
+                lambda x: self.image_callback(x, input_topic),
                 1,
-                callback_args=input_topic)
+            )
 
             # ROS publishers
             objects_array_pub = self.create_publisher(
-                ObjectsArray, objects_array_topic, 10)
+                BboxArray, objects_array_topic, 10)
             self.objects_array_publishers[input_topic] = objects_array_pub
 
             if self.debug:
-                output_image_topic = get_debug_image_topic(input_topic)
-                self.get_logger().info("Node: {}, input topic: {}, output image topic: {}".format(
-                    node_name, input_topic, output_image_topic))
+                output_image_topic = f"{input_topic}/debug_image"
+                self.get_logger().info("input topic: {}, output image topic: {}".format(
+                    input_topic, output_image_topic))
                 image_pub = self.create_publisher(
                     Image, output_image_topic, 1)
                 self.image_publishers[input_topic] = image_pub
@@ -155,7 +153,7 @@ class YoloDetector(Node):
             # to check if inited
             self.initialized = True
 
-    def set_enable_object_detection(self, request: SetEnableObjectDetectionRequest) -> SetEnableObjectDetectionResponse:
+    def _set_enable_object_detection(self, request: SetEnableObjectDetection.Request, response: SetEnableObjectDetection.Response):
         """Callback to enable or disable object detection for specific camera topic
 
         Args:
@@ -166,7 +164,6 @@ class YoloDetector(Node):
         """
 
         self.detection_enabled[request.camera_topic] = request.enabled
-        response = SetEnableObjectDetectionResponse()
         response.success = True
         return response
 
@@ -177,7 +174,7 @@ class YoloDetector(Node):
             img (_type_): cv2 image
 
         Returns:
-            ObjectsArray: ros msg array with bboxes
+            BboxArray: ros msg array with bboxes
             cv2 image: image with visualized bboxes
         """
         with torch.no_grad():
@@ -211,7 +208,7 @@ class YoloDetector(Node):
             # objects = self.deleteMultipleObjects(pred)
 
             # Process predictions
-            objects_array_msg = ObjectsArray()
+            objects_array_msg = BboxArray()
 
             for i, det in enumerate(pred):  # per image
                 im0 = img.copy()
@@ -219,7 +216,7 @@ class YoloDetector(Node):
                     im0, line_width=self.line_thickness, example=str(self.names))
                 if len(det):
                     # Rescale boxes from img_size to im0 size
-                    det[:, :4] = scale_coords(
+                    det[:, :4] = scale_boxes(
                         im.shape[2:], det[:, :4], im0.shape).round()
 
                     # for cpu and gpu machines
@@ -235,18 +232,14 @@ class YoloDetector(Node):
                             annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label + ' ' + str(int(id)),
                                                 color=colors(int(c), True))
 
-                        # rospy.loginfo("conf type: {0}".format(type(float(conf.cpu().detach().numpy()))))
-                        # rospy.loginfo("conf: {0}".format(conf.cpu().detach().numpy()))
-                        # rospy.loginfo("xyxy[0] type: {0}".format(type(xyxy[0].cpu().detach().numpy())))
-                        # rospy.loginfo("xyxy[0]: {0}".format(xyxy[0].cpu().detach().numpy()))
-
-                        object_msg = Object()
-                        object_msg.name = label + ' ' + str(int(id))
+                        object_msg = Bbox()
+                        object_msg.id = int(id)
+                        object_msg.name = label
                         object_msg.top_left_x = int(xyxy[0])
                         object_msg.top_left_y = int(xyxy[1])
                         object_msg.bottom_right_x = int(xyxy[2])
                         object_msg.bottom_right_y = int(xyxy[3])
-                        objects_array_msg.objects.append(object_msg)
+                        objects_array_msg.bboxes.append(object_msg)
 
             # Stream results
             return objects_array_msg, annotator.result()
@@ -271,24 +264,27 @@ class YoloDetector(Node):
                 # publish results
                 self.objects_array_publishers[topic].publish(objects_array_msg)
                 if self.debug:
+
                     ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                     # publish output image
                     self.image_publishers[topic].publish(ros_image)
 
             except CvBridgeError as e:
-                self.get_logger().error(e)
+                self.get_logger().error(f'CV Bridge error: {e}')
+            except Exception as e:
+                self.get_logger().error(f'Error: {e}')
+            
 
 
-if __name__ == '__main__':
+def main():
     rclpy.init(args=None)
 
-    # parameters
-    weights_pkg_name = rclpy.get_param('~weights_pkg_name')
-    image_topic_list = rclpy.get_param('~image_topic_list')
-    debug = rclpy.get_param('~debug')
-
-    detector = YoloDetector(weights_pkg_name, image_topic_list, debug)
+    detector = YoloDetector()
     rclpy.spin(detector)
 
     detector.destroy_node()
     rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

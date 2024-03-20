@@ -9,16 +9,16 @@
                 ]
             },
             "includePath": [
-                "/opt/ros/humble/include/**",
+                "/opt/ros/iron/include/**",
                 "/usr/include/**",
                 "${workspaceFolder}/src/stingray_movement/include",
                 "${workspaceFolder}/src/stingray_utils/include",
                 "${workspaceFolder}/install/stingray_interfaces/include/stingray_interfaces",
-                "${workspaceFolder}/src/stingray_core/src/stingray_communication/include",
+                "${workspaceFolder}/src/stingray_core/src/stingray_core_communication/include",
                 "${workspaceFolder}/install/stingray_core_interfaces/include/stingray_core_interfaces",
                 "${workspaceFolder}/src/stingray_core/src/serial/include",
-                "/opt/ros/humble/include/geometry_msgs",
-                "/opt/ros/humble/include/rclcpp_action"
+                "/opt/ros/iron/include/geometry_msgs",
+                "/opt/ros/iron/include/rclcpp_action"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",

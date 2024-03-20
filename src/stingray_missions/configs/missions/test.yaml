@@ -1,0 +1,30 @@
+initial: THRUSTER_PRE_INIT_INDICATION
+states:
+  THRUSTER_PRE_INIT_INDICATION:
+    action:
+      type: ThrusterIndication
+      repeat: 3
+  WAIT_SUBMERGE:
+    action:
+      type: Duration
+      duration: 5.0
+    timeout: 10
+  DEVICE_OPEN:
+    action:
+      type: SetDeviceValue
+      device: 0.0
+      value: 1.0
+      timeout: 5
+    timeout: 10
+  THRUSTER_AFTER_IMU_INDICATION:
+    action:
+      type: ThrusterIndication
+      repeat: 1
+    timeout: 10
+transitions:
+  - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: WAIT_SUBMERGE }
+  - { trigger: ok, source: WAIT_SUBMERGE, dest: DEVICE_OPEN }
+  - { trigger: ok, source: DEVICE_OPEN, dest: THRUSTER_AFTER_IMU_INDICATION }
+  - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: OK }
+  - { trigger: timeout, source: "*", dest: FAILED }
+  - { trigger: fail, source: "*", dest: FAILED }

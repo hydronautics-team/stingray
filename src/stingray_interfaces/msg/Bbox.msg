@@ -1,4 +1,5 @@
 string name
+int16 id
 float32 confidence
 int16 top_left_x
 int16 top_left_y
