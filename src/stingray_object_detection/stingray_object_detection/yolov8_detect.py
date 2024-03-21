@@ -15,6 +15,7 @@ from stingray_interfaces.msg import Bbox, BboxArray
 from ultralytics.data.augment import LetterBox
 from ultralytics.utils.torch_utils import select_device, time_sync
 from cv_bridge import CvBridge, CvBridgeError
+from stingray_object_detection import ImageHandler
 
 import numpy as np
 
@@ -121,6 +122,17 @@ class YoloDetector(Node):
                     height = bottom - top
                     center = (left + int((right-left)/2), top + int((bottom-top)/2))
                     confidence = float(box.conf.cpu())
+
+                    obj = ImageHandler.Object(label, confidence, int(left), int(top),int(right), int(bottom))
+                    #self.get_logger().info(str(ImageHandler.calcDistanceAndAngle([obj], None)))
+                    v = ImageHandler.calcDistanceAndAngle([obj], None)
+                    distance = 0
+                    angle = 0
+                    name = ''
+                    if len(v) > 0 : 
+                        distance, angle, name = v[0]
+                    #distance, angle, name = ImageHandler.calcDistanceAndAngle([obj], None)[0]
+
                     
                     object_msg = Bbox()
                     object_msg.name = label
@@ -129,7 +141,12 @@ class YoloDetector(Node):
                     object_msg.top_left_y = int(top)
                     object_msg.bottom_right_x = int(right)
                     object_msg.bottom_right_y = int(bottom)
+                    object_msg.distance = float(distance)
+                    object_msg.angle = float(angle)
 
+                    if distance != 0 : self.get_logger().info(str(object_msg))
+
+                    
                     objects_array_msg.bboxes.append(object_msg)
 
             return objects_array_msg, annotator.result()
