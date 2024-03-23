@@ -14,7 +14,17 @@ def generate_launch_description():
             package='stingray_object_detection',
             executable='yolov8_detect',
             name='yolov8_detect'
-        )
+        ),
+        Node(
+            package='stingray_planningPath',
+            executable='Kazemaru',
+            name='Kazemaru'
+        ),
+        #Node(
+        #    package='stingray_',
+        #    executable='a',
+        #    name='a'
+        #),
         # Node(
         #     package='stingray_object_detection',
         #     executable='yolo_detector',

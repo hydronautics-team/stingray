@@ -107,8 +107,18 @@ class YoloDetector(Node):
                 # print("r = ", r)
                 boxes = r.boxes
                 # print("boxes = ", boxes)
+                
+                #objects = []
+                #for box in boxes:
+                #    obj = ImageHandler.Object(label, confidence, int(left), int(top),int(right), int(bottom))
+                #    #self.get_logger().info(str(ImageHandler.calcDistanceAndAngle([obj], None)))
+                #    objects.append(obj)
+                #v = ImageHandler.calcDistanceAndAngle(objects, None)
 
-                for box in boxes:
+                #for box in boxes:
+                for i in range(len(boxes)) :
+                    box = boxes[i]
+
                     
                     b = box.xyxy[0]  # get box coordinates in (left, top, right, bottom) format
                     c = box.cls
@@ -125,13 +135,13 @@ class YoloDetector(Node):
 
                     obj = ImageHandler.Object(label, confidence, int(left), int(top),int(right), int(bottom))
                     #self.get_logger().info(str(ImageHandler.calcDistanceAndAngle([obj], None)))
+                    #objects.append(obj)
                     v = ImageHandler.calcDistanceAndAngle([obj], None)
                     distance = 0
                     angle = 0
                     name = ''
                     if len(v) > 0 : 
                         distance, angle, name = v[0]
-                    #distance, angle, name = ImageHandler.calcDistanceAndAngle([obj], None)[0]
 
                     
                     object_msg = Bbox()
@@ -144,7 +154,7 @@ class YoloDetector(Node):
                     object_msg.distance = float(distance)
                     object_msg.angle = float(angle)
 
-                    if distance != 0 : self.get_logger().info(str(object_msg))
+                    #if distance != 0 : self.get_logger().info(str(object_msg))
 
                     
                     objects_array_msg.bboxes.append(object_msg)
