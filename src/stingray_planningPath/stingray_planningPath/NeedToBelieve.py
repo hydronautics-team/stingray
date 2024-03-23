@@ -287,16 +287,16 @@ class DroneNode(Node):
 
     def __init__(self):
         super().__init__('Kazemaru')
-        self.publisher_ = self.create_publisher(Float32MultiArray, 'vector_topic', 10)
+        #self.publisher_ = self.create_publisher(Float32MultiArray, 'vector_topic', 10)
 
         # Create the subscriber. This subscriber will receive an Image
         # from the video_frames topic. The queue size is 10 messages.
         self.subscription = self.create_subscription(BboxArray, "objects_array_topic", self.listener_callback, 10)
 
     def listener_callback(self, data):
+        
+        #__НЕ_ТРОГАТЬ_ОТ_СЮДА__
         global map2
-
-        #print("Inside listener callback:", str(data))
         # data -> BboxArray
         # data2 -> ImageParsedDataBboxArray format
         # data3 -> calculatedFinishData
@@ -308,18 +308,49 @@ class DroneNode(Node):
         Map.updateMap2(map2, data3, None)
 
         state, isFind, vector, imageMap = map2.calcPath(False, 'gate')
-        #self.get_logger().info('STATE IS: ' + str(state) + ' ' + str(len(vector)))
-        speed = vector[5][:]
-        angle = vector[4][:]
 
         if state == 1 :
-            self.get_logger().info("vector: " + str(speed + angle))
+            self.get_logger().info("vector: " + str(vector[5]+ vector[4]))
+        #__НЕ_ТРОГАТЬ_ДО_СЮДА__
 
 
 
-        msg = LocationMsg(speed[0], speed[1], speed[2], angle[0], angle[1], angle[2])
 
-        self.publisher_.publish(msg)
+
+
+
+
+
+
+
+        speed = vector[5][:]
+        #speed = [surge (скорость по маршу),
+        #         sway (скорость по лагу),
+        #         depth (значение глубины)]
+        
+        angle = vector[4][:]
+        #angle = [roll (всегда 0),
+        #         pitch (всегда 0),
+        #         yaw (значение курса)]
+        
+        # Передай их куда нужно
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
 
 
 def main(args=None):
