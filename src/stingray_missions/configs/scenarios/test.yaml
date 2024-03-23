@@ -1,8 +1,0 @@
-initial: TEST
-missions:
-  TEST:
-    config_name: test
-    package_name: stingray_missions
-transitions:
-  - { source: TEST, outcome: OK, dest: OK }
-  - { source: TEST, outcome: FAILED, dest: FAILED }
