@@ -61,6 +61,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
 
     auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
 
+    RCLCPP_INFO(_node->get_logger(), "Execute action");
     if (!twistSrvClient->wait_for_service(1s)) {
         if (!rclcpp::ok()) {
             RCLCPP_ERROR(_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
@@ -91,6 +92,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvRequest->pitch = goal->pitch;
     twistSrvRequest->yaw = goal->yaw;
 
+    RCLCPP_INFO(_node->get_logger(), "Send twist srv request");
     // check if service success
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
@@ -99,6 +101,8 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     timer.start();
 
     while (rclcpp::ok()) {
+        RCLCPP_INFO(_node->get_logger(), "isTwistDone %d", isTwistDone(goal));
+        RCLCPP_INFO(_node->get_logger(), "timer.isBusy %d", timer.isBusy());
         if (!timer.isBusy() && isTwistDone(goal)) {
             break;
         }
@@ -124,6 +128,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     if (!yaw_stabilization)
         twistSrvRequest->yaw = 0.0;
 
+    RCLCPP_INFO(_node->get_logger(), "Send twist srv request stop");
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     if (rclcpp::ok()) {

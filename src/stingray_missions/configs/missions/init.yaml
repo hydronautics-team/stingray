@@ -33,12 +33,13 @@ states:
       roll: 0.0
       pitch: 0.0
       yaw: 0.0
+      duration: 2.0
 transitions:
   - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: RESET_IMU }
   - { trigger: ok, source: RESET_IMU, dest: THRUSTER_AFTER_IMU_INDICATION }
   - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: WAIT_SUBMERGE }
-  - { trigger: ok, source: WAIT_SUBMERGE, dest: SUBMERGE }
-  - { trigger: ok, source: SUBMERGE, dest: ENABLE_STABILIZATION }
-  - { trigger: ok, source: ENABLE_STABILIZATION, dest: OK }
+  - { trigger: ok, source: WAIT_SUBMERGE, dest: ENABLE_STABILIZATION }
+  - { trigger: ok, source: ENABLE_STABILIZATION, dest: SUBMERGE }
+  - { trigger: ok, source: SUBMERGE, dest: OK }
   - { trigger: timeout, source: "*", dest: FAILED }
   - { trigger: fail, source: "*", dest: FAILED }

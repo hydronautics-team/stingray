@@ -337,6 +337,8 @@ class FSM(object):
     async def process_pending_action(self):
         if self.pending_action:
             self.wait_action_success_event.clear()
+            get_logger("fsm").info(
+                f"{self.pending_action.type} executing: {self.pending_action}")
             result = await self.pending_action.execute()
             get_logger("fsm").info(
                 f"{self.pending_action.type} result: {result}, stopped: {self.pending_action.stopped}")
