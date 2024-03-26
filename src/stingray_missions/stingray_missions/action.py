@@ -5,6 +5,7 @@ from rclpy.node import Node
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
 from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
+from stingray_interfaces.srv import SetEnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
 from std_srvs.srv import Trigger
 
@@ -80,7 +81,7 @@ class ResetIMUAction(DurationAction):
 
         self.reset_imu_client = self.node.create_client(
             Trigger, self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value)
-        
+
         while not self.reset_imu_client.wait_for_service(timeout_sec=1.0):
             get_logger('action').info(
                 f"{self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} not available, waiting again...")
@@ -97,7 +98,8 @@ class ResetIMUAction(DurationAction):
                     f"Error while waiting for {self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value}: {self.future.message}")
                 return False
         except asyncio.TimeoutError:
-            get_logger('action').error(f"Wait for {self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} timed out")
+            get_logger('action').error(
+                f"Wait for {self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} timed out")
             return False
         return await super().execute()
 
@@ -121,7 +123,7 @@ class EnableStabilizationAction(StateAction):
 
         self.set_stabilization_client = self.node.create_client(
             SetStabilization, self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value)
-        
+
         while not self.set_stabilization_client.wait_for_service(timeout_sec=1.0):
             get_logger('action').info(
                 f'set_stabilization_srv not available, waiting again...')
@@ -138,7 +140,47 @@ class EnableStabilizationAction(StateAction):
                     f"Error while waiting for {self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value}: {self.future.message}")
                 return False
         except asyncio.TimeoutError:
-            get_logger('action').error(f"Wait for {self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value} timed out")
+            get_logger('action').error(
+                f"Wait for {self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value} timed out")
+            return False
+        self.executed = True
+        return True
+
+
+class EnableObjectDetectionAction(StateAction):
+    def __init__(self,
+                 node: Node,
+                 type: str = "EnableObjectDetection",
+                 camera_topic: str = "",
+                 enable: bool = False,
+                 **kwargs):
+        super().__init__(node=node, type=type, **kwargs)
+
+        self.srv_request = SetEnableObjectDetection.Request()
+        self.srv_request.camera_topic = camera_topic
+        self.srv_request.enable = enable
+
+        self.set_enable_object_detection_client = self.node.create_client(
+            SetEnableObjectDetection, self.node.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value)
+
+        while not self.set_enable_object_detection_client.wait_for_service(timeout_sec=1.0):
+            get_logger('action').info(
+                f'set_enable_object_detection not available, waiting again...')
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, camera_topic: {self.srv_request.camera_topic}, enable: {self.srv_request.enable}"
+
+    async def execute(self) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action")
+        try:
+            self.future: SetStabilization.Response = await asyncio.wait_for(self.set_enable_object_detection_client.call_async(self.srv_request), timeout=1.0)
+            if not self.future.success:
+                get_logger('action').error(
+                    f"Error while waiting for {self.node.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value}: {self.future.message}")
+                return False
+        except asyncio.TimeoutError:
+            get_logger('action').error(
+                f"Wait for {self.node.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value} timed out")
             return False
         self.executed = True
         return True
@@ -162,7 +204,7 @@ class ThrusterIndicationAction(StateAction):
 
     def __repr__(self) -> str:
         return f"type: {self.type}, repeat: {self.repeat}"
-    
+
     def stop(self):
         self.twist_action_client.cancel()
         return super().stop()
@@ -172,8 +214,9 @@ class ThrusterIndicationAction(StateAction):
         for i in range(self.repeat):
             if self.stopped:
                 return False
-            get_logger("action").info(f"Thruster indication {i+1}/{self.repeat}")
-            result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
+            get_logger("action").info(
+                f"Thruster indication {i+1}/{self.repeat}")
+            result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal)
             await asyncio.sleep(self.goal.duration)
         self.executed = True
         return result.result.success
@@ -210,13 +253,14 @@ class MoveAction(StateAction):
     def stop(self):
         self.twist_action_client.cancel()
         return super().stop()
-    
+
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal);
+        result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
-    
+
+
 class SetDeviceValueAction(StateAction):
     def __init__(self,
                  node: Node,
@@ -240,12 +284,13 @@ class SetDeviceValueAction(StateAction):
     def stop(self):
         self.device_action_client.cancel()
         return super().stop()
-    
+
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: TwistAction_GetResult_Response = await self.device_action_client.send_goal_async(self.goal);
+        result: TwistAction_GetResult_Response = await self.device_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
+
 
 def create_action(node: Node, action: dict) -> StateAction:
     if action['type'] == "Duration":
@@ -254,6 +299,8 @@ def create_action(node: Node, action: dict) -> StateAction:
         return ResetIMUAction(node=node, **action)
     elif action['type'] == "EnableStabilization":
         return EnableStabilizationAction(node=node, **action)
+    elif action['type'] == "EnableObjectDetection":
+        return EnableObjectDetectionAction(node=node, **action)
     elif action['type'] == "ThrusterIndication":
         return ThrusterIndicationAction(node=node, **action)
     elif action['type'] == "Move":

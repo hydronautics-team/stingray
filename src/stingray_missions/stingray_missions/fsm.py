@@ -259,6 +259,8 @@ class FSM(object):
             'transition_srv', '/stingray/services/transition')
         self.node.declare_parameter(
             'set_stabilization_srv', '/stingray/services/set_stabilization')
+        self.node.declare_parameter(
+            'set_enable_object_detection_srv', '/stingray/services/set_enable_object_detection')
 
         self.transition_srv = self.node.create_service(
             SetTransition, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)

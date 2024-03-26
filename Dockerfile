@@ -1,9 +1,9 @@
-FROM stingray_core:latest
+FROM hydronautics/stingray_core:latest
 
-RUN apt update && apt install -y --no-install-recommends ros-iron-usb-cam ros-iron-zbar-ros graphviz graphviz-dev
+RUN apt update && apt install -y --no-install-recommends graphviz graphviz-dev python3-pip
 RUN pip install transitions[diagrams]
 
-RUN echo 'source /additional_packages_ws/install/setup.bash' >> /root/.bashrc
+RUN echo 'source /additional_packages/install/setup.bash' >> /root/.bashrc
 
 WORKDIR /stingray
 CMD ["bash"]

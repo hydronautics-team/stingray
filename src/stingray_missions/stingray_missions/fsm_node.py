@@ -33,10 +33,9 @@ def main():
     rclpy.init()
 
     node = rclpy.create_node('stingray_missions')
-    node.declare_parameter(name="mission_package_names", value='[stingray_missions]')
-    package_names_str = node.get_parameter('mission_package_names').get_parameter_value().string_value
-    package_names = set(package_names_str.strip('[]').split(' '))
-    fsm = FSM(node=node, scenarios_packages=package_names)
+    node.declare_parameter(name="mission_package_names", value=['stingray_missions'])
+    mission_package_names = node.get_parameter('mission_package_names').get_parameter_value().string_array_value
+    fsm = FSM(node=node, scenarios_packages=mission_package_names)
     event_loop = asyncio.get_event_loop()
     future = asyncio.wait(
         [ros_loop(node), fsm_loop(fsm), state_action_loop(fsm)], return_when=asyncio.FIRST_EXCEPTION

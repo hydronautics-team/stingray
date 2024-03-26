@@ -7,12 +7,13 @@ from rclpy.publisher import Publisher
 from cv_bridge import CvBridge, CvBridgeError
 from stingray_interfaces.msg import Bbox, BboxArray
 from stingray_interfaces.srv import SetEnableObjectDetection
-from stingray_object_detection.tracker import Tracker
+# from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
 from ament_index_python import get_package_share_directory
 import os
 import sys
 import torch
+from functools import partial
 
 import numpy as np
 from yolov5.models.common import DetectMultiBackend
@@ -24,7 +25,7 @@ from yolov5.utils.augmentations import letterbox
 
 class YoloDetector(Node):
     def __init__(self,
-                 imgsz=(640, 640),
+                 imgsz=(480, 640),
                  conf_thres=0.25,
                  iou_thres=0.45,
                  max_det=1000,
@@ -58,7 +59,7 @@ class YoloDetector(Node):
         self.declare_parameter(
             'weights_pkg_name', 'stingray_object_detection')
         self.declare_parameter(
-            'image_topic_list', '/stingray/topics/front_camera')
+            'image_topic_list', ['/stingray/topics/front_camera'])
         self.declare_parameter(
             'debug', True)
         self.declare_parameter(
@@ -72,9 +73,10 @@ class YoloDetector(Node):
             self.weights_pkg_path, "weights", "config.yaml")
 
 
-        image_topic_list_str = self.get_parameter(
-            'image_topic_list').get_parameter_value().string_value
-        image_topic_list = set(image_topic_list_str.strip('[]').split(' '))
+        image_topic_list = self.get_parameter(
+            'image_topic_list').get_parameter_value().string_array_value
+        self.get_logger().info(f"image_topic_list: {image_topic_list}")
+            
         self.debug = self.get_parameter(
             'debug').get_parameter_value().bool_value
 
@@ -89,8 +91,8 @@ class YoloDetector(Node):
         self.line_thickness = line_thickness
 
         # init SORT tracker
-        self.tracker = Tracker(
-            tracker_max_age, tracker_min_hits, tracker_iou_threshold)
+        # self.tracker = Tracker(
+        #     tracker_max_age, tracker_min_hits, tracker_iou_threshold)
 
         self.set_enable_object_detection_service = self.create_service(
             SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
@@ -99,36 +101,7 @@ class YoloDetector(Node):
         self.objects_array_publishers: dict[str, Publisher] = {}
         self.image_publishers: dict[str, Publisher] = {}
 
-        for input_topic in image_topic_list:
-
-            # disable detection by default
-            self.detection_enabled[input_topic] = True
-
-            # ROS Topic names
-            objects_array_topic = f"{input_topic}/objects"
-            self.get_logger().info(
-                f"input topic: {input_topic}, output objects topic: {objects_array_topic}")
-
-            # ROS subscribers
-            self.image_sub = self.create_subscription(
-                Image,
-                input_topic,
-                lambda x: self.image_callback(x, input_topic),
-                1,
-            )
-
-            # ROS publishers
-            objects_array_pub = self.create_publisher(
-                BboxArray, objects_array_topic, 10)
-            self.objects_array_publishers[input_topic] = objects_array_pub
-
-            if self.debug:
-                output_image_topic = f"{input_topic}/debug_image"
-                self.get_logger().info("input topic: {}, output image topic: {}".format(
-                    input_topic, output_image_topic))
-                image_pub = self.create_publisher(
-                    Image, output_image_topic, 1)
-                self.image_publishers[input_topic] = image_pub
+        
 
         # init cv_bridge
         self.bridge = CvBridge()
@@ -152,6 +125,40 @@ class YoloDetector(Node):
 
             # to check if inited
             self.initialized = True
+        
+        for input_topic in image_topic_list:
+
+            # disable detection by default
+            self.detection_enabled[input_topic] = False
+
+            # ROS Topic names
+            objects_array_topic = f"{input_topic}/objects"
+            self.get_logger().info(
+                f"input topic: {input_topic}, output objects topic: {objects_array_topic}")
+            
+            # provide topic name to callback
+            bind = partial(self.image_callback, topic=input_topic)
+
+            # ROS subscribers
+            self.create_subscription(
+                Image,
+                input_topic,
+                bind,
+                1,
+            )
+
+            # ROS publishers
+            objects_array_pub = self.create_publisher(
+                BboxArray, objects_array_topic, 10)
+            self.objects_array_publishers[input_topic] = objects_array_pub
+
+            if self.debug:
+                output_image_topic = f"{input_topic}/debug_image"
+                self.get_logger().info("input topic: {}, output image topic: {}".format(
+                    input_topic, output_image_topic))
+                image_pub = self.create_publisher(
+                    Image, output_image_topic, 1)
+                self.image_publishers[input_topic] = image_pub
 
     def _set_enable_object_detection(self, request: SetEnableObjectDetection.Request, response: SetEnableObjectDetection.Response):
         """Callback to enable or disable object detection for specific camera topic
@@ -163,7 +170,7 @@ class YoloDetector(Node):
             SetEnableObjectDetectionResponse: response with str message and success bool arg
         """
 
-        self.detection_enabled[request.camera_topic] = request.enabled
+        self.detection_enabled[request.camera_topic] = request.enable
         response.success = True
         return response
 
@@ -280,7 +287,6 @@ class YoloDetector(Node):
                 # publish results
                 self.objects_array_publishers[topic].publish(objects_array_msg)
                 if self.debug:
-
                     ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                     # publish output image
                     self.image_publishers[topic].publish(ros_image)
