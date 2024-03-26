@@ -19,5 +19,5 @@ RUN pip3 install lap
 
 RUN echo 'source /additional_packages/install/setup.bash' >> /root/.bashrc
 
-WORKDIR /welt_auv
+WORKDIR /stingray
 CMD ["bash"]
