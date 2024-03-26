@@ -7,6 +7,8 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray
 from stingray_interfaces.msg import Bbox, BboxArray
+from stingray_core_interfaces.srv import SetTwist
+from stingray_core_interfaces.msg import UVState
 
 from stingray_planningPath import AStar
 from stingray_planningPath import ImageHandler
@@ -293,6 +295,24 @@ class DroneNode(Node):
         # from the video_frames topic. The queue size is 10 messages.
         self.subscription = self.create_subscription(BboxArray, "objects_array_topic", self.listener_callback, 10)
 
+        # Create the service for to transmit the motion vector
+        self.client_vectorMovement = self.create_client(SetTwist, '/stingray/services/set_twist')
+        while not self.client_vectorMovement.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service SetTwist not available, waiting again...')
+        self.req_vectorMovement = SetTwist.Request()
+
+        # Create the subscriber.
+        self.sub_uvStateTop = self.create_subscription(UVState, "uv_state_topic", self.callback_uvStateTop, 10)
+
+        # Create the action.
+        
+
+
+        
+
+        
+
+
     def listener_callback(self, data):
         
         #__НЕ_ТРОГАТЬ_ОТ_СЮДА__
@@ -316,13 +336,6 @@ class DroneNode(Node):
 
 
 
-
-
-
-
-
-
-
         speed = vector[5][:]
         #speed = [surge (скорость по маршу),
         #         sway (скорость по лагу),
@@ -334,21 +347,33 @@ class DroneNode(Node):
         #         yaw (значение курса)]
         
         # Передай их куда нужно
+        self.send_vectorMovement(speed, angle)
 
 
+    # передача вектора движения + ожидание ответа
+    def send_vectorMovement(self, speed, angle):
+        self.req_vectorMovemenе.surge  = speed[0]
+        self.req_vectorMovemenе.sway = speed[1]
+        self.req_vectorMovemenе.depth = speed[2]
+        self.req_vectorMovemenе.roll = angle[0]
+        self.req_vectorMovemenе.pitch = angle[1]
+        self.req_vectorMovemenе.yaw = angle[2]
+        self.responce_vectorMovemenе = self.client_vectorMovement.call_async(self.req_vectorMovemenе)
+        self.responce_vectorMovemenе.add_done_callback(self.callback_vectorMovement)
 
+    # колбэк при получении ответа, после отправки вектора
+    def callback_vectorMovement(self, responce_vectorMovemenе):
+        self.get_logger().info("responce srv SetTwist:" + responce_vectorMovemenе)
 
+    # колбэк подписчика состояний аппарата
+    def callback_uvStateTop(self, msg):
+        # нужно заполнить
+        pos = [0, 0, 0]
 
-
-
-
-
-
-
-
+        angle3D = [msg.roll, msg.pitch, msg.yaw]
         
-
-
+        Map.updatePositionMap(map2, pos, angle3D)
+        
 
 
 
