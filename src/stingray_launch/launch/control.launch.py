@@ -1,28 +1,24 @@
-from pathlib import Path
-
-from ament_index_python import get_package_share_directory
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.actions import IncludeLaunchDescription
-from launch.actions import GroupAction
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch.substitutions import TextSubstitution
 from launch_ros.actions import Node
-from launch_ros.actions import PushRosNamespace
 
 
 def generate_launch_description():
     # missions
     mission_package_names_arg = DeclareLaunchArgument(
-        "mission_package_names", default_value='stingray_missions stingray_missions'
+        "mission_package_names", default_value='[stingray_missions]'
     )
     transition_srv_arg = DeclareLaunchArgument(
         "transition_srv", default_value='/stingray/services/transition'
     )
     zbar_topic_arg = DeclareLaunchArgument(
         "zbar_topic", default_value='/stingray/topics/zbar'
+    )
+
+    # object detection
+    set_enable_object_detection_srv_arg = DeclareLaunchArgument(
+        "set_enable_object_detection_srv", default_value='/stingray/services/set_enable_object_detection'
     )
 
     # movement
@@ -39,20 +35,6 @@ def generate_launch_description():
     )
     device_state_array_topic_arg = DeclareLaunchArgument(
         "device_state_array_topic", default_value='/stingray/topics/device_state_array'
-    )
-
-    # object detection
-    image_topic_list_arg = DeclareLaunchArgument(
-        "image_topic_list", default_value='/stingray/topics/front_camera'
-    )
-    set_enable_object_detection_srv_arg = DeclareLaunchArgument(
-        "set_enable_object_detection_srv", default_value='/stingray/services/set_twist'
-    )
-    weights_pkg_name_arg = DeclareLaunchArgument(
-        "weights_pkg_name", default_value='stingray_object_detection'
-    )
-    debug_arg = DeclareLaunchArgument(
-        "debug", default_value='True'
     )
 
     # core services
@@ -72,12 +54,15 @@ def generate_launch_description():
         "enable_thrusters_srv", default_value='/stingray/services/enable_thrusters'
     )
 
-    
+    # additional
+    debug_arg = DeclareLaunchArgument(
+        "debug", default_value='True'
+    )
 
-    # load ros config
     return LaunchDescription([
         mission_package_names_arg,
         transition_srv_arg,
+        set_enable_object_detection_srv_arg,
         zbar_topic_arg,
         twist_action_arg,
         uv_state_topic_arg,
@@ -88,9 +73,6 @@ def generate_launch_description():
         set_stabilization_srv_arg,
         enable_thrusters_srv_arg,
         set_device_srv_arg,
-        image_topic_list_arg,
-        set_enable_object_detection_srv_arg,
-        weights_pkg_name_arg,
         debug_arg,
 
         # missions
@@ -125,19 +107,6 @@ def generate_launch_description():
             respawn_delay=1,
         ),
 
-        # qr reader
-        Node(
-            package='zbar_ros',
-            executable='barcode_reader',
-            name='qr_reader',
-            remappings=[
-                ('/image', LaunchConfiguration("front_camera_topic")),
-                ('/barcode', LaunchConfiguration("zbar_topic")),
-            ],
-            respawn=True,
-            respawn_delay=1,
-        ),
-
         # movement
         Node(
             package='stingray_movement',
@@ -162,21 +131,6 @@ def generate_launch_description():
                 {'device_state_array_topic': LaunchConfiguration(
                     "device_state_array_topic")},
                 {'set_device_srv': LaunchConfiguration("set_device_srv")},
-            ],
-            respawn=True,
-            respawn_delay=1,
-        ),
-
-        # object detection        
-        Node(
-            package='stingray_object_detection',
-            executable='yolov5_detector',
-            name='yolov5_detector',
-            parameters=[
-                {'weights_pkg_name': LaunchConfiguration("weights_pkg_name")},
-                {'image_topic_list': LaunchConfiguration("image_topic_list")},
-                {'set_enable_object_detection_srv': LaunchConfiguration("set_enable_object_detection_srv")},
-                {'debug': LaunchConfiguration("debug")},
             ],
             respawn=True,
             respawn_delay=1,

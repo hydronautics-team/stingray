@@ -9,6 +9,14 @@ states:
       type: ResetIMU
       duration: 1
     timeout: 10
+  THRUSTER_AFTER_IMU_INDICATION:
+    action:
+      type: ThrusterIndication
+      repeat: 3
+  WAIT_SUBMERGE:
+    action:
+      type: Duration
+      duration: 10.0
   ENABLE_STABILIZATION:
     action:
       type: EnableStabilization
@@ -16,26 +24,22 @@ states:
       roll: true
       pitch: true
       yaw: true
-    timeout: 10
-  WAIT_SUBMERGE:
-    action:
-      type: Duration
-      duration: 5.0
-    timeout: 10
-  THRUSTER_AFTER_IMU_INDICATION:
-    action:
-      type: ThrusterIndication
-      repeat: 1
-    timeout: 10
+  SUBMERGE:
+    action: 
+      type: Move
+      surge: 0.0
+      sway: 0.0
+      depth: 400.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+      duration: 2.0
 transitions:
   - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: RESET_IMU }
-  - { trigger: ok, source: RESET_IMU, dest: ENABLE_STABILIZATION }
-  - {
-      trigger: ok,
-      source: ENABLE_STABILIZATION,
-      dest: WAIT_SUBMERGE,
-    }
-  - { trigger: ok, source: WAIT_SUBMERGE, dest: THRUSTER_AFTER_IMU_INDICATION }
-  - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: OK }
+  - { trigger: ok, source: RESET_IMU, dest: THRUSTER_AFTER_IMU_INDICATION }
+  - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: WAIT_SUBMERGE }
+  - { trigger: ok, source: WAIT_SUBMERGE, dest: ENABLE_STABILIZATION }
+  - { trigger: ok, source: ENABLE_STABILIZATION, dest: SUBMERGE }
+  - { trigger: ok, source: SUBMERGE, dest: OK }
   - { trigger: timeout, source: "*", dest: FAILED }
   - { trigger: fail, source: "*", dest: FAILED }

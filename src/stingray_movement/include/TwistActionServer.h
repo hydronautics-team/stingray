@@ -31,11 +31,10 @@ private:
     rclcpp::Subscription<stingray_core_interfaces::msg::UVState>::SharedPtr uvStateSub;
     rclcpp::Client<stingray_core_interfaces::srv::SetTwist>::SharedPtr twistSrvClient;
 
-    float depth_tolerance = 0.2;
-    float yaw_tolerance = 0.2;
-    float pitch_tolerance = 0.2;
-    float roll_tolerance = 0.2;
-    float max_depth = 0.5;
+    float depth_tolerance = 100.0;
+    float yaw_tolerance = 10.0;
+    float pitch_tolerance = 10.0;
+    float roll_tolerance = 10.0;
 
     float current_depth;
     float current_yaw;

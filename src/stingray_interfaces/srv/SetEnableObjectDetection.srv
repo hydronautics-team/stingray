@@ -1,6 +1,6 @@
 # Request
 string camera_topic
-bool enabled
+bool enable
 ---
 # Response
 bool success

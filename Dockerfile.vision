@@ -1,0 +1,23 @@
+FROM hydronautics/stingray_core:latest
+
+RUN apt update && apt install -y --no-install-recommends ros-iron-usb-cam ros-iron-zbar-ros python3-pip
+
+RUN pip3 install tqdm
+RUN pip3 install pillow
+RUN pip3 install pandas
+RUN pip3 install scipy
+RUN pip3 install ipython
+RUN pip3 install seaborn
+RUN pip3 install matplotlib
+RUN pip3 install torch==1.13.0
+RUN pip3 install torchvision==0.14.1
+
+# deep sort dependencies
+RUN pip3 install filterpy
+RUN pip3 install scikit-image
+RUN pip3 install lap
+
+RUN echo 'source /additional_packages/install/setup.bash' >> /root/.bashrc
+
+WORKDIR /stingray
+CMD ["bash"]

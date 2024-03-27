@@ -1,3 +1,4 @@
+from __future__ import annotations
 from transitions.extensions.factory import AsyncGraphMachine
 import asyncio
 from rclpy.node import Node
@@ -258,6 +259,8 @@ class FSM(object):
             'transition_srv', '/stingray/services/transition')
         self.node.declare_parameter(
             'set_stabilization_srv', '/stingray/services/set_stabilization')
+        self.node.declare_parameter(
+            'set_enable_object_detection_srv', '/stingray/services/set_enable_object_detection')
 
         self.transition_srv = self.node.create_service(
             SetTransition, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
@@ -336,6 +339,8 @@ class FSM(object):
     async def process_pending_action(self):
         if self.pending_action:
             self.wait_action_success_event.clear()
+            get_logger("fsm").info(
+                f"{self.pending_action.type} executing: {self.pending_action}")
             result = await self.pending_action.execute()
             get_logger("fsm").info(
                 f"{self.pending_action.type} result: {result}, stopped: {self.pending_action.stopped}")
