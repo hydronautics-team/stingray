@@ -4,3 +4,6 @@
 [submodule "src/stingray_object_detection/yolov5"]
 	path = src/stingray_object_detection/yolov5
 	url = git@github.com:hydronautics-team/yolov5.git
+[submodule "src/stingray_object_detection/ultralytics"]
+	path = src/stingray_object_detection/ultralytics
+	url = https://github.com/ultralytics/ultralytics.git
