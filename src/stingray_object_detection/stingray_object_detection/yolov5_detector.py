@@ -7,7 +7,6 @@ from rclpy.publisher import Publisher
 from cv_bridge import CvBridge, CvBridgeError
 from stingray_interfaces.msg import Bbox, BboxArray
 from stingray_interfaces.srv import SetEnableObjectDetection
-from stingray_object_detection.distance import DistanceCalculator
 # from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
 from ament_index_python import get_package_share_directory
@@ -91,18 +90,6 @@ class YoloDetector(Node):
         self.agnostic_nms = agnostic_nms
         self.line_thickness = line_thickness
         self.fov = fov
-
-        self.dist_calc = DistanceCalculator(
-            imgsz=self.imgsz,
-            fov=self.fov,
-            object_attrs={
-                'gate': [1.5, 1.5, 4/5, 'blue'],
-                'yellow_flare': [0.15*2, 1.5, 1.5/5, 'yellow'],
-                'red_flare': [0.15*2, 1.5, 1.5/5, 'red'],
-                'blue_bowl': [0.7, 0.35, 0.8/5, 'blue'],
-                'red_bowl': [0.7, 0.35, 0.8/5, 'red']
-            }
-        )
 
         # init SORT tracker
         # self.tracker = Tracker(
@@ -268,17 +255,13 @@ class YoloDetector(Node):
                             annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label,
                                                 color=colors(int(label_id), True))
                             
-                        distance, angle = self.dist_calc.calcDistanceAndAngle(xyxy, label)
-
                         object_msg = Bbox()
-                        object_msg.id = 0
+                        object_msg.confidence = score
                         object_msg.name = label
                         object_msg.top_left_x = int(xyxy[0])
                         object_msg.top_left_y = int(xyxy[1])
                         object_msg.bottom_right_x = int(xyxy[2])
                         object_msg.bottom_right_y = int(xyxy[3])
-                        object_msg.distance = float(distance)
-                        object_msg.angle = float(angle)
                         objects_array_msg.bboxes.append(object_msg)
 
             # Stream results

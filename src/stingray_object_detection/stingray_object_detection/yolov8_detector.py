@@ -13,7 +13,6 @@ from functools import partial
 
 from stingray_interfaces.msg import Bbox, BboxArray
 from stingray_interfaces.srv import SetEnableObjectDetection
-from stingray_object_detection.distance import DistanceCalculator
 
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
@@ -69,18 +68,6 @@ class YoloDetector(Node):
         self.agnostic_nms = agnostic_nms
         self.line_thickness = line_thickness
         self.fov = fov
-
-        self.dist_calc = DistanceCalculator(
-            imgsz=self.imgsz,
-            fov=self.fov,
-            object_attrs={
-                'gate': [1.5, 1.5, 4/5, 'blue'],
-                'yellow_flare': [0.15*2, 1.5, 1.5/5, 'yellow'],
-                'red_flare': [0.15*2, 1.5, 1.5/5, 'red'],
-                'blue_bowl': [0.7, 0.35, 0.8/5, 'blue'],
-                'red_bowl': [0.7, 0.35, 0.8/5, 'red']
-            }
-        )
 
         self.set_enable_object_detection_service = self.create_service(
             SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
@@ -193,8 +180,8 @@ class YoloDetector(Node):
                         im0, line_width=self.line_thickness, example=str(self.names))
                 for box in det.boxes:
                     # self.get_logger().info(f"xyxy: {xyxy}, label: {label}")
-                    xyxy, label_id = box.xyxy[0].cpu(
-                    ).detach().numpy(), box.cls
+                    xyxy, label_id, confidence = box.xyxy[0].cpu(
+                    ).detach().numpy(), box.cls.cpu(), box.conf.cpu()
                     label = self.names[int(label_id)]
 
                     if self.debug:
@@ -203,18 +190,13 @@ class YoloDetector(Node):
 
                     left, top, right, bottom = xyxy
 
-                    # self.get_logger().info(str(ImageHandler.calcDistanceAndAngle([obj], None)))
-                    # objects.append(obj)
-                    distance, angle = self.dist_calc.calcDistanceAndAngle(xyxy, label)
-
                     object_msg = Bbox()
                     object_msg.name = label
+                    object_msg.confidence = float(confidence)
                     object_msg.top_left_x = int(left)
                     object_msg.top_left_y = int(top)
                     object_msg.bottom_right_x = int(right)
                     object_msg.bottom_right_y = int(bottom)
-                    object_msg.distance = float(distance)
-                    object_msg.angle = float(angle)
 
                     objects_array_msg.bboxes.append(object_msg)
 
