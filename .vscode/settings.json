@@ -12,6 +12,7 @@
         "./src/stingray_core/src/stingray_core_interfaces",
         "./src/stingray_missions",
         "src/stingray_object_detection/yolov5",
+        "src/stingray_object_detection/ultralytics",
         "./install/stingray_core_interfaces/lib/python3.10/site-packages"
     ],
     "files.associations": {

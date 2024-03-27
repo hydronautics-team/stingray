@@ -7,6 +7,7 @@ from rclpy.publisher import Publisher
 from cv_bridge import CvBridge, CvBridgeError
 from stingray_interfaces.msg import Bbox, BboxArray
 from stingray_interfaces.srv import SetEnableObjectDetection
+from stingray_object_detection.distance import DistanceCalculator
 # from stingray_object_detection.tracker import Tracker
 from sensor_msgs.msg import Image
 from ament_index_python import get_package_share_directory
@@ -33,6 +34,7 @@ class YoloDetector(Node):
                  classes=None,
                  agnostic_nms=False,
                  line_thickness=3,
+                 fov=60,
                  tracker_max_age=20,
                  tracker_min_hits=20,
                  tracker_iou_threshold=0.3):
@@ -68,15 +70,14 @@ class YoloDetector(Node):
         # get weights path
         self.weights_pkg_path = f'{get_package_share_directory(self.get_parameter("weights_pkg_name").get_parameter_value().string_value)}'
         self.weights_path = os.path.join(
-            self.weights_pkg_path, "weights", "best.pt")
+            self.weights_pkg_path, "weights", "yolov5.pt")
         self.config_path = os.path.join(
-            self.weights_pkg_path, "weights", "config.yaml")
-
+            self.weights_pkg_path, "weights", "yolov5.yaml")
 
         image_topic_list = self.get_parameter(
             'image_topic_list').get_parameter_value().string_array_value
         self.get_logger().info(f"image_topic_list: {image_topic_list}")
-            
+
         self.debug = self.get_parameter(
             'debug').get_parameter_value().bool_value
 
@@ -89,6 +90,19 @@ class YoloDetector(Node):
         self.classes = classes
         self.agnostic_nms = agnostic_nms
         self.line_thickness = line_thickness
+        self.fov = fov
+
+        self.dist_calc = DistanceCalculator(
+            imgsz=self.imgsz,
+            fov=self.fov,
+            object_attrs={
+                'gate': [1.5, 1.5, 4/5, 'blue'],
+                'yellow_flare': [0.15*2, 1.5, 1.5/5, 'yellow'],
+                'red_flare': [0.15*2, 1.5, 1.5/5, 'red'],
+                'blue_bowl': [0.7, 0.35, 0.8/5, 'blue'],
+                'red_bowl': [0.7, 0.35, 0.8/5, 'red']
+            }
+        )
 
         # init SORT tracker
         # self.tracker = Tracker(
@@ -100,8 +114,6 @@ class YoloDetector(Node):
         self.detection_enabled: dict[str, bool] = {}
         self.objects_array_publishers: dict[str, Publisher] = {}
         self.image_publishers: dict[str, Publisher] = {}
-
-        
 
         # init cv_bridge
         self.bridge = CvBridge()
@@ -125,17 +137,17 @@ class YoloDetector(Node):
 
             # to check if inited
             self.initialized = True
-        
+
         for input_topic in image_topic_list:
 
             # disable detection by default
-            self.detection_enabled[input_topic] = False
+            self.detection_enabled[input_topic] = True
 
             # ROS Topic names
             objects_array_topic = f"{input_topic}/objects"
             self.get_logger().info(
                 f"input topic: {input_topic}, output objects topic: {objects_array_topic}")
-            
+
             # provide topic name to callback
             bind = partial(self.image_callback, topic=input_topic)
 
@@ -217,14 +229,15 @@ class YoloDetector(Node):
             # Process predictions
             objects_array_msg = BboxArray()
 
-            for i, det in enumerate(pred):  # per image
-                im0 = img.copy()
-                annotator = Annotator(
-                    im0, line_width=self.line_thickness, example=str(self.names))
+            for det in pred:  # per image
+                if self.debug:
+                    im0 = img.copy()
+                    annotator = Annotator(
+                        im0, line_width=self.line_thickness, example=str(self.names))
                 if len(det):
                     # Rescale boxes from img_size to im0 size
                     det[:, :4] = scale_boxes(
-                        im.shape[2:], det[:, :4], im0.shape).round()
+                        im.shape[2:], det[:, :4], img.shape).round()
 
                     # for cpu and gpu machines
                     det = det.cpu().detach().numpy()
@@ -254,6 +267,8 @@ class YoloDetector(Node):
                         if self.debug:
                             annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label,
                                                 color=colors(int(label_id), True))
+                            
+                        distance, angle = self.dist_calc.calcDistanceAndAngle(xyxy, label)
 
                         object_msg = Bbox()
                         object_msg.id = 0
@@ -262,6 +277,8 @@ class YoloDetector(Node):
                         object_msg.top_left_y = int(xyxy[1])
                         object_msg.bottom_right_x = int(xyxy[2])
                         object_msg.bottom_right_y = int(xyxy[3])
+                        object_msg.distance = float(distance)
+                        object_msg.angle = float(angle)
                         objects_array_msg.bboxes.append(object_msg)
 
             # Stream results
@@ -295,7 +312,6 @@ class YoloDetector(Node):
                 self.get_logger().error(f'CV Bridge error: {e}')
             except Exception as e:
                 self.get_logger().error(f'Error: {e}')
-            
 
 
 def main():

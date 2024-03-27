@@ -1,1 +1,0 @@
-colcon build --packages-select stingray_missions stingray_launch stingray_utils stingray_interfaces stingray_core_interfaces stingray_core_launch stingray_movement stingray_core_communication serial stingray_devices stingray_object_detection

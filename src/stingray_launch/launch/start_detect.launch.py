@@ -12,8 +12,8 @@ def generate_launch_description():
         ),
         Node(
             package='stingray_object_detection',
-            executable='yolov8_detect',
-            name='yolov8_detect'
+            executable='yolov8_detector',
+            name='yolov8_detector'
         ),
         Node(
             package='stingray_planningPath',
