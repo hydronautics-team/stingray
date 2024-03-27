@@ -6,7 +6,9 @@ package_name = 'stingray_object_detection'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=find_packages(exclude=['test, yolov5']),
+    packages=find_packages(exclude=['test']) + find_packages(where='ultralytics', include=["ultralytics", "ultralytics.*"]),
+    package_dir={'ultralytics': 'ultralytics/ultralytics'},
+    package_data={ "ultralytics": ["**/*.yaml"], "ultralytics.assets" : ["*.jpg"] },
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -23,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'yolov5_detector = stingray_object_detection.yolov5_detector:main',
+            'yolov8_detector = stingray_object_detection.yolov8_detector:main',
         ],
     },
 )

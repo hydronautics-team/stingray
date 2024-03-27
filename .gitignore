@@ -1,5 +1,5 @@
 # Special
-weights/best.pt
+*.pt
 
 # Prerequisites
 *.d
