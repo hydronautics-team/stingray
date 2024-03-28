@@ -1,0 +1,16 @@
+string bbox_name 
+string topic_name 
+float32 camera_fov 
+float32 surge 
+float32 sway
+float32 depth
+float32 roll
+float32 pitch
+float32 yaw
+float32 timeout
+---
+# Result
+bool success
+---
+# Feedback
+std_msgs/Empty empty

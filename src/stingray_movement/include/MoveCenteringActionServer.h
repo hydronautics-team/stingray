@@ -3,10 +3,10 @@
 
 #include <stingray_interfaces/action/twist_action.hpp>
 
-#include "AbstractActionServer.h"
-#include "stingray_core_interfaces/srv/set_stabilization.hpp"
+#include "stingray_utils/AbstractActionServer.h"
+#include "stingray_utils/AsyncTimer.h"
+#include "stingray_core_interfaces/srv/set_twist.hpp"
 #include "stingray_core_interfaces/msg/uv_state.hpp"
-#include "AsyncTimer.h"
 
 using namespace std::chrono_literals;
 
@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
  * Action server that is responsible for moving vehicle
  * by march and lag.
  */
-class EnableStabilizationActionServer : AbstractActionServer<stingray_interfaces::action::TwistAction, stingray_interfaces::action::TwistAction_Goal> {
+class MoveCenteringActionServer : AbstractActionServer<stingray_interfaces::action::TwistAction, stingray_interfaces::action::TwistAction_Goal> {
 
 protected:
 
@@ -22,8 +22,8 @@ protected:
 
 public:
 
-    EnableStabilizationActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName);
-    ~EnableStabilizationActionServer() = default;
+    MoveCenteringActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName);
+    ~MoveCenteringActionServer() = default;
 
 private:
     void uvStateCallback(const stingray_core_interfaces::msg::UVState &msg);
@@ -31,11 +31,10 @@ private:
     rclcpp::Subscription<stingray_core_interfaces::msg::UVState>::SharedPtr uvStateSub;
     rclcpp::Client<stingray_core_interfaces::srv::SetTwist>::SharedPtr twistSrvClient;
 
-    float depth_tolerance = 0.2;
-    float yaw_tolerance = 0.2;
-    float pitch_tolerance = 0.2;
-    float roll_tolerance = 0.2;
-    float max_depth = 0.5;
+    float depth_tolerance = 100.0;
+    float yaw_tolerance = 10.0;
+    float pitch_tolerance = 10.0;
+    float roll_tolerance = 10.0;
 
     float current_depth;
     float current_yaw;

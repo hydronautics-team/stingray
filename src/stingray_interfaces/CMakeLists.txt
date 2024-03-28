@@ -13,6 +13,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetTransition.srv"
   "action/TwistAction.action"
+  "action/MoveCenteringAction.action"
   "action/DeviceAction.action"
   "msg/Bbox.msg"
   "msg/BboxArray.msg"

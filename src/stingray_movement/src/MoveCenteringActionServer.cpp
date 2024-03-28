@@ -1,6 +1,6 @@
-#include <EnableStabilizationActionServer.h>
+#include <MoveCenteringActionServer.h>
 
-EnableStabilizationActionServer::EnableStabilizationActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<stingray_interfaces::action::TwistAction, stingray_interfaces::action::TwistAction_Goal>(_node, actionName) {
+MoveCenteringActionServer::MoveCenteringActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<stingray_interfaces::action::TwistAction, stingray_interfaces::action::TwistAction_Goal>(_node, actionName) {
 
     _node->declare_parameter("uv_state_topic", "/stingray/topics/uv_state");
     _node->declare_parameter("set_twist_srv", "/stingray/services/set_twist");
@@ -10,10 +10,10 @@ EnableStabilizationActionServer::EnableStabilizationActionServer(std::shared_ptr
     // ROS subscribers
     uvStateSub = _node->create_subscription<stingray_core_interfaces::msg::UVState>(
         _node->get_parameter("uv_state_topic").as_string(), 1000,
-        std::bind(&EnableStabilizationActionServer::uvStateCallback, this, std::placeholders::_1));
+        std::bind(&MoveCenteringActionServer::uvStateCallback, this, std::placeholders::_1));
 };
 
-void EnableStabilizationActionServer::uvStateCallback(const stingray_core_interfaces::msg::UVState &msg) {
+void MoveCenteringActionServer::uvStateCallback(const stingray_core_interfaces::msg::UVState &msg) {
     current_depth = msg.depth;
     current_roll = msg.roll;
     current_pitch = msg.pitch;
@@ -24,7 +24,7 @@ void EnableStabilizationActionServer::uvStateCallback(const stingray_core_interf
     yaw_stabilization = msg.yaw_stabilization;
 };
 
-bool EnableStabilizationActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::TwistAction_Goal> goal) {
+bool MoveCenteringActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::TwistAction_Goal> goal) {
     bool depth_done = false;
     bool roll_done = false;
     bool pitch_done = false;
@@ -57,10 +57,11 @@ bool EnableStabilizationActionServer::isTwistDone(const std::shared_ptr<const st
     return depth_done && roll_done && pitch_done && yaw_done;
 };
 
-void EnableStabilizationActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::TwistAction>> goal_handle) {
+void MoveCenteringActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::TwistAction>> goal_handle) {
 
     auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
 
+    RCLCPP_INFO(_node->get_logger(), "Execute action");
     if (!twistSrvClient->wait_for_service(1s)) {
         if (!rclcpp::ok()) {
             RCLCPP_ERROR(_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
@@ -73,11 +74,11 @@ void EnableStabilizationActionServer::execute(const std::shared_ptr<rclcpp_actio
     // get goal data
     const auto goal = goal_handle->get_goal();
     auto goal_result = std::make_shared<stingray_interfaces::action::TwistAction::Result>();
-    goal_result->done = false;
+    goal_result->success = false;
 
     // check duration
     if (goal->duration < 0.0) {
-        goal_result->done = false;
+        goal_result->success = false;
         goal_handle->abort(goal_result);
         RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
         return;
@@ -91,7 +92,8 @@ void EnableStabilizationActionServer::execute(const std::shared_ptr<rclcpp_actio
     twistSrvRequest->pitch = goal->pitch;
     twistSrvRequest->yaw = goal->yaw;
 
-    // check if service done
+    RCLCPP_INFO(_node->get_logger(), "Send twist srv request");
+    // check if service success
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     rclcpp::Rate checkRate(10ms);
@@ -99,11 +101,13 @@ void EnableStabilizationActionServer::execute(const std::shared_ptr<rclcpp_actio
     timer.start();
 
     while (rclcpp::ok()) {
+        RCLCPP_INFO(_node->get_logger(), "isTwistDone %d", isTwistDone(goal));
+        RCLCPP_INFO(_node->get_logger(), "timer.isBusy %d", timer.isBusy());
         if (!timer.isBusy() && isTwistDone(goal)) {
             break;
         }
         if (goal_handle->is_canceling()) {
-            goal_result->done = false;
+            goal_result->success = false;
             goal_handle->canceled(goal_result);
             RCLCPP_INFO(_node->get_logger(), "Goal canceled");
             return;
@@ -124,10 +128,11 @@ void EnableStabilizationActionServer::execute(const std::shared_ptr<rclcpp_actio
     if (!yaw_stabilization)
         twistSrvRequest->yaw = 0.0;
 
+    RCLCPP_INFO(_node->get_logger(), "Send twist srv request stop");
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     if (rclcpp::ok()) {
-        goal_result->done = true;
+        goal_result->success = true;
         goal_handle->succeed(goal_result);
         RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
     }
@@ -138,7 +143,7 @@ int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
     std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("twist_action_server");
     node->declare_parameter("twist_action", "/stingray/actions/twist");
-    EnableStabilizationActionServer server = EnableStabilizationActionServer(node, node->get_parameter("twist_action").as_string());
+    MoveCenteringActionServer server = MoveCenteringActionServer(node, node->get_parameter("twist_action").as_string());
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
