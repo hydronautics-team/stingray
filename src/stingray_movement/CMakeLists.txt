@@ -29,16 +29,16 @@ add_executable(twist_action_server
         )
 ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
-add_executable(move_centering_action_server
-        include/MoveCenteringActionServer.h
-        src/MoveCenteringActionServer.cpp
+add_executable(bbox_centering_twist_action_server
+        include/BboxCenteringTwistActionServer.h
+        src/BboxCenteringTwistActionServer.cpp
         )
-ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+ament_target_dependencies(bbox_centering_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 
 install(TARGETS
         twist_action_server
-        move_centering_action_server
+        bbox_centering_twist_action_server
         DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

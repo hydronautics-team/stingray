@@ -5,6 +5,20 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    # object detection
+    bbox_array_topic_arg = DeclareLaunchArgument(
+        "bbox_array_topic", default_value='/stingray/topics/camera/bbox_array'
+    )
+    camera_fov_arg = DeclareLaunchArgument(
+        "camera_fov", default_value='60'
+    )
+    image_width_arg = DeclareLaunchArgument(
+        "image_width", default_value='640'
+    )
+    image_height_arg = DeclareLaunchArgument(
+        "image_height", default_value='480'
+    )
+
     # missions
     mission_package_names_arg = DeclareLaunchArgument(
         "mission_package_names", default_value='[stingray_missions]'
@@ -24,6 +38,9 @@ def generate_launch_description():
     # movement
     twist_action_arg = DeclareLaunchArgument(
         "twist_action", default_value='/stingray/actions/twist'
+    )
+    bbox_centering_twist_action_arg = DeclareLaunchArgument(
+        "bbox_centering_twist_action", default_value='/stingray/actions/bbox_centering_twist'
     )
     uv_state_topic_arg = DeclareLaunchArgument(
         "uv_state_topic", default_value='/stingray/topics/uv_state'
@@ -60,11 +77,16 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        bbox_array_topic_arg,
+        camera_fov_arg,
+        image_width_arg,
+        image_height_arg,
         mission_package_names_arg,
         transition_srv_arg,
         set_enable_object_detection_srv_arg,
         zbar_topic_arg,
         twist_action_arg,
+        bbox_centering_twist_action_arg,
         uv_state_topic_arg,
         set_twist_srv_arg,
         device_action_arg,
@@ -84,6 +106,7 @@ def generate_launch_description():
                 {'mission_package_names': LaunchConfiguration("mission_package_names")},
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
+                {'bbox_centering_twist_action': LaunchConfiguration("bbox_centering_twist_action")},
                 {'device_action': LaunchConfiguration("device_action")},
                 {'reset_imu_srv': LaunchConfiguration("reset_imu_srv")},
                 {'set_stabilization_srv': LaunchConfiguration("set_stabilization_srv")},
@@ -116,6 +139,22 @@ def generate_launch_description():
                 {'twist_action': LaunchConfiguration("twist_action")},
                 {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
                 {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
+            ],
+            respawn=True,
+            respawn_delay=1,
+        ),
+        Node(
+            package='stingray_movement',
+            executable='bbox_centering_twist_action_server',
+            name='bbox_centering_twist_action_server',
+            parameters=[
+                {'bbox_centering_twist_action': LaunchConfiguration("bbox_centering_twist_action")},
+                {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
+                {'bbox_array_topic': LaunchConfiguration("bbox_array_topic")},
+                {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
+                {'camera_fov': LaunchConfiguration("camera_fov")},
+                {'image_width': LaunchConfiguration("image_width")},
+                {'image_height': LaunchConfiguration("image_height")},
             ],
             respawn=True,
             respawn_delay=1,

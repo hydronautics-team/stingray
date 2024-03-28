@@ -9,7 +9,7 @@ states:
       yaw: false
   EMERGE:
     action: 
-      type: Move
+      type: Twist
       surge: 0.0
       sway: 0.0
       depth: -100.0

@@ -73,8 +73,8 @@ def generate_launch_description():
         # object detection
         Node(
             package='stingray_object_detection',
-            executable='yolov8_detector',
-            name='yolov8_detector',
+            executable='yolov5_detector',
+            name='yolov5_detector',
             parameters=[
                 {'weights_pkg_name': LaunchConfiguration("weights_pkg_name")},
                 {'image_topic_list': LaunchConfiguration("image_topic_list")},
