@@ -13,8 +13,9 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetTransition.srv"
   "action/TwistAction.action"
+  "action/BboxCenteringTwistAction.action"
   "action/DeviceAction.action"
-  "action/MoveToObjectAction.action"
+  "action/BboxPathTwistAction.action"
   "msg/Bbox.msg"
   "msg/BboxArray.msg"
   "srv/SetEnableObjectDetection.srv"

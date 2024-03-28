@@ -99,7 +99,7 @@ class YoloDetector(Node):
             SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
 
         self.detection_enabled: dict[str, bool] = {}
-        self.objects_array_publishers: dict[str, Publisher] = {}
+        self.bbox_array_publishers: dict[str, Publisher] = {}
         self.image_publishers: dict[str, Publisher] = {}
 
         # init cv_bridge
@@ -131,9 +131,9 @@ class YoloDetector(Node):
             self.detection_enabled[input_topic] = True
 
             # ROS Topic names
-            objects_array_topic = f"{input_topic}/objects"
+            bbox_array_topic = f"{input_topic}/bbox_array"
             self.get_logger().info(
-                f"input topic: {input_topic}, output objects topic: {objects_array_topic}")
+                f"input topic: {input_topic}, output bbox_array topic: {bbox_array_topic}")
 
             # provide topic name to callback
             bind = partial(self.image_callback, topic=input_topic)
@@ -147,9 +147,9 @@ class YoloDetector(Node):
             )
 
             # ROS publishers
-            objects_array_pub = self.create_publisher(
-                BboxArray, objects_array_topic, 10)
-            self.objects_array_publishers[input_topic] = objects_array_pub
+            bbox_array_pub = self.create_publisher(
+                BboxArray, bbox_array_topic, 10)
+            self.bbox_array_publishers[input_topic] = bbox_array_pub
 
             if self.debug:
                 output_image_topic = f"{input_topic}/debug_image"
@@ -214,7 +214,7 @@ class YoloDetector(Node):
             # objects = self.deleteMultipleObjects(pred)
 
             # Process predictions
-            objects_array_msg = BboxArray()
+            bbox_array_msg = BboxArray()
 
             for det in pred:  # per image
                 if self.debug:
@@ -249,23 +249,23 @@ class YoloDetector(Node):
                     #     objects_array_msg.bboxes.append(object_msg)
 
                     for *xyxy, score, label_id in reversed(dots):
-                        # self.get_logger().info(f"xyxy: {xyxy}, score: {score}, label: {label}")
                         label = self.names[int(label_id)]
+                        self.get_logger().info(f"xyxy: {xyxy}, score: {score}, label: {label}")
                         if self.debug:
                             annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label,
                                                 color=colors(int(label_id), True))
                             
                         object_msg = Bbox()
-                        object_msg.confidence = score
+                        object_msg.confidence = float(score)
                         object_msg.name = label
                         object_msg.top_left_x = int(xyxy[0])
                         object_msg.top_left_y = int(xyxy[1])
                         object_msg.bottom_right_x = int(xyxy[2])
                         object_msg.bottom_right_y = int(xyxy[3])
-                        objects_array_msg.bboxes.append(object_msg)
+                        bbox_array_msg.bboxes.append(object_msg)
 
             # Stream results
-            return objects_array_msg, annotator.result()
+            return bbox_array_msg, annotator.result()
 
     def image_callback(self, input_image: Image, topic: str):
         """ Input image callback
@@ -282,10 +282,10 @@ class YoloDetector(Node):
                 cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
 
                 # detect our objects
-                objects_array_msg, drawed_image = self.detector(cv_image)
+                bbox_array_msg, drawed_image = self.detector(cv_image)
 
                 # publish results
-                self.objects_array_publishers[topic].publish(objects_array_msg)
+                self.bbox_array_publishers[topic].publish(bbox_array_msg)
                 if self.debug:
                     ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                     # publish output image

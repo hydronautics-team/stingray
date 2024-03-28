@@ -1,0 +1,11 @@
+string bbox_name 
+float32 surge 
+float32 depth
+float32 roll
+float32 pitch
+---
+# Result
+bool success
+---
+# Feedback
+std_msgs/Empty empty

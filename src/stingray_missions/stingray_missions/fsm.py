@@ -253,6 +253,7 @@ class FSM(object):
 
         self.lock_coroutine = asyncio.Lock()
         self.node.declare_parameter('twist_action', '/stingray/actions/twist')
+        self.node.declare_parameter('bbox_centering_twist_action', '/stingray/actions/bbox_centering_twist')
         self.node.declare_parameter('device_action', '/stingray/actions/device')
         self.node.declare_parameter('reset_imu_srv', '/stingray/services/reset_imu')
         self.node.declare_parameter(

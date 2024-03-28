@@ -73,7 +73,7 @@ class YoloDetector(Node):
             SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
 
         self.detection_enabled: dict[str, bool] = {}
-        self.objects_array_publishers: dict[str, Publisher] = {}
+        self.bbox_array_publishers: dict[str, Publisher] = {}
         self.image_publishers: dict[str, Publisher] = {}
 
         # init cv_bridge
@@ -95,9 +95,9 @@ class YoloDetector(Node):
             self.detection_enabled[input_topic] = True
 
             # ROS Topic names
-            objects_array_topic = f"{input_topic}/objects"
+            bbox_array_topic = f"{input_topic}/bbox_array"
             self.get_logger().info(
-                f"input topic: {input_topic}, output objects topic: {objects_array_topic}")
+                f"input topic: {input_topic}, output bbox_array topic: {bbox_array_topic}")
 
             # provide topic name to callback
             bind = partial(self.image_callback, topic=input_topic)
@@ -111,9 +111,9 @@ class YoloDetector(Node):
             )
 
             # ROS publishers
-            objects_array_pub = self.create_publisher(
-                BboxArray, objects_array_topic, 10)
-            self.objects_array_publishers[input_topic] = objects_array_pub
+            bbox_array_pub = self.create_publisher(
+                BboxArray, bbox_array_topic, 10)
+            self.bbox_array_publishers[input_topic] = bbox_array_pub
 
             if self.debug:
                 output_image_topic = f"{input_topic}/debug_image"
@@ -171,7 +171,7 @@ class YoloDetector(Node):
             self.dt[1] += t3 - t2
 
             # Process predictions
-            objects_array_msg = BboxArray()
+            bbox_array_msg = BboxArray()
 
             for det in pred:  # per image
                 if self.debug:
@@ -198,9 +198,9 @@ class YoloDetector(Node):
                     object_msg.bottom_right_x = int(right)
                     object_msg.bottom_right_y = int(bottom)
 
-                    objects_array_msg.bboxes.append(object_msg)
+                    bbox_array_msg.bboxes.append(object_msg)
 
-            return objects_array_msg, annotator.result()
+            return bbox_array_msg, annotator.result()
 
     def image_callback(self, input_image: Image, topic: str):
         """ Input image callback
@@ -217,10 +217,10 @@ class YoloDetector(Node):
             cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
 
             # detect our objects
-            objects_array_msg, drawed_image = self.detector(cv_image)
+            bbox_array_msg, drawed_image = self.detector(cv_image)
 
             # publish results
-            self.objects_array_publishers[topic].publish(objects_array_msg)
+            self.bbox_array_publishers[topic].publish(bbox_array_msg)
             if self.debug:
                 ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
                 # publish output image

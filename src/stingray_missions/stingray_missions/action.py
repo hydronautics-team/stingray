@@ -4,6 +4,7 @@ import asyncio
 from rclpy.node import Node
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
+from stingray_interfaces.action import BboxCenteringTwistAction, BboxCenteringTwistAction_GetResult_Response
 from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
 from stingray_interfaces.srv import SetEnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
@@ -39,7 +40,7 @@ class StateAction():
             f"execute method not implemented for {self.type} state action")
 
 
-class DurationAction(StateAction):
+class DurationStateAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "Duration",
@@ -72,7 +73,7 @@ class DurationAction(StateAction):
         return True
 
 
-class ResetIMUAction(DurationAction):
+class ResetIMUStateAction(DurationStateAction):
     def __init__(self,
                  node: Node,
                  type: str = "ResetIMU",
@@ -104,7 +105,7 @@ class ResetIMUAction(DurationAction):
         return await super().execute()
 
 
-class EnableStabilizationAction(StateAction):
+class EnableStabilizationStateAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "EnableStabilization",
@@ -147,7 +148,7 @@ class EnableStabilizationAction(StateAction):
         return True
 
 
-class EnableObjectDetectionAction(StateAction):
+class EnableObjectDetectionStateAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "EnableObjectDetection",
@@ -186,7 +187,7 @@ class EnableObjectDetectionAction(StateAction):
         return True
 
 
-class ThrusterIndicationAction(StateAction):
+class ThrusterIndicationStateAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "ThrusterIndication",
@@ -222,7 +223,7 @@ class ThrusterIndicationAction(StateAction):
         return result.result.success
 
 
-class MoveAction(StateAction):
+class TwistStateAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "Move",
@@ -261,7 +262,42 @@ class MoveAction(StateAction):
         return result.result.success
 
 
-class SetDeviceValueAction(StateAction):
+class BboxCenteringTwistStateAction(StateAction):
+    def __init__(self,
+                 node: Node,
+                 type: str = "BboxCenteringTwist",
+                 bbox_name: str = "",
+                 surge: float = 0.0,
+                 depth: float = 0.0,
+                 roll: float = 0.0,
+                 pitch: float = 0.0,
+                 **kwargs):
+        super().__init__(node=node, type=type, **kwargs)
+        self.goal = BboxCenteringTwistAction.Goal()
+        self.goal.bbox_name = bbox_name
+        self.goal.surge = float(surge)
+        self.goal.depth = float(depth)
+        self.goal.roll = float(roll)
+        self.goal.pitch = float(pitch)
+
+        self.bbox_centering_twist_action_client = AsyncActionClient(
+            self.node, BboxCenteringTwistAction, self.node.get_parameter('bbox_centering_twist_action').get_parameter_value().string_value)
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, bbox_name: {self.goal.bbox_name}, surge: {self.goal.surge}, depth: {self.goal.depth}, roll: {self.goal.roll}, pitch: {self.goal.pitch}"
+
+    def stop(self):
+        self.bbox_centering_twist_action_client.cancel()
+        return super().stop()
+
+    async def execute(self) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action")
+        result: BboxCenteringTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(self.goal)
+        self.executed = True
+        return result.result.success
+
+
+class SetDeviceValueStateAction(StateAction):
     def __init__(self,
                  node: Node,
                  type: str = "SetDeviceValue",
@@ -287,26 +323,28 @@ class SetDeviceValueAction(StateAction):
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: TwistAction_GetResult_Response = await self.device_action_client.send_goal_async(self.goal)
+        result: DeviceAction_GetResult_Response = await self.device_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
 
 def create_action(node: Node, action: dict) -> StateAction:
     if action['type'] == "Duration":
-        return DurationAction(node=node, **action)
+        return DurationStateAction(node=node, **action)
     elif action['type'] == "ResetIMU":
-        return ResetIMUAction(node=node, **action)
+        return ResetIMUStateAction(node=node, **action)
     elif action['type'] == "EnableStabilization":
-        return EnableStabilizationAction(node=node, **action)
+        return EnableStabilizationStateAction(node=node, **action)
     elif action['type'] == "EnableObjectDetection":
-        return EnableObjectDetectionAction(node=node, **action)
+        return EnableObjectDetectionStateAction(node=node, **action)
     elif action['type'] == "ThrusterIndication":
-        return ThrusterIndicationAction(node=node, **action)
-    elif action['type'] == "Move":
-        return MoveAction(node=node, **action)
+        return ThrusterIndicationStateAction(node=node, **action)
+    elif action['type'] == "Twist":
+        return TwistStateAction(node=node, **action)
+    elif action['type'] == "BboxCenteringTwist":
+        return BboxCenteringTwistStateAction(node=node, **action)
     elif action['type'] == "SetDeviceValue":
-        return SetDeviceValueAction(node=node, **action)
+        return SetDeviceValueStateAction(node=node, **action)
     else:
         raise NotImplementedError(
             f"Action type {action['type']} not implemented")

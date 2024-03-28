@@ -26,7 +26,7 @@ states:
       yaw: true
   SUBMERGE:
     action: 
-      type: Move
+      type: Twist
       surge: 0.0
       sway: 0.0
       depth: 400.0
