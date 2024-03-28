@@ -1,9 +1,0 @@
-nc: 7  # number of classes
-names:
-  0: gate
-  1: red_flare
-  2: yellow_flare
-  3: red_bowl
-  4: blue_bowl
-  5: mat
-  6: gate_qualification
