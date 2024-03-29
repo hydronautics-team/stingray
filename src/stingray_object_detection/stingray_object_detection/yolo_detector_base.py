@@ -2,7 +2,8 @@ import rclpy
 from rclpy.logging import get_logger
 from rclpy.node import Node
 from rclpy.publisher import Publisher
-from sensor_msgs.msg import Image
+from rclpy.subscription import Subscription
+from sensor_msgs.msg import Image, CameraInfo
 from ament_index_python import get_package_share_directory
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -15,26 +16,15 @@ from stingray_interfaces.msg import Bbox, BboxArray
 from stingray_interfaces.srv import SetEnableObjectDetection
 from stingray_object_detection.distance import DistanceCalculator
 
-from ultralytics import YOLO
-from ultralytics.utils.plotting import Annotator, colors
-from ultralytics.data.augment import LetterBox
-from ultralytics.utils.torch_utils import select_device, time_sync
-
 
 class YoloDetector(Node):
     def __init__(self,
-                 imgsz=(480, 640),
-                 conf_thres=0.25,
-                 iou_thres=0.45,
-                 max_det=1000,
-                 device='',
-                 classes=None,
-                 agnostic_nms=False,
-                 line_thickness=3,
-                 fov=60,
+                 node_name: str = 'yolov_detector',
+                 detector_init_func: callable = None,
+                 detector_inference_func: callable = None,
                  ):
 
-        super().__init__('yolov8_detector')
+        super().__init__(node_name)
 
         self.declare_parameter(
             'weights_pkg_name', 'stingray_object_detection')
@@ -44,6 +34,10 @@ class YoloDetector(Node):
             'debug', True)
         self.declare_parameter(
             'set_enable_object_detection_srv', '/stingray/services/set_enable_object_detection')
+
+        self.declare_parameter('confidence_threshold', 0.25)
+        self.declare_parameter('iou_threshold', 0.45)
+        self.declare_parameter('max_detections', 20)
 
         # get weights path
         self.weights_pkg_path = f'{get_package_share_directory(self.get_parameter("weights_pkg_name").get_parameter_value().string_value)}'
@@ -59,67 +53,65 @@ class YoloDetector(Node):
         self.debug = self.get_parameter(
             'debug').get_parameter_value().bool_value
 
-        self.imgsz = imgsz
-        self.conf_thres = conf_thres
-        self.iou_thres = iou_thres
-        self.max_det = max_det
+        self.imgsz = None
+        self.conf_thres = self.get_parameter(
+            'confidence_threshold').get_parameter_value().double_value
+        self.iou_thres = self.get_parameter(
+            'iou_threshold').get_parameter_value().double_value
+        self.max_det = self.get_parameter(
+            'max_detections').get_parameter_value().integer_value
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
-        self.classes = classes
-        self.agnostic_nms = agnostic_nms
-        self.line_thickness = line_thickness
-        self.fov = fov
-
-        self.dist_calc = DistanceCalculator(
-            imgsz=self.imgsz,
-            fov=self.fov,
-            object_attrs={
-                'gate': [1.5, 1.5, 4/5, 'blue'],
-                'yellow_flare': [0.15*2, 1.5, 1.5/5, 'yellow'],
-                'red_flare': [0.15*2, 1.5, 1.5/5, 'red'],
-                'blue_bowl': [0.7, 0.35, 0.8/5, 'blue'],
-                'red_bowl': [0.7, 0.35, 0.8/5, 'red']
-            }
-        )
 
         self.set_enable_object_detection_service = self.create_service(
             SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
 
         self.detection_enabled: dict[str, bool] = {}
+        self.camera_info_subscriptions: dict[str, Subscription] = {}
+        self.camera_info: dict[str, CameraInfo] = {}
         self.bbox_array_publishers: dict[str, Publisher] = {}
         self.image_publishers: dict[str, Publisher] = {}
+        self.inited: dict[str, bool] = {}
 
         # init cv_bridge
         self.bridge = CvBridge()
 
-        with torch.no_grad():
-            # Load model
-            self.device = select_device(device)
-            self.model = YOLO(model=self.weights_path)
-            self.names = self.model.names
-            
+        detector_init_func()
+        self.detector = detector_inference_func
+
         self.dt = [0.0, 0.0, 0.0]
-        # to check if inited
-        self.initialized = True
 
         for input_topic in image_topic_list:
 
             # disable detection by default
-            self.detection_enabled[input_topic] = True
+            self.detection_enabled[input_topic] = False
 
             # ROS Topic names
             bbox_array_topic = f"{input_topic}/bbox_array"
             self.get_logger().info(
                 f"input topic: {input_topic}, output bbox_array topic: {bbox_array_topic}")
 
-            # provide topic name to callback
-            bind = partial(self.image_callback, topic=input_topic)
+            camera_info_topic = f"{input_topic}/camera_info"
 
             # ROS subscribers
+
+            # provide topic name to callback
+            input_img_callback = partial(
+                self._image_callback, topic=input_topic)
             self.create_subscription(
                 Image,
                 input_topic,
-                bind,
+                input_img_callback,
+                1,
+            )
+
+            # provide topic name to callback
+            camera_info_callback = partial(
+                self._image_callback, topic=input_topic)
+            self.camera_info_subscriptions[input_topic] = self.create_subscription(
+                CameraInfo,
+                camera_info_topic,
+                camera_info_callback,
                 1,
             )
 
@@ -135,6 +127,27 @@ class YoloDetector(Node):
                 image_pub = self.create_publisher(
                     Image, output_image_topic, 1)
                 self.image_publishers[input_topic] = image_pub
+
+    def _init_after_camera_info(self):
+        """Initialize after camera info is available
+
+        Returns:
+            bool: True if inited, False otherwise
+        """
+
+        self.dist_calc = DistanceCalculator(
+            imgsz=self.imgsz,
+            fov=self.fov,
+            object_attrs={
+                'gate': [1.5, 1.5, 4/5, 'blue'],
+                'yellow_flare': [0.15*2, 1.5, 1.5/5, 'yellow'],
+                'red_flare': [0.15*2, 1.5, 1.5/5, 'red'],
+                'blue_bowl': [0.7, 0.35, 0.8/5, 'blue'],
+                'red_bowl': [0.7, 0.35, 0.8/5, 'red']
+            }
+        )
+
+        return self.initialized
 
     def _set_enable_object_detection(self, request: SetEnableObjectDetection.Request, response: SetEnableObjectDetection.Response):
         """Callback to enable or disable object detection for specific camera topic
@@ -202,7 +215,8 @@ class YoloDetector(Node):
                             xyxy, label, color=colors(int(label_id), True))
 
                     left, top, right, bottom = xyxy
-                    distance, angle = self.dist_calc.calcDistanceAndAngle(xyxy, label)
+                    distance, angle = self.dist_calc.calcDistanceAndAngle(
+                        xyxy, label)
 
                     bbox_msg = Bbox()
                     bbox_msg.name = label
@@ -218,7 +232,13 @@ class YoloDetector(Node):
 
             return bbox_array_msg, annotator.result()
 
-    def image_callback(self, input_image: Image, topic: str):
+    def _camera_info_callback(self, info: CameraInfo, topic: str):
+        self.camera_info[topic] = info
+        self.destroy_subscription(self.camera_info_subscriptions[topic])
+        del self.camera_info_subscriptions[topic]
+        self.inited[topic] = True
+
+    def _image_callback(self, input_image: Image, topic: str):
         """ Input image callback
 
         Args:
@@ -227,7 +247,7 @@ class YoloDetector(Node):
         """
         if not self.detection_enabled[topic]:
             return
-        if hasattr(self, 'initialized'):
+        if self.inited[topic]:
             # try:
             # convert ROS image to OpenCV image
             cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
