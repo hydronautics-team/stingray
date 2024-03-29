@@ -141,6 +141,9 @@ class ScenarioDescription:
                  node: Node,
                  name: str = "",
                  initial: str = "",
+                 ok_state_package_name: str = "stingray_missions",
+                 failed_state_package_name: str = "stingray_missions",
+                 abort_state_package_name: str = "stingray_missions",
                  missions: dict[str, dict] = {},
                  transitions: list[dict] = {},
                  **kwargs
@@ -150,6 +153,13 @@ class ScenarioDescription:
         self.scenario_transitions = transitions
         self.missions = {self._custom_mission_name(m_name): load_mission(node=node, custom_name=self._custom_mission_name(m_name), **m_params)
                          for m_name, m_params in missions.items()}
+        default_missions = {
+            self._custom_mission_name("OK"): load_mission(node=node, custom_name=self._custom_mission_name("OK"), config_name="ok", package_name=ok_state_package_name),
+            self._custom_mission_name("FAILED"): load_mission(node=node, custom_name=self._custom_mission_name("FAILED"), config_name="failed", package_name=failed_state_package_name),
+            # self._custom_mission_name("ABORT"): load_mission(node=node, custom_name=self._custom_mission_name("ABORT"), config_name="abort", package_name=abort_state_package_name),
+        }
+        self.missions.update(default_missions)
+
         self.initial_mission = self._custom_mission_name(initial)
 
         if kwargs:
@@ -189,23 +199,23 @@ class ScenarioDescription:
             source = transition['source']
             outcome = transition['outcome']
             dest = transition['dest']
-            if dest not in State.aslist():
-                if outcome == State.OK:
-                    if isinstance(source, list):
-                        for mission in source:
-                            self.missions[self._custom_mission_name(mission)].set_OK_outcome(
-                                self.missions[self._custom_mission_name(dest)].initial_state)
-                    else:
-                        self.missions[self._custom_mission_name(source)].set_OK_outcome(
+            if outcome == State.OK:
+                if isinstance(source, list):
+                    for mission in source:
+                        self.missions[self._custom_mission_name(mission)].set_OK_outcome(
                             self.missions[self._custom_mission_name(dest)].initial_state)
-                elif outcome == State.FAILED:
-                    if isinstance(source, list):
-                        for mission in source:
-                            self.missions[self._custom_mission_name(mission)].set_FAILED_outcome(
-                                self.missions[self._custom_mission_name(dest)].initial_state)
-                    else:
-                        self.missions[self._custom_mission_name(source)].set_FAILED_outcome(
+                else:
+                    self.missions[self._custom_mission_name(source)].set_OK_outcome(
+                        self.missions[self._custom_mission_name(dest)].initial_state)
+            elif outcome == State.FAILED:
+                if isinstance(source, list):
+                    for mission in source:
+                        self.missions[self._custom_mission_name(mission)].set_FAILED_outcome(
                             self.missions[self._custom_mission_name(dest)].initial_state)
+                else:
+                    self.missions[self._custom_mission_name(source)].set_FAILED_outcome(
+                        self.missions[self._custom_mission_name(dest)].initial_state)
+
         for mission in self.missions.values():
             scenario_transitions.extend(mission.transitions)
 
