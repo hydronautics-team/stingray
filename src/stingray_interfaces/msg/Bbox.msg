@@ -5,3 +5,8 @@ int16 top_left_x
 int16 top_left_y
 int16 bottom_right_x
 int16 bottom_right_y
+float32 pos_x
+float32 pos_y
+float32 pos_z
+float32 horizontal_angle
+float32 vertical_angle
