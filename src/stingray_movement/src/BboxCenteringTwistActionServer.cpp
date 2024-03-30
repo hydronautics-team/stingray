@@ -95,7 +95,7 @@ bool BboxCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const sti
     RCLCPP_INFO(_node->get_logger(), "Target big %d", target_big);
     RCLCPP_INFO(_node->get_logger(), "Target disappeared %d", target_disappeared_counter);
 
-    return depth_done && roll_done && pitch_done && target_big && target_lost;
+    return depth_done && roll_done && pitch_done && target_big;
 };
 
 void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::BboxCenteringTwistAction>> goal_handle) {
@@ -137,12 +137,12 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     while (rclcpp::ok() && !isTwistDone(goal)) {
         move_in_progress = true;
         RCLCPP_INFO(_node->get_logger(), "Send twist srv request");
-        if (!target_big && target_lost) {
-            goal_result->success = false;
-            goal_handle->abort(goal_result);
-            RCLCPP_ERROR(_node->get_logger(), "Target lost!");
-            return;
-        }
+        // if (!target_big && target_lost) {
+        //     goal_result->success = false;
+        //     goal_handle->abort(goal_result);
+        //     RCLCPP_ERROR(_node->get_logger(), "Target lost!");
+        //     return;
+        // }
         RCLCPP_INFO(_node->get_logger(), "Centering angle difference: %f", centering_angle_difference);
         // check if service success
         twistSrvRequest->yaw = current_yaw + centering_angle_difference;
