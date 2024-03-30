@@ -22,7 +22,7 @@ states:
       type: EnableStabilization
       depth: true
       roll: true
-      pitch: true
+      pitch: false
       yaw: true
   SUBMERGE:
     action: 
