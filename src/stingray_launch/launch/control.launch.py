@@ -9,14 +9,8 @@ def generate_launch_description():
     bbox_array_topic_arg = DeclareLaunchArgument(
         "bbox_array_topic", default_value='/stingray/topics/camera/bbox_array'
     )
-    camera_fov_arg = DeclareLaunchArgument(
-        "camera_fov", default_value='60'
-    )
-    image_width_arg = DeclareLaunchArgument(
-        "image_width", default_value='640'
-    )
-    image_height_arg = DeclareLaunchArgument(
-        "image_height", default_value='480'
+    target_close_thresh_arg = DeclareLaunchArgument(
+        "target_close_thresh", default_value='1.5'
     )
 
     # missions
@@ -78,9 +72,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         bbox_array_topic_arg,
-        camera_fov_arg,
-        image_width_arg,
-        image_height_arg,
+        target_close_thresh_arg,
         mission_package_names_arg,
         transition_srv_arg,
         set_enable_object_detection_srv_arg,
@@ -152,9 +144,7 @@ def generate_launch_description():
                 {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
                 {'bbox_array_topic': LaunchConfiguration("bbox_array_topic")},
                 {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
-                {'camera_fov': LaunchConfiguration("camera_fov")},
-                {'image_width': LaunchConfiguration("image_width")},
-                {'image_height': LaunchConfiguration("image_height")},
+                {'target_close_thresh': LaunchConfiguration("target_close_thresh")},
             ],
             respawn=True,
             respawn_delay=1,
