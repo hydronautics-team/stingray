@@ -303,7 +303,7 @@ class SetDeviceValueStateAction(StateAction):
                  type: str = "SetDeviceValue",
                  device: int = 0.0,
                  value: int = 0.0,
-                 timeout: float = 0.0,
+                 timeout: float = 10.0,
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
         self.goal = DeviceAction.Goal()

@@ -379,7 +379,7 @@ class FSM(object):
                     {state.name: state for state in scenario.states})
                 self.machine.add_transitions(scenario.transitions)
                 self._register_events(scenario.states)
-                get_logger("fsm").info(f"Registered scenario {scenario}")
+                # get_logger("fsm").info(f"Registered scenario {scenario}")
 
     def _register_events(self, states: list[StateDescription]):
         for state in states:
@@ -392,8 +392,8 @@ class FSM(object):
                         trigger=state.transition_event.trigger,
                         count=state.transition_event.count,
                     )
-                    get_logger("fsm").info(
-                        f"Event {state.transition_event.type} registered for state {state.name}")
+                    # get_logger("fsm").info(
+                    #     f"Event {state.transition_event.type} registered for state {state.name}")
                 # TODO
                 elif state.transition_event.type == "ObjectDetectionEvent":
                     self.events[state.name] = ObjectDetectionEvent(
@@ -403,7 +403,7 @@ class FSM(object):
                         trigger=state.transition_event.trigger,
                         count=state.transition_event.count,
                     )
-                    get_logger("fsm").info(f"Event {state.transition_event.type} registered for state {state.name}")
+                    # get_logger("fsm").info(f"Event {state.transition_event.type} registered for state {state.name}")
                 else:
                     raise ValueError(
                         f"Event type not supported: {state.transition_event.type}")
