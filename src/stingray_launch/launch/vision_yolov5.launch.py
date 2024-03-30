@@ -5,12 +5,9 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # front camera
-    camera_topic_arg = DeclareLaunchArgument(
-        "camera_topic", default_value='/stingray/topics/camera'
-    )
-    camera_path_arg = DeclareLaunchArgument(
-        "camera_path", default_value='/dev/video0'
+    # zbar camera
+    zbar_camera_topic_arg = DeclareLaunchArgument(
+        "zbar_camera_topic", default_value='/stingray/topics/camera'
     )
 
     # zbar
@@ -28,34 +25,23 @@ def generate_launch_description():
     weights_pkg_name_arg = DeclareLaunchArgument(
         "weights_pkg_name", default_value='stingray_object_detection'
     )
+    bbox_attrs_pkg_name_arg = DeclareLaunchArgument(
+        "bbox_attrs_pkg_name", default_value='stingray_object_detection'
+    )
     debug_arg = DeclareLaunchArgument(
         "debug", default_value='True'
     )
 
     # load ros config
     return LaunchDescription([
-        camera_topic_arg,
-        camera_path_arg,
+        zbar_camera_topic_arg,
         zbar_topic_arg,
         image_topic_list_arg,
         set_enable_object_detection_srv_arg,
         weights_pkg_name_arg,
+        bbox_attrs_pkg_name_arg,
         debug_arg,
 
-        # camera
-        Node(
-            package='usb_cam',
-            executable='usb_cam_node_exe',
-            name='camera_node',
-            remappings=[
-                ('/image_raw', LaunchConfiguration("camera_topic")),
-            ],
-            parameters=[
-                {'video_device': LaunchConfiguration("camera_path")},
-            ],
-            respawn=True,
-            respawn_delay=1,
-        ),
 
         # qr reader
         Node(
@@ -63,7 +49,7 @@ def generate_launch_description():
             executable='barcode_reader',
             name='qr_reader',
             remappings=[
-                ('/image', LaunchConfiguration("camera_topic")),
+                ('/image', LaunchConfiguration("zbar_camera_topic")),
                 ('/barcode', LaunchConfiguration("zbar_topic")),
             ],
             respawn=True,
@@ -77,6 +63,7 @@ def generate_launch_description():
             name='yolov5_detector',
             parameters=[
                 {'weights_pkg_name': LaunchConfiguration("weights_pkg_name")},
+                {'bbox_attrs_pkg_name': LaunchConfiguration("bbox_attrs_pkg_name")},
                 {'image_topic_list': LaunchConfiguration("image_topic_list")},
                 {'set_enable_object_detection_srv': LaunchConfiguration(
                     "set_enable_object_detection_srv")},
