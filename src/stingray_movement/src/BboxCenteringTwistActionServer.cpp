@@ -5,13 +5,9 @@ BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(std::shared_ptr<r
     _node->declare_parameter("set_twist_srv", "/stingray/services/set_twist");
     _node->declare_parameter("uv_state_topic", "/stingray/topics/uv_state");
     _node->declare_parameter("bbox_array_topic", "/stingray/topics/camera/bbox_array");
-    _node->declare_parameter("camera_fov", 60);
-    _node->declare_parameter("image_width", 640);
-    _node->declare_parameter("image_height", 480);
+    _node->declare_parameter("target_close_thresh", 1.5);
 
-    image_width = _node->get_parameter("image_width").as_int();
-    image_height = _node->get_parameter("image_height").as_int();
-    camera_fov = _node->get_parameter("camera_fov").as_int();
+    target_close_thresh = _node->get_parameter("target_close_thresh").as_double();
 
     // ROS service clients
     twistSrvClient = _node->create_client<stingray_core_interfaces::srv::SetTwist>(_node->get_parameter("set_twist_srv").as_string());
@@ -40,15 +36,10 @@ void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces
         bool found_target = false;
         for (auto bbox : msg.bboxes) {
             if (bbox.name == target_name) {
-                float bbox_width = bbox.bottom_right_x - bbox.top_left_x;
-                float bbox_height = bbox.bottom_right_y - bbox.top_left_y;
-                float bbox_center = bbox.top_left_x + bbox_width / 2;
-                float image_center = image_width / 2;
-                float centering_difference = bbox_center - image_center;
-                centering_angle_difference = centering_difference * camera_fov / image_width;
+                centering_angle_difference = bbox.horizontal_angle;
                 found_target = true;
                 target_disappeared_counter = 0;
-                target_big = (bbox_width > 0.7 * image_width) && (bbox_height > 0.9 * image_height);
+                target_close = bbox.pos_z < target_close_thresh;
             }
         }
         if (!found_target) {
@@ -92,10 +83,10 @@ bool BboxCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const sti
         pitch_done = true;
     }
 
-    RCLCPP_INFO(_node->get_logger(), "Target big %d", target_big);
+    RCLCPP_INFO(_node->get_logger(), "Target big %d", target_close);
     RCLCPP_INFO(_node->get_logger(), "Target disappeared %d", target_disappeared_counter);
 
-    return depth_done && roll_done && pitch_done && target_big;
+    return depth_done && roll_done && pitch_done && target_close;
 };
 
 void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::BboxCenteringTwistAction>> goal_handle) {

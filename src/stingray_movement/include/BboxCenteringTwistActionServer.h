@@ -51,13 +51,11 @@ private:
 
     bool move_in_progress = false;
     std::string target_name = "";
-    int image_width = 640;
-    int image_height = 480;
-    int camera_fov = 60;
+    float target_close_thresh = 60;
     float centering_angle_difference = 0.0;
 
     int target_disappeared_counter = 0;
-    bool target_big = false;
+    bool target_close = false;
     bool target_lost = false;
 };
 

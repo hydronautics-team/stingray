@@ -41,6 +41,8 @@ private:
     float current_pitch;
     float current_roll;
 
+    float target_yaw;
+
     bool depth_stabilization;
     bool roll_stabilization;
     bool pitch_stabilization;

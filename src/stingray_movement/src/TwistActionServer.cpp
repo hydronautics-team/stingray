@@ -58,7 +58,7 @@ bool TwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfa
         pitch_done = true;
     }
     if (yaw_stabilization) {
-        auto yaw_delta = abs(current_yaw - goal->yaw);
+        auto yaw_delta = abs(target_yaw - goal->yaw);
         yaw_done = yaw_delta < yaw_tolerance;
         if (!yaw_done) {
             RCLCPP_ERROR(_node->get_logger(), "Yaw not reached %d", yaw_delta);
@@ -103,6 +103,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
     twistSrvRequest->yaw = goal->yaw;
+    target_yaw = current_yaw + goal->yaw;
 
     RCLCPP_INFO(_node->get_logger(), "Send twist srv request");
     // check if service success

@@ -52,12 +52,12 @@ void DeviceActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoal
     auto goal_result = std::make_shared<stingray_interfaces::action::DeviceAction::Result>();
     goal_result->success = false;
 
-    if (isSwitchDone(goal)) {
-        goal_result->success = true;
-        goal_handle->succeed(goal_result);
-        RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
-        return;
-    }
+    // if (isSwitchDone(goal)) {
+    //     goal_result->success = true;
+    //     goal_handle->succeed(goal_result);
+    //     RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
+    //     return;
+    // }
 
     // send service request
     setDeviceSrvRequest->device = goal->device;
@@ -66,33 +66,36 @@ void DeviceActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoal
     // check if service done
     setDeviceSrvClient->async_send_request(setDeviceSrvRequest).wait();
 
-    rclcpp::Rate checkRate(10ms);
-    AsyncTimer timer(goal->timeout * 1000);
-    timer.start();
+    // rclcpp::Rate checkRate(10ms);
+    // AsyncTimer timer(goal->timeout * 1000);
+    // timer.start();
 
-    while (rclcpp::ok()) {
-        if (!timer.isBusy()) {
-            RCLCPP_ERROR(_node->get_logger(), "Timeout reached during device action!");
-            goal_result->success = false;
-            goal_handle->abort(goal_result);
-            return;
-        }
-        if (isSwitchDone(goal)) {
-            RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
-            goal_result->success = true;
-            goal_handle->succeed(goal_result);
-            return;
-        }
+    goal_result->success = true;
+    goal_handle->succeed(goal_result);
 
-        if (goal_handle->is_canceling()) {
-            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
-            goal_result->success = false;
-            goal_handle->canceled(goal_result);
-            return;
-        }
-        // rclcpp::spin_some(_node);
-        checkRate.sleep();
-    }
+    // while (rclcpp::ok()) {
+    //     if (!timer.isBusy()) {
+    //         RCLCPP_ERROR(_node->get_logger(), "Timeout reached during device action!");
+    //         goal_result->success = false;
+    //         goal_handle->abort(goal_result);
+    //         return;
+    //     }
+    //     // if (isSwitchDone(goal)) {
+    //     //     RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
+    //     //     goal_result->success = true;
+    //     //     goal_handle->succeed(goal_result);
+    //     //     return;
+    //     // }
+
+    //     if (goal_handle->is_canceling()) {
+    //         RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+    //         goal_result->success = false;
+    //         goal_handle->canceled(goal_result);
+    //         return;
+    //     }
+    //     // rclcpp::spin_some(_node);
+    //     checkRate.sleep();
+    // }
 };
 
 int main(int argc, char *argv[]) {
