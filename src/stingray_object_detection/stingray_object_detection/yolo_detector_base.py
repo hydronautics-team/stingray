@@ -106,7 +106,7 @@ class YoloDetectorBase(Node):
         for input_topic in image_topic_list:
 
             # disable detection by default
-            self.detection_enabled[input_topic] = True
+            self.detection_enabled[input_topic] = False
 
             # ROS Topic names
             bbox_array_topic = f"{input_topic}/bbox_array"
