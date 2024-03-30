@@ -151,7 +151,7 @@ class YoloDetectorBase(Node):
                     Image, output_image_topic, 1)
                 self.image_publishers[input_topic] = image_pub
 
-    def init_yolo(self, camera_info, topic: str):
+    def init_yolo(self, topic: str):
         """ YOLO init"""
         raise NotImplementedError
 
@@ -177,7 +177,7 @@ class YoloDetectorBase(Node):
         self.camera_info[topic] = camera_info
         self.destroy_subscription(self.camera_info_subscriptions[topic])
         del self.camera_info_subscriptions[topic]
-        self.init_yolo(camera_info, topic)
+        self.init_yolo(topic)
         self.inited[topic] = True
 
     def _image_callback(self, input_image: Image, topic: str):

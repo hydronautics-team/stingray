@@ -35,16 +35,16 @@ class YoloV5Detector(YoloDetectorBase):
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "yolov5.yaml")
 
-    def init_yolo(self, camera_info, topic: str):
+    def init_yolo(self, topic: str):
         """ YOLO init"""
         with torch.no_grad():
             # Load model
-            self.device = select_device(self.device)
+            self.device = select_device('')
             self.model = DetectMultiBackend(
                 self.weights_path, device=self.device, data=self.config_path)
             self.stride, self.names, pt = self.model.stride, self.model.names, self.model.pt
 
-            imgsz = (camera_info[topic].height, camera_info[topic].width)
+            imgsz = (self.camera_info[topic].height, self.camera_info[topic].width)
             self.imgsz = check_img_size(
                 imgsz, s=self.stride)  # check image size
 

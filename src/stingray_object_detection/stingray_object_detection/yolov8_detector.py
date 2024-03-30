@@ -34,7 +34,7 @@ class YoloV8Detector(YoloDetectorBase):
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "yolov8.yaml")
 
-    def init_yolo(self, camera_info, topic: str):
+    def init_yolo(self, topic: str):
         with torch.no_grad():
             # Load model
             self.device = select_device(self.device)
