@@ -56,28 +56,28 @@ bool BboxCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const sti
     target_lost = target_disappeared_counter > 10;
 
     if (depth_stabilization) {
-        auto depth_delta = abs(current_depth - goal->depth);
+        float depth_delta = abs(current_depth - goal->depth);
         depth_done = depth_delta < depth_tolerance;
         if (!depth_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Depth not reached %d", depth_delta);
+            RCLCPP_ERROR(_node->get_logger(), "Depth not reached %f", depth_delta);
         }
     } else {
         depth_done = true;
     }
     if (roll_stabilization) {
-        auto roll_delta = abs(current_roll - goal->roll);
+        float roll_delta = abs(current_roll - goal->roll);
         roll_done = roll_delta < roll_tolerance;
         if (!roll_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Roll not reached %d", roll_delta);
+            RCLCPP_ERROR(_node->get_logger(), "Roll not reached %f", roll_delta);
         }
     } else {
         roll_done = true;
     }
     if (pitch_stabilization) {
-        auto pitch_delta = abs(current_pitch - goal->pitch);
+        float pitch_delta = abs(current_pitch - goal->pitch);
         pitch_done = pitch_delta < pitch_tolerance;
         if (!pitch_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Pitch not reached %d", pitch_delta);
+            RCLCPP_ERROR(_node->get_logger(), "Pitch not reached %f", pitch_delta);
         }
     } else {
         pitch_done = true;
