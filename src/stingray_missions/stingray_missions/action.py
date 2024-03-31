@@ -197,7 +197,7 @@ class ThrusterIndicationStateAction(StateAction):
         self.repeat = repeat
 
         self.goal = TwistAction.Goal()
-        self.goal.surge = 10.0
+        self.goal.surge = 50.0
         self.goal.duration = 0.3
 
         self.twist_action_client = AsyncActionClient(

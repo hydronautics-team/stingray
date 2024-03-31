@@ -51,7 +51,8 @@ private:
 
     bool move_in_progress = false;
     std::string target_name = "";
-    float target_close_thresh = 60;
+    float target_close_thresh = 2.0;
+    int target_lost_thresh = 20;
     float centering_angle_difference = 0.0;
 
     int target_disappeared_counter = 0;

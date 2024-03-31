@@ -10,7 +10,7 @@ def generate_launch_description():
         "bbox_array_topic", default_value='/stingray/topics/camera/bbox_array'
     )
     target_close_thresh_arg = DeclareLaunchArgument(
-        "target_close_thresh", default_value='1.5'
+        "target_close_thresh", default_value='2.5'
     )
 
     # missions

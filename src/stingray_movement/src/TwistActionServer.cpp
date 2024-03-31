@@ -26,46 +26,53 @@ void TwistActionServer::uvStateCallback(const stingray_core_interfaces::msg::UVS
 
 bool TwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::TwistAction_Goal> goal) {
     bool depth_done = true;
-    bool roll_done = false;
-    bool pitch_done = false;
+    bool roll_done = true;
+    bool pitch_done = true;
     bool yaw_done = true;
 
-    // if (depth_stabilization) {
-    //     float depth_delta = abs(current_depth - goal->depth);
-    //     depth_done = depth_delta < depth_tolerance;
-    //     if (!depth_done) {
-    //         RCLCPP_ERROR(_node->get_logger(), "Depth not reached %f", depth_delta);
-    //     }
-    // } else {
-    //     depth_done = true;
-    // }
+    if (depth_stabilization) {
+        float depth_delta = abs(current_depth - goal->depth);
+        // depth_done = depth_delta < depth_tolerance;
+        if (!depth_done) {
+            RCLCPP_ERROR(_node->get_logger(), "Depth not reached current_depth %f", current_depth);
+            RCLCPP_ERROR(_node->get_logger(), "Depth not reached depth_tolerance %f", depth_tolerance);
+            RCLCPP_ERROR(_node->get_logger(), "Depth not reached depth_delta %f", depth_delta);        }
+    } else {
+        depth_done = true;
+    }
     if (roll_stabilization) {
         float roll_delta = abs(current_roll - goal->roll);
-        roll_done = roll_delta < roll_tolerance;
+        // roll_done = roll_delta < roll_tolerance;
         if (!roll_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Roll not reached %f", roll_delta);
+            RCLCPP_ERROR(_node->get_logger(), "Roll not reached current_roll %f", current_roll);
+            RCLCPP_ERROR(_node->get_logger(), "Roll not reached roll_tolerance %f", roll_tolerance);
+            RCLCPP_ERROR(_node->get_logger(), "Roll not reached roll_delta %f", roll_delta);
         }
     } else {
         roll_done = true;
     }
     if (pitch_stabilization) {
         float pitch_delta = abs(current_pitch - goal->pitch);
-        pitch_done = pitch_delta < pitch_tolerance;
+        // pitch_done = pitch_delta < pitch_tolerance;
         if (!pitch_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Pitch not reached %f", pitch_delta);
+            RCLCPP_ERROR(_node->get_logger(), "Pitch not reached current_pitch %f", current_pitch);
+            RCLCPP_ERROR(_node->get_logger(), "Pitch not reached pitch_tolerance %f", pitch_tolerance);
+            RCLCPP_ERROR(_node->get_logger(), "Pitch not reached pitch_delta %f", pitch_delta);
         }
     } else {
         pitch_done = true;
     }
-    // if (yaw_stabilization) {
-    //     float yaw_delta = abs(target_yaw - goal->yaw);
-    //     yaw_done = yaw_delta < yaw_tolerance;
-    //     if (!yaw_done) {
-    //         RCLCPP_ERROR(_node->get_logger(), "Yaw not reached %f", yaw_delta);
-    //     }
-    // } else {
-    //     yaw_done = true;
-    // }
+    if (yaw_stabilization) {
+        float yaw_delta = abs(current_yaw - target_yaw);
+        // yaw_done = yaw_delta < yaw_tolerance;
+        if (!yaw_done) {
+            RCLCPP_ERROR(_node->get_logger(), "Yaw not reached current_yaw %f", current_yaw);
+            RCLCPP_ERROR(_node->get_logger(), "Yaw not reached yaw_tolerance %f", yaw_tolerance);
+            RCLCPP_ERROR(_node->get_logger(), "Yaw not reached yaw_delta %f", yaw_delta);
+        }
+    } else {
+        yaw_done = true;
+    }
     return depth_done && roll_done && pitch_done && yaw_done;
 };
 
@@ -105,11 +112,11 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvRequest->yaw = goal->yaw;
     target_yaw = current_yaw + goal->yaw;
 
-    RCLCPP_INFO(_node->get_logger(), "Send twist srv request");
+    RCLCPP_INFO(_node->get_logger(), "Twist action request yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
     // check if service success
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
-    rclcpp::Rate checkRate(10ms);
+    rclcpp::Rate checkRate(100ms);
     AsyncTimer timer(goal->duration * 1000);
     timer.start();
 
@@ -138,10 +145,9 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
         twistSrvRequest->roll = 0.0;
     if (!pitch_stabilization)
         twistSrvRequest->pitch = 0.0;
-    if (!yaw_stabilization)
-        twistSrvRequest->yaw = 0.0;
+    twistSrvRequest->yaw = 0.0;
 
-    RCLCPP_INFO(_node->get_logger(), "Send twist srv request stop");
+    RCLCPP_INFO(_node->get_logger(), "Twist action request stop yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     if (rclcpp::ok()) {

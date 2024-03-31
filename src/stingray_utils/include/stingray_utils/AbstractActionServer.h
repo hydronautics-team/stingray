@@ -34,7 +34,7 @@ private:
     virtual rclcpp_action::GoalResponse handle_goal(
         const rclcpp_action::GoalUUID &uuid,
         std::shared_ptr<const TActionGoal> goal) {
-        RCLCPP_INFO(_node->get_logger(), "Received goal request");
+        // RCLCPP_INFO(_node->get_logger(), "Received goal request");
         (void)uuid;
         (void)goal;
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -42,14 +42,14 @@ private:
 
     virtual rclcpp_action::CancelResponse handle_cancel(
         const std::shared_ptr<rclcpp_action::ServerGoalHandle<TAction>> goal_handle) {
-        RCLCPP_INFO(_node->get_logger(), "Received request to cancel goal");
+        // RCLCPP_INFO(_node->get_logger(), "Received request to cancel goal");
         (void)goal_handle;
         return rclcpp_action::CancelResponse::ACCEPT;
     }
 
     virtual void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<TAction>> goal_handle) {
         using namespace std::placeholders;
-        RCLCPP_INFO(_node->get_logger(), "Accepted goal callback");
+        // RCLCPP_INFO(_node->get_logger(), "Accepted goal callback");
         // this needs to return quickly to avoid blocking the executor, so spin up a new thread
         std::thread { std::bind(&AbstractActionServer::execute, this, std::placeholders::_1), goal_handle }.detach();
     }
