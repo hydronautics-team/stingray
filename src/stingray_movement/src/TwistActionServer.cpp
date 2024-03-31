@@ -25,20 +25,20 @@ void TwistActionServer::uvStateCallback(const stingray_core_interfaces::msg::UVS
 };
 
 bool TwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::TwistAction_Goal> goal) {
-    bool depth_done = false;
+    bool depth_done = true;
     bool roll_done = false;
     bool pitch_done = false;
-    bool yaw_done = false;
+    bool yaw_done = true;
 
-    if (depth_stabilization) {
-        float depth_delta = abs(current_depth - goal->depth);
-        depth_done = depth_delta < depth_tolerance;
-        if (!depth_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Depth not reached %f", depth_delta);
-        }
-    } else {
-        depth_done = true;
-    }
+    // if (depth_stabilization) {
+    //     float depth_delta = abs(current_depth - goal->depth);
+    //     depth_done = depth_delta < depth_tolerance;
+    //     if (!depth_done) {
+    //         RCLCPP_ERROR(_node->get_logger(), "Depth not reached %f", depth_delta);
+    //     }
+    // } else {
+    //     depth_done = true;
+    // }
     if (roll_stabilization) {
         float roll_delta = abs(current_roll - goal->roll);
         roll_done = roll_delta < roll_tolerance;
@@ -57,15 +57,15 @@ bool TwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfa
     } else {
         pitch_done = true;
     }
-    if (yaw_stabilization) {
-        float yaw_delta = abs(target_yaw - goal->yaw);
-        yaw_done = yaw_delta < yaw_tolerance;
-        if (!yaw_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Yaw not reached %f", yaw_delta);
-        }
-    } else {
-        yaw_done = true;
-    }
+    // if (yaw_stabilization) {
+    //     float yaw_delta = abs(target_yaw - goal->yaw);
+    //     yaw_done = yaw_delta < yaw_tolerance;
+    //     if (!yaw_done) {
+    //         RCLCPP_ERROR(_node->get_logger(), "Yaw not reached %f", yaw_delta);
+    //     }
+    // } else {
+    //     yaw_done = true;
+    // }
     return depth_done && roll_done && pitch_done && yaw_done;
 };
 
