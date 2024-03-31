@@ -49,21 +49,21 @@ void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces
 };
 
 bool BboxCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::BboxCenteringTwistAction_Goal> goal) {
-    bool depth_done = false;
+    bool depth_done = true;
     bool roll_done = false;
     bool pitch_done = false;
 
     target_lost = target_disappeared_counter > 10;
 
-    if (depth_stabilization) {
-        float depth_delta = abs(current_depth - goal->depth);
-        depth_done = depth_delta < depth_tolerance;
-        if (!depth_done) {
-            RCLCPP_ERROR(_node->get_logger(), "Depth not reached %f", depth_delta);
-        }
-    } else {
-        depth_done = true;
-    }
+    // if (depth_stabilization) {
+    //     float depth_delta = abs(current_depth - goal->depth);
+    //     depth_done = depth_delta < depth_tolerance;
+    //     if (!depth_done) {
+    //         RCLCPP_ERROR(_node->get_logger(), "Depth not reached %f", depth_delta);
+    //     }
+    // } else {
+    //     depth_done = true;
+    // }
     if (roll_stabilization) {
         float roll_delta = abs(current_roll - goal->roll);
         roll_done = roll_delta < roll_tolerance;
