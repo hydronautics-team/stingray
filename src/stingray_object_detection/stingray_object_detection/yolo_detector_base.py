@@ -166,6 +166,7 @@ class YoloDetectorBase(Node):
         """
 
         self.detection_enabled[request.camera_topic] = request.enable
+        self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
         response.success = True
         return response
 
