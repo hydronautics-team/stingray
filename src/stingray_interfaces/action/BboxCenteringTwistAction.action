@@ -1,8 +1,11 @@
 string bbox_name 
+string bbox_topic
+float32 distance_threshold
 float32 surge 
 float32 depth
 float32 roll
 float32 pitch
+float32 duration
 ---
 # Result
 bool success

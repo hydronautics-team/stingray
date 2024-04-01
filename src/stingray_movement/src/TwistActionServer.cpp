@@ -121,8 +121,6 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     timer.start();
 
     while (rclcpp::ok()) {
-        // RCLCPP_INFO(_node->get_logger(), "isTwistDone %d", isTwistDone(goal));
-        // RCLCPP_INFO(_node->get_logger(), "timer.isBusy %d", timer.isBusy());
         if (!timer.isBusy() && isTwistDone(goal)) {
             break;
         }

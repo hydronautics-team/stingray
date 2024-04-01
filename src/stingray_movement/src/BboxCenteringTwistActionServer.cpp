@@ -4,12 +4,6 @@ BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(std::shared_ptr<r
 
     _node->declare_parameter("set_twist_srv", "/stingray/services/set_twist");
     _node->declare_parameter("uv_state_topic", "/stingray/topics/uv_state");
-    _node->declare_parameter("bbox_array_topic", "/stingray/topics/camera/bbox_array");
-    _node->declare_parameter("target_close_thresh", 2.0);
-    _node->declare_parameter("target_lost_thresh", 20);
-
-    target_close_thresh = _node->get_parameter("target_close_thresh").as_double();
-    target_lost_thresh = _node->get_parameter("target_lost_thresh").as_int();
 
     // ROS service clients
     twistSrvClient = _node->create_client<stingray_core_interfaces::srv::SetTwist>(_node->get_parameter("set_twist_srv").as_string());
@@ -17,9 +11,6 @@ BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(std::shared_ptr<r
     uvStateSub = _node->create_subscription<stingray_core_interfaces::msg::UVState>(
         _node->get_parameter("uv_state_topic").as_string(), 10,
         std::bind(&BboxCenteringTwistActionServer::uvStateCallback, this, std::placeholders::_1));
-    bboxArraySub = _node->create_subscription<stingray_interfaces::msg::BboxArray>(
-        _node->get_parameter("bbox_array_topic").as_string(), 10,
-        std::bind(&BboxCenteringTwistActionServer::bboxArrayCallback, this, std::placeholders::_1));
 };
 
 void BboxCenteringTwistActionServer::uvStateCallback(const stingray_core_interfaces::msg::UVState &msg) {
@@ -114,13 +105,17 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     auto goal_result = std::make_shared<stingray_interfaces::action::BboxCenteringTwistAction::Result>();
     goal_result->success = false;
 
-    // // check duration
-    // if (goal->duration < 0.0) {
-    //     goal_result->success = false;
-    //     goal_handle->abort(goal_result);
-    //     RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
-    //     return;
-    // }
+    bboxArraySub = _node->create_subscription<stingray_interfaces::msg::BboxArray>(
+        goal->bbox_topic, 10,
+        std::bind(&BboxCenteringTwistActionServer::bboxArrayCallback, this, std::placeholders::_1));
+
+    // check duration
+    if (goal->duration < 0.0) {
+        goal_result->success = false;
+        goal_handle->abort(goal_result);
+        RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
+        return;
+    }
 
     // send service request
     target_name = goal->bbox_name;
@@ -129,19 +124,19 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
 
-    rclcpp::Rate checkRate(2s);
+    rclcpp::Rate checkRate(1s);
+    AsyncTimer timer(goal->duration * 1000);
+    timer.start();
 
     while (rclcpp::ok() && !isTwistDone(goal)) {
         move_in_progress = true;
-        RCLCPP_INFO(_node->get_logger(), "Twist action request yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
         target_lost = target_disappeared_counter > target_lost_thresh;
-        
-        if (target_lost) {
-            goal_result->success = false;
-            goal_handle->abort(goal_result);
-            RCLCPP_ERROR(_node->get_logger(), "Target lost!");
-            return;
+
+        if (!timer.isBusy() && !target_lost) {
+            RCLCPP_ERROR(_node->get_logger(), "Twist done by duration %f, target lost!", goal->duration);
+            break;
         }
+        RCLCPP_INFO(_node->get_logger(), "Twist action request yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
         RCLCPP_INFO(_node->get_logger(), "Centering angle difference: %f", centering_angle_difference);
         // check if service success
         twistSrvRequest->yaw = centering_angle_difference;
@@ -160,6 +155,7 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     move_in_progress = false;
     centering_angle_difference = 0.0;
     target_name = "";
+    bboxArraySub.reset();
 
     RCLCPP_INFO(_node->get_logger(), "Done moving");
 
