@@ -2,11 +2,12 @@ from rclpy.logging import get_logger
 import time
 import asyncio
 from rclpy.node import Node
+from rclpy.publisher import Publisher
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
 from stingray_interfaces.action import BboxCenteringTwistAction, BboxCenteringTwistAction_GetResult_Response
 from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
-from stingray_interfaces.srv import SetEnableObjectDetection
+from stingray_interfaces.msg import EnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
 from std_srvs.srv import Trigger
 
@@ -157,32 +158,23 @@ class EnableObjectDetectionStateAction(StateAction):
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
 
-        self.srv_request = SetEnableObjectDetection.Request()
-        self.srv_request.camera_topic = camera_topic
-        self.srv_request.enable = enable
+        self.msg = EnableObjectDetection()
+        self.msg.camera_topic = camera_topic
+        self.msg.enable = enable
 
-        self.set_enable_object_detection_client = self.node.create_client(
-            SetEnableObjectDetection, self.node.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value)
-
-        while not self.set_enable_object_detection_client.wait_for_service(timeout_sec=1.0):
-            get_logger('action').info(
-                f'set_enable_object_detection not available, waiting again...')
+        self._enable_object_detection_pub: Publisher = self.node.create_publisher(
+            EnableObjectDetection,
+            self.node.get_parameter(
+                'enable_object_detection_topic').get_parameter_value().string_value,
+            10)
 
     def __repr__(self) -> str:
-        return f"type: {self.type}, camera_topic: {self.srv_request.camera_topic}, enable: {self.srv_request.enable}"
+        return f"type: {self.type}, camera_topic: {self.msg.camera_topic}, enable: {self.msg.enable}"
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        try:
-            self.future: SetStabilization.Response = await asyncio.wait_for(self.set_enable_object_detection_client.call_async(self.srv_request), timeout=1.0)
-            if not self.future.success:
-                get_logger('action').error(
-                    f"Error while waiting for {self.node.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value}: {self.future.message}")
-                return False
-        except asyncio.TimeoutError:
-            get_logger('action').error(
-                f"Wait for {self.node.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value} timed out")
-            return False
+        for _ in range(5):
+            self._enable_object_detection_pub.publish(self.msg)
         self.executed = True
         return True
 
