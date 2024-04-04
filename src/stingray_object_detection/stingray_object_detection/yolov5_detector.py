@@ -67,7 +67,7 @@ class YoloV5Detector(YoloDetectorBase):
         """
         with torch.no_grad():
             # Padded resize
-            im = letterbox(img, new_shape=self.imgsz, stride=self.stride)[0]
+            im = letterbox(img, new_shape=(640,640), stride=self.stride)[0]
             # Convert
             im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
             im = np.ascontiguousarray(im)
@@ -132,8 +132,8 @@ class YoloV5Detector(YoloDetectorBase):
 
                     for *xyxy, score, label_id in reversed(dots):
                         label = self.names[int(label_id)]
-                        self.get_logger().info(
-                            f"xyxy: {xyxy}, score: {score}, label: {label}")
+                        # self.get_logger().info(
+                        #     f"xyxy: {xyxy}, score: {score}, label: {label}")
                         if self.debug:
                             annotator.box_label([xyxy[0], xyxy[1], xyxy[2], xyxy[3]], label,
                                                 color=colors(int(label_id), True))
