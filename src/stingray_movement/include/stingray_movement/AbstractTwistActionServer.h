@@ -12,18 +12,18 @@
 template <class TTwistAction, class TTwistActionGoal>
 class AbstractTwistActionServer : public AbstractActionServer<TTwistAction, TTwistActionGoal> {
 
-protected:
+public:
 
     virtual bool isTwistDone(const std::shared_ptr<const TTwistActionGoal> goal) = 0;
 
-    bool isDepthDone(const float &goal_depth) {
+    virtual bool isDepthDone(const float &goal_depth) {
         if (current_uv_state.depth_stabilization) {
             float depth_delta = abs(current_uv_state.depth - goal_depth);
             bool depth_done = depth_delta < depth_tolerance;
             if (!depth_done) {
-                // RCLCPP_ERROR(_node->get_logger(), "Depth not reached current_depth %f", current_uv_state.depth);
-                // RCLCPP_ERROR(_node->get_logger(), "Depth not reached depth_tolerance %f", depth_tolerance);
-                // RCLCPP_ERROR(_node->get_logger(), "Depth not reached depth_delta %f", depth_delta);
+                RCLCPP_ERROR(this->_node->get_logger(), "Depth not reached current_depth %f", current_uv_state.depth);
+                RCLCPP_ERROR(this->_node->get_logger(), "Depth not reached depth_tolerance %f", depth_tolerance);
+                RCLCPP_ERROR(this->_node->get_logger(), "Depth not reached depth_delta %f", depth_delta);
             }
 
             return depth_done;
@@ -32,14 +32,14 @@ protected:
         }
     };
 
-    bool isRollDone(const float &goal_roll) {
+    virtual bool isRollDone(const float &goal_roll) {
         if (current_uv_state.roll_stabilization) {
             float roll_delta = abs(current_uv_state.roll - goal_roll);
             bool roll_done = roll_delta < angle_tolerance;
             if (!roll_done) {
-                // RCLCPP_ERROR(_node->get_logger(), "Roll not reached current_roll %f", current_uv_state.roll);
-                // RCLCPP_ERROR(_node->get_logger(), "Roll not reached angle_tolerance %f", angle_tolerance);
-                // RCLCPP_ERROR(_node->get_logger(), "Roll not reached roll_delta %f", roll_delta);
+                RCLCPP_ERROR(this->_node->get_logger(), "Roll not reached current_roll %f", current_uv_state.roll);
+                RCLCPP_ERROR(this->_node->get_logger(), "Roll not reached angle_tolerance %f", angle_tolerance);
+                RCLCPP_ERROR(this->_node->get_logger(), "Roll not reached roll_delta %f", roll_delta);
             }
             return roll_done;
         } else {
@@ -47,14 +47,14 @@ protected:
         }
     }
 
-    bool isPitchDone(const float &goal_pitch) {
+    virtual bool isPitchDone(const float &goal_pitch) {
         if (current_uv_state.pitch_stabilization) {
             float pitch_delta = abs(current_uv_state.pitch - goal_pitch);
             bool pitch_done = pitch_delta < angle_tolerance;
             if (!pitch_done) {
-                // RCLCPP_ERROR(_node->get_logger(), "Pitch not reached current_pitch %f", current_uv_state.pitch);
-                // RCLCPP_ERROR(_node->get_logger(), "Pitch not reached angle_tolerance %f", angle_tolerance);
-                // RCLCPP_ERROR(_node->get_logger(), "Pitch not reached pitch_delta %f", pitch_delta);
+                RCLCPP_ERROR(this->_node->get_logger(), "Pitch not reached current_pitch %f", current_uv_state.pitch);
+                RCLCPP_ERROR(this->_node->get_logger(), "Pitch not reached angle_tolerance %f", angle_tolerance);
+                RCLCPP_ERROR(this->_node->get_logger(), "Pitch not reached pitch_delta %f", pitch_delta);
             }
             return pitch_done;
         } else {
@@ -62,14 +62,14 @@ protected:
         }
     }
 
-    bool isYawDone(const float &goal_yaw) {
+    virtual bool isYawDone(const float &goal_yaw) {
         if (current_uv_state.yaw_stabilization) {
             float yaw_delta = abs(current_uv_state.yaw - goal_yaw);
             bool yaw_done = yaw_delta < angle_tolerance;
             if (!yaw_done) {
-                // RCLCPP_ERROR(_node->get_logger(), "Yaw not reached current_yaw %f", current_uv_state.yaw);
-                // RCLCPP_ERROR(_node->get_logger(), "Yaw not reached yaw_tolerance %f", angle_tolerance);
-                // RCLCPP_ERROR(_node->get_logger(), "Yaw not reached yaw_delta %f", yaw_delta);
+                RCLCPP_ERROR(this->_node->get_logger(), "Yaw not reached current_yaw %f", current_uv_state.yaw);
+                RCLCPP_ERROR(this->_node->get_logger(), "Yaw not reached yaw_tolerance %f", angle_tolerance);
+                RCLCPP_ERROR(this->_node->get_logger(), "Yaw not reached yaw_delta %f", yaw_delta);
             }
             return yaw_done;
         } else {
@@ -77,7 +77,7 @@ protected:
         }
     }
 
-    void stopTwist() {
+    virtual void stopTwist() {
         auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
         twistSrvRequest->surge = 0.0;
         twistSrvRequest->sway = 0.0;
@@ -89,7 +89,7 @@ protected:
         if (!current_uv_state.pitch_stabilization)
             twistSrvRequest->pitch = 0.0;
 
-        // RCLCPP_INFO(_node->get_logger(), "Twist action request stop yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
+        RCLCPP_INFO(this->_node->get_logger(), "Twist action request stop yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
         twistSrvClient->async_send_request(twistSrvRequest).wait();
     }
 
@@ -98,8 +98,6 @@ protected:
     float depth_tolerance;
     float angle_tolerance;
     stingray_core_interfaces::msg::UVState current_uv_state;
-
-public:
 
     AbstractTwistActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<TTwistAction, TTwistActionGoal>(_node, actionName) {
 

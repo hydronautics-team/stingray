@@ -1,7 +1,0 @@
-string name 
----
-# Result
-bool success
----
-# Feedback
-std_msgs/Empty empty

@@ -4,12 +4,22 @@ BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(std::shared_ptr<r
     current_target_bbox.pos_x = 1000.0;
     current_target_bbox.pos_y = 1000.0;
     current_target_bbox.pos_z = 1000.0;
+
+    current_avoid_target_bbox.pos_x = 1000.0;
+    current_avoid_target_bbox.pos_y = 1000.0;
+    current_avoid_target_bbox.pos_z = 1000.0;
 };
 
 
 void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces::msg::BboxArray &msg) {
     bool found_target = false;
     for (auto bbox : msg.bboxes) {
+        if (std::find(target_avoid_bbox_name_array.begin(), target_avoid_bbox_name_array.end(), bbox.name) != target_avoid_bbox_name_array.end()) {
+            if (bbox.pos_z < current_avoid_target_bbox.pos_z) {
+                current_avoid_target_bbox = bbox;
+            }
+        }
+
         if (bbox.name == target_bbox_name) {
             current_target_bbox = bbox;
             found_target = true;
@@ -66,6 +76,7 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
 
     // send service request
     target_bbox_name = goal->bbox_name;
+    target_avoid_bbox_name_array = goal->avoid_bbox_name_array;
     target_distance_threshold = goal->distance_threshold;
     target_lost_thresh = goal->lost_threshold;
     twistSrvRequest->surge = goal->surge;
@@ -73,7 +84,7 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
 
-    rclcpp::Rate checkRate(1s);
+    rclcpp::Rate checkRate(goal->centering_rate * 1000);
     AsyncTimer timer(goal->duration * 1000);
     timer.start();
 
@@ -87,10 +98,17 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
             break;
         }
 
-        if (isTwistDone(goal)) {
+        if (isTwistDone(goal) && isCenteringTwistDone()) {
             RCLCPP_INFO(_node->get_logger(), "Twist done, target distance: %f, closer than: %f", current_target_bbox.pos_z, target_distance_threshold);
             break;
         }
+        if (current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold && abs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold) {
+            if (current_avoid_target_bbox.pos_x < 0.0) {
+                twistSrvRequest->sway = - goal->sway;
+            } else {
+                twistSrvRequest->sway = goal->sway;
+            }
+        } 
         twistSrvRequest->yaw = current_target_angle;
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
         // check if service success
