@@ -405,14 +405,12 @@ class FSM(object):
         for event in self.events.values():
             event.unsubscribe(self.node)
         get_logger("fsm").info("Mission FAILED")
-        self.add_pending_transition(Transition.reset)
 
     async def on_enter_OK(self):
         """Executing on entering the OK state"""
         for event in self.events.values():
             event.unsubscribe(self.node)
         get_logger("fsm").info("Mission OK")
-        self.add_pending_transition(Transition.reset)
 
     async def execute_state(self):
         """Executing as soon as the state is entered"""
@@ -434,6 +432,9 @@ class FSM(object):
             get_logger("fsm").info(
                 f"Register action for {self.state}")
             self.add_pending_action(self.registered_states[self.state].action)
+
+        if self.state == State.OK or self.state == State.FAILED:
+            self.add_pending_transition(Transition.reset)
 
     async def leave_state(self):
         """Executing before leaving the state"""
