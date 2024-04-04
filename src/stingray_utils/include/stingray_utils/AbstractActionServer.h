@@ -29,7 +29,7 @@ public:
             std::bind(&AbstractActionServer<TAction, TActionGoal>::handle_accepted, this, std::placeholders::_1));
     }
     ~AbstractActionServer() = default;
-
+    
 private:
     virtual rclcpp_action::GoalResponse handle_goal(
         const rclcpp_action::GoalUUID &uuid,

@@ -23,34 +23,49 @@ include_directories(
         include
 )
 
+add_library(${PROJECT_NAME} 
+        include/stingray_movement/AbstractTwistActionServer.h
+        include/stingray_movement/AbstractCenteringTwistActionServer.h
+)
+target_link_libraries(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+
 add_executable(twist_action_server
-        include/TwistActionServer.h
+        include/stingray_movement/AbstractTwistActionServer.h
+        include/stingray_movement/TwistActionServer.h
         src/TwistActionServer.cpp
         )
 ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
 add_executable(bbox_centering_twist_action_server
-        include/BboxCenteringTwistActionServer.h
+        include/stingray_movement/AbstractTwistActionServer.h
+        include/stingray_movement/AbstractCenteringTwistActionServer.h
+        include/stingray_movement/BboxCenteringTwistActionServer.h
         src/BboxCenteringTwistActionServer.cpp
         )
 ament_target_dependencies(bbox_centering_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
+## Install headers
+install(
+        DIRECTORY include/${PROJECT_NAME}
+        DESTINATION include)
 
+## Install executable
 install(TARGETS
         twist_action_server
         bbox_centering_twist_action_server
-        DESTINATION lib/${PROJECT_NAME})
+        ${PROJECT_NAME}
+        DESTINATION lib/${PROJECT_NAME}
+        EXPORT ${PROJECT_NAME}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        # RUNTIME DESTINATION bin
+        # INCLUDES DESTINATION include
+)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+ament_export_dependencies(rosidl_default_runtime)
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 ament_package()

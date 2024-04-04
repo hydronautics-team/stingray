@@ -1,6 +1,7 @@
 string bbox_name 
 string bbox_topic
 float32 distance_threshold
+int32 lost_threshold
 float32 surge 
 float32 depth
 float32 roll
