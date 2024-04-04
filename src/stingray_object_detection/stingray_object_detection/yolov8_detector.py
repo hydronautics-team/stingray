@@ -13,14 +13,14 @@ from functools import partial
 
 from stingray_object_detection.yolo_detector_base import YoloDetectorBase
 from stingray_interfaces.msg import Bbox, BboxArray
-from stingray_interfaces.srv import SetEnableObjectDetection
+from stingray_interfaces.msg import EnableObjectDetection
 from stingray_object_detection.distance import DistanceCalculator
 
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 from ultralytics.data.augment import LetterBox
 from ultralytics.utils.torch_utils import select_device, time_sync
-
+from ultralytics.utils.ops import scale_boxes
 
 class YoloV8Detector(YoloDetectorBase):
     def __init__(self):
@@ -41,7 +41,7 @@ class YoloV8Detector(YoloDetectorBase):
             self.model = YOLO(model=self.weights_path)
             self.names = self.model.names
 
-    def detect(self, img: np.ndarray, topic: str):
+    def detect(self, input_img: np.ndarray, topic: str):
         """ YOLO inference
 
         Args:
@@ -52,10 +52,10 @@ class YoloV8Detector(YoloDetectorBase):
             cv2 image: image with visualized bboxes
         """
         with torch.no_grad():
-            imgsz = (self.camera_info[topic].height, self.camera_info[topic].width)
+            # imgsz = (self.camera_info[topic].height, self.camera_info[topic].width)
             # Padded resize
-            letterbox = LetterBox(new_shape=imgsz, auto=False, stride=32)
-            img = letterbox(image=img)
+            letterbox = LetterBox(auto=True, stride=32)
+            img = letterbox(image=input_img)
             # Convert
             im = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
             im = np.ascontiguousarray(im)
@@ -80,29 +80,48 @@ class YoloV8Detector(YoloDetectorBase):
 
             for det in pred:  # per image
                 if self.debug:
-                    im0 = img.copy()
+                    im0 = input_img.copy()
                     annotator = Annotator(
                         im0, line_width=3, example=str(self.names))
+                    
+                # Rescale boxes from img_size to im0 size
+                # self.get_logger().info(f"im.shape: {im.shape}")
+                # self.get_logger().info(f"input_img.shape: {input_img.shape}")
+                # self.get_logger().info(f"det: {det}")
+                # self.get_logger().info(f"det.boxes: {det.boxes}")
                 for box in det.boxes:
-                    # self.get_logger().info(f"xyxy: {xyxy}, label: {label}")
                     xyxy, label_id, confidence = box.xyxy[0].cpu(
                     ).detach().numpy(), box.cls.cpu(), box.conf.cpu()
+                    # self.get_logger().info(f"xyxy: {xyxy}")
                     label = self.names[int(label_id)]
+
+                    # self.get_logger().info(f"prev xyxy: {xyxy}")
+                    # xyxy = scale_boxes(
+                    #     im.shape[2:], xyxy, input_img.shape).round()
+                    # self.get_logger().info(f"xyxy: {xyxy}")
+
+                    # left, top, right, bottom = xyxy
+
+                    # top = 0 if top < 12 else top - 12
+                    # bottom = 360 if bottom > 371 else bottom - 24
+
+                    # scale = self.camera_info[topic].width / img.shape[1]
+
+                    # new_xyxy = [left * scale, top * scale, right * scale, bottom * scale]
 
                     if self.debug:
                         annotator.box_label(
                             xyxy, label, color=colors(int(label_id), True))
 
-                    left, top, right, bottom = xyxy
                     pos_x, pos_y, pos_z, horizontal_angle, vertical_angle = self.dist_calc.calcDistanceAndAngle(xyxy, label, self.camera_info[topic])
 
                     bbox_msg = Bbox()
                     bbox_msg.name = label
                     bbox_msg.confidence = float(confidence)
-                    bbox_msg.top_left_x = int(left)
-                    bbox_msg.top_left_y = int(top)
-                    bbox_msg.bottom_right_x = int(right)
-                    bbox_msg.bottom_right_y = int(bottom)
+                    bbox_msg.top_left_x = int(xyxy[0])
+                    bbox_msg.top_left_y = int(xyxy[1])
+                    bbox_msg.bottom_right_x = int(xyxy[2])
+                    bbox_msg.bottom_right_y = int(xyxy[3])
                     bbox_msg.pos_x = float(pos_x)
                     bbox_msg.pos_y = float(pos_y)
                     bbox_msg.pos_z = float(pos_z)

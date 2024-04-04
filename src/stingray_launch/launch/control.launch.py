@@ -25,8 +25,8 @@ def generate_launch_description():
     )
 
     # object detection
-    set_enable_object_detection_srv_arg = DeclareLaunchArgument(
-        "set_enable_object_detection_srv", default_value='/stingray/services/set_enable_object_detection'
+    enable_object_detection_topic_arg = DeclareLaunchArgument(
+        "enable_object_detection_topic", default_value='/stingray/topics/enable_object_detection'
     )
 
     # movement
@@ -75,7 +75,7 @@ def generate_launch_description():
         target_close_thresh_arg,
         mission_package_names_arg,
         transition_srv_arg,
-        set_enable_object_detection_srv_arg,
+        enable_object_detection_topic_arg,
         zbar_topic_arg,
         twist_action_arg,
         bbox_centering_twist_action_arg,
@@ -103,7 +103,7 @@ def generate_launch_description():
                 {'reset_imu_srv': LaunchConfiguration("reset_imu_srv")},
                 {'set_stabilization_srv': LaunchConfiguration("set_stabilization_srv")},
                 {'enable_thrusters_srv': LaunchConfiguration("enable_thrusters_srv")},
-                {'set_enable_object_detection_srv': LaunchConfiguration("set_enable_object_detection_srv")},
+                {'enable_object_detection_topic': LaunchConfiguration("enable_object_detection_topic")},
             ],
             respawn=True,
             respawn_delay=1,

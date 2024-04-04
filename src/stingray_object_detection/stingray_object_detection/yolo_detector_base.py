@@ -19,7 +19,7 @@ import torch
 from functools import partial
 
 from stingray_interfaces.msg import Bbox, BboxArray
-from stingray_interfaces.srv import SetEnableObjectDetection
+from stingray_interfaces.msg import EnableObjectDetection
 from stingray_object_detection.distance import DistanceCalculator
 
 
@@ -54,7 +54,7 @@ class YoloDetectorBase(Node):
         self.declare_parameter(
             'debug', True)
         self.declare_parameter(
-            'set_enable_object_detection_srv', '/stingray/services/set_enable_object_detection')
+            'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
 
         self.declare_parameter('confidence_threshold', 0.25)
         self.declare_parameter('iou_threshold', 0.45)
@@ -87,8 +87,11 @@ class YoloDetectorBase(Node):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
 
-        self.set_enable_object_detection_service = self.create_service(
-            SetEnableObjectDetection, self.get_parameter('set_enable_object_detection_srv').get_parameter_value().string_value, self._set_enable_object_detection)
+        self._enable_object_detection_sub = self.create_subscription(
+            EnableObjectDetection, 
+            self.get_parameter('enable_object_detection_topic').get_parameter_value().string_value, 
+            self._enable_object_detection,
+            10)
 
         self.detection_enabled: dict[str, bool] = {}
         self.camera_info_subscriptions: dict[str, Subscription] = {}
@@ -106,7 +109,7 @@ class YoloDetectorBase(Node):
         for input_topic in image_topic_list:
 
             # disable detection by default
-            self.detection_enabled[input_topic] = True
+            self.detection_enabled[input_topic] = False
 
             # ROS Topic names
             bbox_array_topic = f"{input_topic}/bbox_array"
@@ -155,20 +158,11 @@ class YoloDetectorBase(Node):
         """ YOLO init"""
         raise NotImplementedError
 
-    def _set_enable_object_detection(self, request: SetEnableObjectDetection.Request, response: SetEnableObjectDetection.Response):
-        """Callback to enable or disable object detection for specific camera topic
+    def _enable_object_detection(self, msg: EnableObjectDetection):
+        """Callback to enable or disable object detection for specific camera topic"""
 
-        Args:
-            request (SetEnableObjectDetectionRequest): camera id and bool arg
-
-        Returns:
-            SetEnableObjectDetectionResponse: response with str message and success bool arg
-        """
-
-        self.detection_enabled[request.camera_topic] = request.enable
+        self.detection_enabled[msg.camera_topic] = msg.enable
         self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
-        response.success = True
-        return response
 
     def detect(self, img: np.ndarray, topic: str):
         """ YOLO inference"""
@@ -191,20 +185,20 @@ class YoloDetectorBase(Node):
         if not self.detection_enabled[topic]:
             return
         if self.inited[topic]:
-            try:
-                # convert ROS image to OpenCV image
-                cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
+            # try:
+            # convert ROS image to OpenCV image
+            cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
 
-                # detect our objects
-                bbox_array_msg, drawed_image = self.detect(cv_image, topic)
+            # detect our objects
+            bbox_array_msg, drawed_image = self.detect(cv_image, topic)
 
-                # publish results
-                self.bbox_array_publishers[topic].publish(bbox_array_msg)
-                if self.debug:
-                    ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
-                    # publish output image
-                    self.image_publishers[topic].publish(ros_image)
-            except CvBridgeError as e:
-                self.get_logger().error(f'CV Bridge error: {e}')
-            except Exception as e:
-                self.get_logger().error(f'Error: {e}')
+            # publish results
+            self.bbox_array_publishers[topic].publish(bbox_array_msg)
+            if self.debug:
+                ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
+                # publish output image
+                self.image_publishers[topic].publish(ros_image)
+            # except CvBridgeError as e:
+            #     self.get_logger().error(f'CV Bridge error: {e}')
+            # except Exception as e:
+            #     self.get_logger().error(f'Error: {e}')
