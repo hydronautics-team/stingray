@@ -292,6 +292,7 @@ class FSM(object):
         # add global transitions
         global_transitions = [
             [Transition.reset, [State.FAILED, State.OK], State.IDLE],
+            [Transition.fail, State.ALL, State.FAILED],
         ]
         self.machine.add_transitions(global_transitions)
 

@@ -35,5 +35,3 @@ transitions:
   - { trigger: ok, source: WAIT_SUBMERGE, dest: ENABLE_STABILIZATION }
   - { trigger: ok, source: ENABLE_STABILIZATION, dest: WAIT_RUN }
   - { trigger: ok, source: WAIT_RUN, dest: OK }
-  - { trigger: timeout, source: "*", dest: FAILED }
-  - { trigger: fail, source: "*", dest: FAILED }
