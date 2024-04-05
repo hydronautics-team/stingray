@@ -6,6 +6,7 @@ from rclpy.publisher import Publisher
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
 from stingray_interfaces.action import BboxCenteringTwistAction, BboxCenteringTwistAction_GetResult_Response
+from stingray_interfaces.action import BboxSearchTwistAction, BboxSearchTwistAction_GetResult_Response
 from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
 from stingray_interfaces.msg import EnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
@@ -259,24 +260,43 @@ class BboxCenteringTwistStateAction(StateAction):
                  node: Node,
                  type: str = "BboxCenteringTwist",
                  bbox_name: str = "",
+                 bbox_topic: str = "",
+                 distance_threshold: float = 0.0,
+                 lost_threshold: int = 0,
+                 avoid_bbox_name_array: list[str] = [],
+                 avoid_distance_threshold: float = 0.0,
+                 avoid_horizontal_threshold: float = 0.0,
                  surge: float = 0.0,
+                 sway: float = 0.0,
                  depth: float = 0.0,
                  roll: float = 0.0,
                  pitch: float = 0.0,
+                 duration: float = 0.0,
+                 centering_rate: float = 0.0,
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
         self.goal = BboxCenteringTwistAction.Goal()
         self.goal.bbox_name = bbox_name
+        self.goal.bbox_topic = bbox_topic
+        self.goal.distance_threshold = float(distance_threshold)
+        self.goal.lost_threshold = int(lost_threshold)
+        self.goal.avoid_bbox_name_array = avoid_bbox_name_array
+        self.goal.avoid_distance_threshold = float(avoid_distance_threshold)
+        self.goal.avoid_horizontal_threshold = float(
+            avoid_horizontal_threshold)
         self.goal.surge = float(surge)
+        self.goal.sway = float(sway)
         self.goal.depth = float(depth)
         self.goal.roll = float(roll)
         self.goal.pitch = float(pitch)
+        self.goal.duration = float(duration)
+        self.goal.centering_rate = float(centering_rate)
 
         self.bbox_centering_twist_action_client = AsyncActionClient(
             self.node, BboxCenteringTwistAction, self.node.get_parameter('bbox_centering_twist_action').get_parameter_value().string_value)
 
     def __repr__(self) -> str:
-        return f"type: {self.type}, bbox_name: {self.goal.bbox_name}, surge: {self.goal.surge}, depth: {self.goal.depth}, roll: {self.goal.roll}, pitch: {self.goal.pitch}"
+        return f"type: {self.type}, bbox_name: {self.goal.bbox_name}"
 
     def stop(self):
         self.bbox_centering_twist_action_client.cancel()
@@ -285,6 +305,53 @@ class BboxCenteringTwistStateAction(StateAction):
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
         result: BboxCenteringTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(self.goal)
+        self.executed = True
+        return result.result.success
+
+
+class BboxSearchTwistStateAction(StateAction):
+    def __init__(self,
+                 node: Node,
+                 type: str = "BboxSearchTwist",
+                 bbox_name: str = "",
+                 bbox_topic: str = "",
+                 first_clockwise: bool = True,
+                 found_threshold: int = 0,
+                 max_yaw: float = 0.0,
+                 yaw_step: float = 0.0,
+                 depth: float = 0.0,
+                 roll: float = 0.0,
+                 pitch: float = 0.0,
+                 duration: float = 0.0,
+                 search_rate: float = 0.0,
+                 **kwargs):
+        super().__init__(node=node, type=type, **kwargs)
+        self.goal = BboxSearchTwistAction.Goal()
+        self.goal.bbox_name = bbox_name
+        self.goal.bbox_topic = bbox_topic
+        self.goal.first_clockwise = first_clockwise
+        self.goal.found_threshold = int(found_threshold)
+        self.goal.max_yaw = float(max_yaw)
+        self.goal.yaw_step = float(yaw_step)
+        self.goal.depth = float(depth)
+        self.goal.roll = float(roll)
+        self.goal.pitch = float(pitch)
+        self.goal.duration = float(duration)
+        self.goal.search_rate = float(search_rate)
+
+        self.bbox_centering_twist_action_client = AsyncActionClient(
+            self.node, BboxSearchTwistAction, self.node.get_parameter('bbox_centering_twist_action').get_parameter_value().string_value)
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, bbox_name: {self.goal.bbox_name}"
+
+    def stop(self):
+        self.bbox_centering_twist_action_client.cancel()
+        return super().stop()
+
+    async def execute(self) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action")
+        result: BboxSearchTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
