@@ -280,6 +280,7 @@ class BboxCenteringTwistStateAction(StateAction):
         self.goal.bbox_topic = bbox_topic
         self.goal.distance_threshold = float(distance_threshold)
         self.goal.lost_threshold = int(lost_threshold)
+        get_logger("action").info(f"avoid_bbox_name_array {avoid_bbox_name_array}")
         self.goal.avoid_bbox_name_array = avoid_bbox_name_array
         self.goal.avoid_distance_threshold = float(avoid_distance_threshold)
         self.goal.avoid_horizontal_threshold = float(
@@ -339,19 +340,19 @@ class BboxSearchTwistStateAction(StateAction):
         self.goal.duration = float(duration)
         self.goal.search_rate = float(search_rate)
 
-        self.bbox_centering_twist_action_client = AsyncActionClient(
-            self.node, BboxSearchTwistAction, self.node.get_parameter('bbox_centering_twist_action').get_parameter_value().string_value)
+        self.bbox_search_twist_action_client = AsyncActionClient(
+            self.node, BboxSearchTwistAction, self.node.get_parameter('bbox_search_twist_action').get_parameter_value().string_value)
 
     def __repr__(self) -> str:
         return f"type: {self.type}, bbox_name: {self.goal.bbox_name}"
 
     def stop(self):
-        self.bbox_centering_twist_action_client.cancel()
+        self.bbox_search_twist_action_client.cancel()
         return super().stop()
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: BboxSearchTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(self.goal)
+        result: BboxSearchTwistAction_GetResult_Response = await self.bbox_search_twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
@@ -402,6 +403,8 @@ def create_action(node: Node, action: dict) -> StateAction:
         return TwistStateAction(node=node, **action)
     elif action['type'] == "BboxCenteringTwist":
         return BboxCenteringTwistStateAction(node=node, **action)
+    elif action['type'] == "BboxSearchTwist":
+        return BboxSearchTwistStateAction(node=node, **action)
     elif action['type'] == "SetDeviceValue":
         return SetDeviceValueStateAction(node=node, **action)
     else:
