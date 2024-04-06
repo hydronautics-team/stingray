@@ -258,6 +258,9 @@ class FSM(object):
         self.expiration_timer = None
         self.wait_action_success_event = asyncio.Event()
 
+        # TODO kostyl
+        self.flare_sequence: list[str] = ["Y", "R", "B"]
+
         self.lock_coroutine = asyncio.Lock()
         self.node.declare_parameter(
             'uv_state_topic', '/stingray/topics/uv_state')
@@ -283,7 +286,7 @@ class FSM(object):
             UVState,
             self.node.get_parameter(
                 'uv_state_topic').get_parameter_value().string_value,
-            self.qr_callback,
+            self._uv_state_callback,
             1)
 
         self._initialize_machine(scenarios_packages)
@@ -323,6 +326,13 @@ class FSM(object):
 
     def _uv_state_callback(self, uv_state: UVState):
         get_logger("fsm").info(f"uv_state.flare_seq: {uv_state.flare_seq}")
+        unpacked = [chr(i) for i in uv_state.flare_seq]
+        if "R" in unpacked and "Y" in unpacked and "B" in unpacked:
+            self.flare_sequence = unpacked
+        elif "F" in unpacked:
+            self.add_pending_transition(Transition.fail)
+        else:
+            self.flare_sequence = ["Y", "R", "B"]
 
     def _transition_callback(self, request: SetTransition.Request, response: SetTransition.Response):
         self.add_pending_transition(request.transition)
@@ -362,6 +372,9 @@ class FSM(object):
             self.wait_action_success_event.clear()
             get_logger("fsm").info(
                 f"{self.pending_action.type} executing: {self.pending_action}")
+            # TODO kostyl
+            if self.pending_action.type == "SequencePunchBboxTwist":
+                self.pending_action.sequence = self.flare_sequence
             result = await self.pending_action.execute()
             get_logger("fsm").info(
                 f"{self.pending_action.type} result: {result}, stopped: {self.pending_action.stopped}")

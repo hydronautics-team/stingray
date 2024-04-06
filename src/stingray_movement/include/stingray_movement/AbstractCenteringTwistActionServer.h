@@ -17,7 +17,6 @@ protected:
     float target_distance_threshold;
     int target_lost_thresh;
 
-    float current_target_angle = 0.0;
     int target_disappeared_counter = 0;
 
 public:
