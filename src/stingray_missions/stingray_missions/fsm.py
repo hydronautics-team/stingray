@@ -325,14 +325,16 @@ class FSM(object):
             state=State.OK)
 
     def _uv_state_callback(self, uv_state: UVState):
-        get_logger("fsm").info(f"uv_state.flare_seq: {uv_state.flare_seq}")
+        # get_logger("fsm").info(f"uv_state.flare_seq: {uv_state.flare_seq}, len: {len(uv_state.flare_seq)}")
         unpacked = [chr(i) for i in uv_state.flare_seq]
+        # get_logger("fsm").info(f"unpacked: {unpacked}")
         if "R" in unpacked and "Y" in unpacked and "B" in unpacked:
             self.flare_sequence = unpacked
-        elif "F" in unpacked:
-            self.add_pending_transition(Transition.fail)
+        # elif "H" in unpacked and "H" in unpacked and "H" in unpacked:
+        #     self.add_pending_transition(Transition.fail)
         else:
             self.flare_sequence = ["Y", "R", "B"]
+        # get_logger("fsm").info(f"flare_sequence: {self.flare_sequence}, len: {len(self.flare_sequence)}")
 
     def _transition_callback(self, request: SetTransition.Request, response: SetTransition.Response):
         self.add_pending_transition(request.transition)
