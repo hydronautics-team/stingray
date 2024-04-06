@@ -10,6 +10,7 @@ from stingray_missions.event import StringEvent, ObjectDetectionEvent, Subscript
 from stingray_missions.action import StateAction, create_action
 from stingray_utils.config import load_yaml
 from stingray_interfaces.srv import SetTransition
+from stingray_core_interfaces.msg import UVState
 
 
 class TransitionEvent():
@@ -257,12 +258,21 @@ class FSM(object):
         self.expiration_timer = None
         self.wait_action_success_event = asyncio.Event()
 
+        # TODO kostyl
+        self.flare_sequence: list[str] = ["Y", "R", "B"]
+
         self.lock_coroutine = asyncio.Lock()
+        self.node.declare_parameter(
+            'uv_state_topic', '/stingray/topics/uv_state')
         self.node.declare_parameter('twist_action', '/stingray/actions/twist')
-        self.node.declare_parameter('bbox_search_twist_action', '/stingray/actions/bbox_search_twist')
-        self.node.declare_parameter('bbox_centering_twist_action', '/stingray/actions/bbox_centering_twist')
-        self.node.declare_parameter('device_action', '/stingray/actions/device')
-        self.node.declare_parameter('reset_imu_srv', '/stingray/services/reset_imu')
+        self.node.declare_parameter(
+            'bbox_search_twist_action', '/stingray/actions/bbox_search_twist')
+        self.node.declare_parameter(
+            'bbox_centering_twist_action', '/stingray/actions/bbox_centering_twist')
+        self.node.declare_parameter(
+            'device_action', '/stingray/actions/device')
+        self.node.declare_parameter(
+            'reset_imu_srv', '/stingray/services/reset_imu')
         self.node.declare_parameter(
             'transition_srv', '/stingray/services/transition')
         self.node.declare_parameter(
@@ -272,6 +282,12 @@ class FSM(object):
 
         self.transition_srv = self.node.create_service(
             SetTransition, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
+        self.uv_state_sub = self.node.create_subscription(
+            UVState,
+            self.node.get_parameter(
+                'uv_state_topic').get_parameter_value().string_value,
+            self._uv_state_callback,
+            1)
 
         self._initialize_machine(scenarios_packages)
 
@@ -307,6 +323,18 @@ class FSM(object):
         self.registered_states[State.OK] = State.state_description(
             node=self.node,
             state=State.OK)
+
+    def _uv_state_callback(self, uv_state: UVState):
+        # get_logger("fsm").info(f"uv_state.flare_seq: {uv_state.flare_seq}, len: {len(uv_state.flare_seq)}")
+        unpacked = [chr(i) for i in uv_state.flare_seq]
+        # get_logger("fsm").info(f"unpacked: {unpacked}")
+        if "R" in unpacked and "Y" in unpacked and "B" in unpacked:
+            self.flare_sequence = unpacked
+        # elif "H" in unpacked and "H" in unpacked and "H" in unpacked:
+        #     self.add_pending_transition(Transition.fail)
+        else:
+            self.flare_sequence = ["Y", "R", "B"]
+        # get_logger("fsm").info(f"flare_sequence: {self.flare_sequence}, len: {len(self.flare_sequence)}")
 
     def _transition_callback(self, request: SetTransition.Request, response: SetTransition.Response):
         self.add_pending_transition(request.transition)
@@ -346,6 +374,9 @@ class FSM(object):
             self.wait_action_success_event.clear()
             get_logger("fsm").info(
                 f"{self.pending_action.type} executing: {self.pending_action}")
+            # TODO kostyl
+            if self.pending_action.type == "SequencePunchBboxTwist":
+                self.pending_action.sequence = self.flare_sequence
             result = await self.pending_action.execute()
             get_logger("fsm").info(
                 f"{self.pending_action.type} result: {result}, stopped: {self.pending_action.stopped}")

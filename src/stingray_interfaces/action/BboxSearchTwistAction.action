@@ -7,7 +7,6 @@ float32 yaw_step
 float32 depth
 float32 roll
 float32 pitch
-float32 duration
 float32 search_rate
 ---
 # Result
