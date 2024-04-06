@@ -18,8 +18,9 @@ public:
 
     virtual bool isDepthDone(const float &goal_depth) {
         if (current_uv_state.depth_stabilization) {
+            bool depth_done = true;
             float depth_delta = abs(current_uv_state.depth - goal_depth);
-            bool depth_done = depth_delta < depth_tolerance;
+            // bool depth_done = depth_delta < depth_tolerance;
             if (!depth_done) {
                 RCLCPP_ERROR(this->_node->get_logger(), "Depth not reached current_depth %f", current_uv_state.depth);
                 RCLCPP_ERROR(this->_node->get_logger(), "Depth not reached depth_tolerance %f", depth_tolerance);
@@ -34,8 +35,9 @@ public:
 
     virtual bool isRollDone(const float &goal_roll) {
         if (current_uv_state.roll_stabilization) {
+            bool roll_done = true;
             float roll_delta = abs(current_uv_state.roll - goal_roll);
-            bool roll_done = roll_delta < angle_tolerance;
+            // bool roll_done = roll_delta < angle_tolerance;
             if (!roll_done) {
                 RCLCPP_ERROR(this->_node->get_logger(), "Roll not reached current_roll %f", current_uv_state.roll);
                 RCLCPP_ERROR(this->_node->get_logger(), "Roll not reached angle_tolerance %f", angle_tolerance);
@@ -49,8 +51,9 @@ public:
 
     virtual bool isPitchDone(const float &goal_pitch) {
         if (current_uv_state.pitch_stabilization) {
+            bool pitch_done = true;
             float pitch_delta = abs(current_uv_state.pitch - goal_pitch);
-            bool pitch_done = pitch_delta < angle_tolerance;
+            // bool pitch_done = pitch_delta < angle_tolerance;
             if (!pitch_done) {
                 RCLCPP_ERROR(this->_node->get_logger(), "Pitch not reached current_pitch %f", current_uv_state.pitch);
                 RCLCPP_ERROR(this->_node->get_logger(), "Pitch not reached angle_tolerance %f", angle_tolerance);
@@ -64,8 +67,9 @@ public:
 
     virtual bool isYawDone(const float &goal_yaw) {
         if (current_uv_state.yaw_stabilization) {
+            bool yaw_done = true;
             float yaw_delta = abs(current_uv_state.yaw - goal_yaw);
-            bool yaw_done = yaw_delta < angle_tolerance;
+            // bool yaw_done = yaw_delta < angle_tolerance;
             if (!yaw_done) {
                 RCLCPP_ERROR(this->_node->get_logger(), "Yaw not reached current_yaw %f", current_uv_state.yaw);
                 RCLCPP_ERROR(this->_node->get_logger(), "Yaw not reached yaw_tolerance %f", angle_tolerance);
