@@ -323,7 +323,6 @@ class BboxSearchTwistStateAction(StateAction):
                  depth: float = 0.0,
                  roll: float = 0.0,
                  pitch: float = 0.0,
-                 duration: float = 0.0,
                  search_rate: float = 0.0,
                  **kwargs):
         super().__init__(node=node, type=type, **kwargs)
@@ -337,7 +336,6 @@ class BboxSearchTwistStateAction(StateAction):
         self.goal.depth = float(depth)
         self.goal.roll = float(roll)
         self.goal.pitch = float(pitch)
-        self.goal.duration = float(duration)
         self.goal.search_rate = float(search_rate)
 
         self.bbox_search_twist_action_client = AsyncActionClient(

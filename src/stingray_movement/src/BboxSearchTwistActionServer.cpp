@@ -7,9 +7,11 @@ void BboxSearchTwistActionServer::bboxArrayCallback(const stingray_interfaces::m
     for (auto bbox : msg.bboxes) {
         if (bbox.name == target_bbox_name) {
             target_found_counter++;
+            found_target = true;
             if (target_found_counter > target_found_threshold) {
                 found_target_yaw = bbox.horizontal_angle;
             }
+            RCLCPP_INFO(_node->get_logger(), "target_found_counter %d", target_found_counter);
         }
     }
     if (!found_target) {
@@ -49,14 +51,6 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
         goal->bbox_topic, 10,
         std::bind(&BboxSearchTwistActionServer::bboxArrayCallback, this, std::placeholders::_1));
 
-    // check duration
-    if (goal->duration < 0.0) {
-        goal_result->success = false;
-        goal_handle->abort(goal_result);
-        RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
-        return;
-    }
-
     // send service request
     target_bbox_name = goal->bbox_name;
     target_found_threshold = goal->found_threshold;
@@ -70,25 +64,23 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
         target_yaw_step = - goal->yaw_step;
     }
     rclcpp::Rate checkRate(goal->search_rate);
-    AsyncTimer timer(goal->duration * 1000);
-    timer.start();
+
+    float start_yaw = current_uv_state.yaw;
 
     while (rclcpp::ok()) {
-        if (!timer.isBusy()) {
-            RCLCPP_ERROR(_node->get_logger(), "Twist done by duration %f, target not found!", goal->duration);
-            break;
-        }
-
         if (isTwistDone(goal) && isSearchTwistDone()) {
             RCLCPP_INFO(_node->get_logger(), "Twist done, target found, target yaw: %f", found_target_yaw);
             twistSrvRequest->yaw = found_target_yaw;
             twistSrvClient->async_send_request(twistSrvRequest).wait();
             break;
         }
-        twistSrvRequest->yaw += target_yaw_step;
-        if (abs(twistSrvRequest->yaw) > goal->max_yaw) {
+        if (abs(current_uv_state.yaw - start_yaw) > goal->max_yaw) {
+            twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
+            twistSrvClient->async_send_request(twistSrvRequest).wait();
+            twistSrvRequest->yaw = 0.0;
             break;
         }
+        twistSrvRequest->yaw += target_yaw_step;
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
         // check if service success
         twistSrvClient->async_send_request(twistSrvRequest).wait();
@@ -104,22 +96,22 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
         checkRate.sleep();
     }
 
-    while (rclcpp::ok()) {
-        if (!timer.isBusy()) {
-            RCLCPP_ERROR(_node->get_logger(), "Twist done by duration %f, target not found!", goal->duration);
-            break;
-        }
+    start_yaw = current_uv_state.yaw;
 
+    while (rclcpp::ok()) {
         if (isTwistDone(goal) && isSearchTwistDone()) {
             RCLCPP_INFO(_node->get_logger(), "Twist done, target found, target yaw: %f", found_target_yaw);
             twistSrvRequest->yaw = found_target_yaw;
             twistSrvClient->async_send_request(twistSrvRequest).wait();
             break;
         }
-        twistSrvRequest->yaw -= target_yaw_step;
-        if (abs(twistSrvRequest->yaw) < goal->max_yaw) {
+        if (abs(current_uv_state.yaw - start_yaw) > goal->max_yaw) {
+            twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
+            twistSrvClient->async_send_request(twistSrvRequest).wait();
+            twistSrvRequest->yaw = 0.0;
             break;
         }
+        twistSrvRequest->yaw -= target_yaw_step;
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
         // check if service success
         twistSrvClient->async_send_request(twistSrvRequest).wait();

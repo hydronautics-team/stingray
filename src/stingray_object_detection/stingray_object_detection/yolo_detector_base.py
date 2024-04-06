@@ -185,20 +185,20 @@ class YoloDetectorBase(Node):
         if not self.detection_enabled[topic]:
             return
         if self.inited[topic]:
-            # try:
-            # convert ROS image to OpenCV image
-            cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
+            try:
+                # convert ROS image to OpenCV image
+                cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
 
-            # detect our objects
-            bbox_array_msg, drawed_image = self.detect(cv_image, topic)
+                # detect our objects
+                bbox_array_msg, drawed_image = self.detect(cv_image, topic)
 
-            # publish results
-            self.bbox_array_publishers[topic].publish(bbox_array_msg)
-            if self.debug:
-                ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
-                # publish output image
-                self.image_publishers[topic].publish(ros_image)
-            # except CvBridgeError as e:
-            #     self.get_logger().error(f'CV Bridge error: {e}')
-            # except Exception as e:
-            #     self.get_logger().error(f'Error: {e}')
+                # publish results
+                self.bbox_array_publishers[topic].publish(bbox_array_msg)
+                if self.debug:
+                    ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
+                    # publish output image
+                    self.image_publishers[topic].publish(ros_image)
+            except CvBridgeError as e:
+                self.get_logger().error(f'CV Bridge error: {e}')
+            except Exception as e:
+                self.get_logger().error(f'Error: {e}')

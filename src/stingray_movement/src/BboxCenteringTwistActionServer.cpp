@@ -17,11 +17,13 @@ void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces
         if (std::find(target_avoid_bbox_name_array.begin(), target_avoid_bbox_name_array.end(), bbox.name) != target_avoid_bbox_name_array.end()) {
             if (bbox.pos_z < current_avoid_target_bbox.pos_z) {
                 current_avoid_target_bbox = bbox;
+                RCLCPP_INFO(_node->get_logger(), "current_avoid_target_bbox: z: %f, x: %f", current_avoid_target_bbox.pos_z, current_avoid_target_bbox.pos_x);
             }
         }
 
         if (bbox.name == target_bbox_name) {
             current_target_bbox = bbox;
+            RCLCPP_INFO(_node->get_logger(), "current_target_bbox: z: %f, x: %f", current_target_bbox.pos_z, current_target_bbox.pos_x);
             found_target = true;
             target_disappeared_counter = 0;
         }
@@ -77,6 +79,10 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     // send service request
     target_bbox_name = goal->bbox_name;
     target_avoid_bbox_name_array = goal->avoid_bbox_name_array;
+    for (auto name: target_avoid_bbox_name_array) {
+        RCLCPP_INFO(_node->get_logger(), "target_avoid_bbox_name: %s", name.c_str());
+
+    }
     target_distance_threshold = goal->distance_threshold;
     target_lost_thresh = goal->lost_threshold;
     twistSrvRequest->surge = goal->surge;
@@ -127,6 +133,12 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     }
     current_target_angle = 0.0;
     target_disappeared_counter = 0;
+    current_target_bbox.pos_x = 1000.0;
+    current_target_bbox.pos_y = 1000.0;
+    current_target_bbox.pos_z = 1000.0;
+    current_avoid_target_bbox.pos_x = 1000.0;
+    current_avoid_target_bbox.pos_y = 1000.0;
+    current_avoid_target_bbox.pos_z = 1000.0;
     target_bbox_name = "";
     bboxArraySub.reset();
 
