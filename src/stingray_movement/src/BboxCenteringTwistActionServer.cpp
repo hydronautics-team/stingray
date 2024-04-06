@@ -84,7 +84,7 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
 
-    rclcpp::Rate checkRate(goal->centering_rate * 1000);
+    rclcpp::Rate checkRate(goal->centering_rate);
     AsyncTimer timer(goal->duration * 1000);
     timer.start();
 

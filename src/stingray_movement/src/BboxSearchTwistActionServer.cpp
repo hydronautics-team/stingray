@@ -69,7 +69,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
     } else {
         target_yaw_step = - goal->yaw_step;
     }
-    rclcpp::Rate checkRate(goal->search_rate * 1000);
+    rclcpp::Rate checkRate(goal->search_rate);
     AsyncTimer timer(goal->duration * 1000);
     timer.start();
 

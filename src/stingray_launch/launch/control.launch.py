@@ -9,9 +9,6 @@ def generate_launch_description():
     bbox_array_topic_arg = DeclareLaunchArgument(
         "bbox_array_topic", default_value='/stingray/topics/camera/bbox_array'
     )
-    target_close_thresh_arg = DeclareLaunchArgument(
-        "target_close_thresh", default_value='2.5'
-    )
 
     # missions
     mission_package_names_arg = DeclareLaunchArgument(
@@ -35,6 +32,9 @@ def generate_launch_description():
     )
     bbox_centering_twist_action_arg = DeclareLaunchArgument(
         "bbox_centering_twist_action", default_value='/stingray/actions/bbox_centering_twist'
+    )
+    bbox_search_twist_action_arg = DeclareLaunchArgument(
+        "bbox_search_twist_action", default_value='/stingray/actions/bbox_search_twist'
     )
     uv_state_topic_arg = DeclareLaunchArgument(
         "uv_state_topic", default_value='/stingray/topics/uv_state'
@@ -72,13 +72,13 @@ def generate_launch_description():
 
     return LaunchDescription([
         bbox_array_topic_arg,
-        target_close_thresh_arg,
         mission_package_names_arg,
         transition_srv_arg,
         enable_object_detection_topic_arg,
         zbar_topic_arg,
         twist_action_arg,
         bbox_centering_twist_action_arg,
+        bbox_search_twist_action_arg,
         uv_state_topic_arg,
         set_twist_srv_arg,
         device_action_arg,
@@ -99,6 +99,7 @@ def generate_launch_description():
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
                 {'bbox_centering_twist_action': LaunchConfiguration("bbox_centering_twist_action")},
+                {'bbox_search_twist_action': LaunchConfiguration("bbox_search_twist_action")},
                 {'device_action': LaunchConfiguration("device_action")},
                 {'reset_imu_srv': LaunchConfiguration("reset_imu_srv")},
                 {'set_stabilization_srv': LaunchConfiguration("set_stabilization_srv")},
@@ -144,7 +145,19 @@ def generate_launch_description():
                 {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
                 {'bbox_array_topic': LaunchConfiguration("bbox_array_topic")},
                 {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
-                {'target_close_thresh': LaunchConfiguration("target_close_thresh")},
+            ],
+            respawn=True,
+            respawn_delay=1,
+        ),
+        Node(
+            package='stingray_movement',
+            executable='bbox_search_twist_action_server',
+            name='bbox_search_twist_action_server',
+            parameters=[
+                {'bbox_search_twist_action': LaunchConfiguration("bbox_search_twist_action")},
+                {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
+                {'bbox_array_topic': LaunchConfiguration("bbox_array_topic")},
+                {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
             ],
             respawn=True,
             respawn_delay=1,
