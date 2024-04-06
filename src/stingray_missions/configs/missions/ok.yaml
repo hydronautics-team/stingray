@@ -28,5 +28,3 @@ transitions:
   - { trigger: ok, source: DISABLE_STABILIZATION, dest: EMERGE }
   - { trigger: ok, source: EMERGE, dest: DISABLE_DEPTH_STABILIZATION }
   - { trigger: ok, source: DISABLE_DEPTH_STABILIZATION, dest: OK }
-  - { trigger: timeout, source: "*", dest: FAILED }
-  - { trigger: fail, source: "*", dest: FAILED }

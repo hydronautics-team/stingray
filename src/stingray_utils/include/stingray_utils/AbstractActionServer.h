@@ -14,12 +14,11 @@
 template <class TAction, class TActionGoal>
 class AbstractActionServer {
 
-protected:
+public:
     typename rclcpp_action::Server<TAction>::SharedPtr _action_server;
     std::shared_ptr<rclcpp::Node> _node;
     virtual void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<TAction>> goal_handle) = 0;
 
-public:
     AbstractActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : _node(_node) {
         _action_server = rclcpp_action::create_server<TAction>(
             _node,
@@ -29,7 +28,7 @@ public:
             std::bind(&AbstractActionServer<TAction, TActionGoal>::handle_accepted, this, std::placeholders::_1));
     }
     ~AbstractActionServer() = default;
-
+    
 private:
     virtual rclcpp_action::GoalResponse handle_goal(
         const rclcpp_action::GoalUUID &uuid,

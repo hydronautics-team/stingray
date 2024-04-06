@@ -143,7 +143,6 @@ class ScenarioDescription:
                  initial: str = "",
                  ok_state_package_name: str = "stingray_missions",
                  failed_state_package_name: str = "stingray_missions",
-                 abort_state_package_name: str = "stingray_missions",
                  missions: dict[str, dict] = {},
                  transitions: list[dict] = {},
                  **kwargs
@@ -156,7 +155,6 @@ class ScenarioDescription:
         default_missions = {
             self._custom_mission_name("OK"): load_mission(node=node, custom_name=self._custom_mission_name("OK"), config_name="ok", package_name=ok_state_package_name),
             self._custom_mission_name("FAILED"): load_mission(node=node, custom_name=self._custom_mission_name("FAILED"), config_name="failed", package_name=failed_state_package_name),
-            # self._custom_mission_name("ABORT"): load_mission(node=node, custom_name=self._custom_mission_name("ABORT"), config_name="abort", package_name=abort_state_package_name),
         }
         self.missions.update(default_missions)
 
@@ -227,11 +225,10 @@ class State:
     IDLE = "IDLE"
     OK = "OK"
     FAILED = "FAILED"
-    ABORTED = "ABORTED"
 
     @staticmethod
     def aslist():
-        return [State.ALL, State.IDLE, State.OK, State.FAILED, State.ABORTED]
+        return [State.ALL, State.IDLE, State.OK, State.FAILED]
 
     @staticmethod
     def state_description(node: Node, state: str):
@@ -245,7 +242,6 @@ class State:
 class Transition:
     ok = "ok"
     fail = "fail"
-    abort = "abort"
     reset = "reset"
     timeout = "timeout"
 
@@ -263,6 +259,7 @@ class FSM(object):
 
         self.lock_coroutine = asyncio.Lock()
         self.node.declare_parameter('twist_action', '/stingray/actions/twist')
+        self.node.declare_parameter('bbox_search_twist_action', '/stingray/actions/bbox_search_twist')
         self.node.declare_parameter('bbox_centering_twist_action', '/stingray/actions/bbox_centering_twist')
         self.node.declare_parameter('device_action', '/stingray/actions/device')
         self.node.declare_parameter('reset_imu_srv', '/stingray/services/reset_imu')
@@ -271,7 +268,7 @@ class FSM(object):
         self.node.declare_parameter(
             'set_stabilization_srv', '/stingray/services/set_stabilization')
         self.node.declare_parameter(
-            'set_enable_object_detection_srv', '/stingray/services/set_enable_object_detection')
+            'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
 
         self.transition_srv = self.node.create_service(
             SetTransition, self.node.get_parameter('transition_srv').get_parameter_value().string_value, self._transition_callback)
@@ -283,7 +280,7 @@ class FSM(object):
     def _initialize_machine(self, scenarios_packages: list[str]):
         self.machine = AsyncGraphMachine(
             model=self,
-            states=[State.IDLE, State.OK, State.FAILED, State.ABORTED],
+            states=[State.IDLE, State.OK, State.FAILED],
             initial=State.IDLE,
             auto_transitions=False,
             after_state_change="execute_state",
@@ -295,8 +292,8 @@ class FSM(object):
 
         # add global transitions
         global_transitions = [
-            [Transition.abort, State.ALL, State.ABORTED],
-            [Transition.reset, [State.ABORTED, State.FAILED, State.OK], State.IDLE],
+            [Transition.reset, [State.FAILED, State.OK], State.IDLE],
+            [Transition.fail, State.ALL, State.FAILED],
         ]
         self.machine.add_transitions(global_transitions)
 
@@ -307,9 +304,6 @@ class FSM(object):
         self.registered_states[State.FAILED] = State.state_description(
             node=self.node,
             state=State.FAILED)
-        self.registered_states[State.ABORTED] = State.state_description(
-            node=self.node,
-            state=State.ABORTED)
         self.registered_states[State.OK] = State.state_description(
             node=self.node,
             state=State.OK)
@@ -408,12 +402,6 @@ class FSM(object):
                     raise ValueError(
                         f"Event type not supported: {state.transition_event.type}")
 
-    async def on_enter_ABORTED(self):
-        """Executing on entering the ABORTED state"""
-        for event in self.events.values():
-            event.unsubscribe(self.node)
-        get_logger("fsm").info("Mission ABORTED")
-
     async def on_enter_FAILED(self):
         """Executing on entering the FAILED state"""
         for event in self.events.values():
@@ -446,6 +434,9 @@ class FSM(object):
             get_logger("fsm").info(
                 f"Register action for {self.state}")
             self.add_pending_action(self.registered_states[self.state].action)
+
+        if self.state == State.OK or self.state == State.FAILED:
+            self.add_pending_transition(Transition.reset)
 
     async def leave_state(self):
         """Executing before leaving the state"""
