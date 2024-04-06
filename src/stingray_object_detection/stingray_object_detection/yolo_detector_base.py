@@ -161,7 +161,12 @@ class YoloDetectorBase(Node):
     def _enable_object_detection(self, msg: EnableObjectDetection):
         """Callback to enable or disable object detection for specific camera topic"""
 
-        self.detection_enabled[msg.camera_topic] = msg.enable
+        if msg.camera_topic == 'all':
+            for key in self.detection_enabled.keys():
+                self.detection_enabled[key] = msg.enable
+                self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
+        else:
+            self.detection_enabled[msg.camera_topic] = msg.enable
         self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
 
     def detect(self, img: np.ndarray, topic: str):

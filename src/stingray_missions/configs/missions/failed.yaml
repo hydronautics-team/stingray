@@ -1,5 +1,10 @@
-initial: DISABLE_STABILIZATION
+initial: DISABLE_OBJECT_DETECTION
 states:
+  DISABLE_OBJECT_DETECTION:
+    action:
+      type: EnableObjectDetection
+      camera_topic: all
+      enable: false
   DISABLE_STABILIZATION:
     action:
       type: EnableStabilization
@@ -25,6 +30,7 @@ states:
       pitch: false
       yaw: false
 transitions:
+  - { trigger: ok, source: DISABLE_OBJECT_DETECTION, dest: DISABLE_STABILIZATION }
   - { trigger: ok, source: DISABLE_STABILIZATION, dest: EMERGE }
   - { trigger: ok, source: EMERGE, dest: DISABLE_DEPTH_STABILIZATION }
   - { trigger: ok, source: DISABLE_DEPTH_STABILIZATION, dest: OK }
