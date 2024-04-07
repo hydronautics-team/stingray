@@ -57,6 +57,8 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
     twistSrvRequest->depth = goal->depth;
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
+    // twistSrvRequest->surge = 30;
+
 
     if (goal->first_clockwise) {
         target_yaw_step = goal->yaw_step;
@@ -66,6 +68,9 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
     rclcpp::Rate checkRate(goal->search_rate);
 
     float start_yaw = current_uv_state.yaw;
+    twistSrvClient->async_send_request(twistSrvRequest).wait();
+
+    checkRate.sleep();
 
     while (rclcpp::ok()) {
         if (isTwistDone(goal) && isSearchTwistDone()) {
@@ -105,7 +110,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
             twistSrvClient->async_send_request(twistSrvRequest).wait();
             break;
         }
-        if (abs(current_uv_state.yaw - start_yaw) > goal->max_yaw) {
+        if (abs(current_uv_state.yaw - start_yaw) > 2 * goal->max_yaw) {
             twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
             twistSrvClient->async_send_request(twistSrvRequest).wait();
             twistSrvRequest->yaw = 0.0;

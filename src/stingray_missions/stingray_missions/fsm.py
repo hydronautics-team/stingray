@@ -336,7 +336,7 @@ class FSM(object):
         #     self.add_pending_transition(Transition.fail)
         else:
             self.flare_sequence = ["Y", "R", "B"]
-        # get_logger("fsm").info(f"flare_sequence: {self.flare_sequence}, len: {len(self.flare_sequence)}")
+        get_logger("fsm").info(f"flare_sequence: {self.flare_sequence}, len: {len(self.flare_sequence)}")
 
     def _transition_callback(self, request: SetTransition.Request, response: SetTransition.Response):
         self.add_pending_transition(request.transition)

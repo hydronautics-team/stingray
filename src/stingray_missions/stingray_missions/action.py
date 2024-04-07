@@ -86,7 +86,7 @@ class ResetIMUStateAction(DurationStateAction):
         self.reset_imu_client = self.node.create_client(
             Trigger, self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value)
 
-        while not self.reset_imu_client.wait_for_service(timeout_sec=1.0):
+        while not self.reset_imu_client.wait_for_service(timeout_sec=10.0):
             get_logger('action').info(
                 f"{self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} not available, waiting again...")
 
@@ -96,7 +96,7 @@ class ResetIMUStateAction(DurationStateAction):
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
         try:
-            self.future: Trigger.Response = await asyncio.wait_for(self.reset_imu_client.call_async(Trigger.Request()), timeout=1.0)
+            self.future: Trigger.Response = await asyncio.wait_for(self.reset_imu_client.call_async(Trigger.Request()), timeout=10.0)
             if not self.future.success:
                 get_logger('action').error(
                     f"Error while waiting for {self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value}: {self.future.message}")
@@ -128,7 +128,7 @@ class EnableStabilizationStateAction(StateAction):
         self.set_stabilization_client = self.node.create_client(
             SetStabilization, self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value)
 
-        while not self.set_stabilization_client.wait_for_service(timeout_sec=1.0):
+        while not self.set_stabilization_client.wait_for_service(timeout_sec=10.0):
             get_logger('action').info(
                 f'set_stabilization_srv not available, waiting again...')
 
@@ -138,7 +138,7 @@ class EnableStabilizationStateAction(StateAction):
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
         try:
-            self.future: SetStabilization.Response = await asyncio.wait_for(self.set_stabilization_client.call_async(self.srv_request), timeout=1.0)
+            self.future: SetStabilization.Response = await asyncio.wait_for(self.set_stabilization_client.call_async(self.srv_request), timeout=10.0)
             if not self.future.success:
                 get_logger('action').error(
                     f"Error while waiting for {self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value}: {self.future.message}")
@@ -472,14 +472,14 @@ class SequencePunchBboxTwistStateAction(StateAction):
             result: BboxCenteringTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(centering_goal)
 
             punch_goal = TwistAction.Goal()
-            punch_goal.surge = float(100.0)
+            punch_goal.surge = float(70.0)
             punch_goal.sway = float(0.0)
             punch_goal.depth = float(self.depth)
             punch_goal.roll = float(self.roll)
             punch_goal.pitch = float(self.pitch)
             punch_goal.yaw = float(0.0)
             punch_goal.duration = float(self.punch_duration)
-            result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(punch_goal)
+            # result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(punch_goal)
         self.executed = True
         return result.result.success
 
