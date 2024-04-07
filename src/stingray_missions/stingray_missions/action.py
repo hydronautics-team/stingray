@@ -7,6 +7,7 @@ from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
 from stingray_interfaces.action import BboxCenteringTwistAction, BboxCenteringTwistAction_GetResult_Response
 from stingray_interfaces.action import BboxSearchTwistAction, BboxSearchTwistAction_GetResult_Response
+from stingray_interfaces.action import HydroacousticCenteringTwistAction, HydroacousticCenteringTwistAction_GetResult_Response
 from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
 from stingray_interfaces.msg import EnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
@@ -282,7 +283,8 @@ class BboxCenteringTwistStateAction(StateAction):
         self.goal.lost_threshold = int(lost_threshold)
         self.goal.avoid_bbox_name_array = avoid_bbox_name_array
         self.goal.avoid_distance_threshold = float(avoid_distance_threshold)
-        self.goal.avoid_horizontal_threshold = float(avoid_horizontal_threshold)
+        self.goal.avoid_horizontal_threshold = float(
+            avoid_horizontal_threshold)
         self.goal.surge = float(surge)
         self.goal.sway = float(sway)
         self.goal.depth = float(depth)
@@ -352,6 +354,7 @@ class BboxSearchTwistStateAction(StateAction):
         self.executed = True
         return result.result.success
 
+
 class SequencePunchBboxTwistStateAction(StateAction):
     def __init__(self,
                  node: Node,
@@ -411,7 +414,7 @@ class SequencePunchBboxTwistStateAction(StateAction):
         self.bbox_centering_twist_action_client.cancel()
         self.bbox_search_twist_action_client.cancel()
         return super().stop()
-    
+
     def get_bbox_name(self, flare_id: str):
         if flare_id == "R":
             return "small_red_flare"
@@ -421,7 +424,7 @@ class SequencePunchBboxTwistStateAction(StateAction):
             return "yellow_flare"
         else:
             return "yellow_flare"
-        
+
     def get_avoid_bbox_array(self, flare_id: str):
         if flare_id == "R":
             return ["blue_flare", "yellow_flare"]
@@ -447,15 +450,18 @@ class SequencePunchBboxTwistStateAction(StateAction):
             search_goal.pitch = float(self.pitch)
             search_goal.search_rate = float(self.search_rate)
             result: BboxSearchTwistAction_GetResult_Response = await self.bbox_search_twist_action_client.send_goal_async(search_goal)
-            
+
             centering_goal = BboxCenteringTwistAction.Goal()
             centering_goal.bbox_name = self.get_bbox_name(flare_id=flare)
             centering_goal.bbox_topic = self.bbox_topic
             centering_goal.distance_threshold = float(self.distance_threshold)
             centering_goal.lost_threshold = int(self.lost_threshold)
-            centering_goal.avoid_bbox_name_array = self.get_avoid_bbox_array(flare_id=flare)
-            centering_goal.avoid_distance_threshold = float(self.avoid_distance_threshold)
-            centering_goal.avoid_horizontal_threshold = float(self.avoid_horizontal_threshold)
+            centering_goal.avoid_bbox_name_array = self.get_avoid_bbox_array(
+                flare_id=flare)
+            centering_goal.avoid_distance_threshold = float(
+                self.avoid_distance_threshold)
+            centering_goal.avoid_horizontal_threshold = float(
+                self.avoid_horizontal_threshold)
             centering_goal.surge = float(self.surge)
             centering_goal.sway = float(self.avoid_sway)
             centering_goal.depth = float(self.depth)
@@ -476,6 +482,58 @@ class SequencePunchBboxTwistStateAction(StateAction):
             result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(punch_goal)
         self.executed = True
         return result.result.success
+
+
+class HydroacousticCenteringTwistStateAction(StateAction):
+    def __init__(self,
+                 node: Node,
+                 type: str = "HydroacousticCenteringTwist",
+                 bbox_name: str = "",
+                 bbox_topic: str = "",
+                 hydroacoustic_topic: str = "",
+                 angle_threshold: float = 0.0,
+                 distance_threshold: float = 0.0,
+                 lost_threshold: int = 0,
+                 surge: float = 0.0,
+                 sway: float = 0.0,
+                 depth: float = 0.0,
+                 roll: float = 0.0,
+                 pitch: float = 0.0,
+                 duration: float = 0.0,
+                 centering_rate: float = 0.0,
+                 **kwargs):
+        super().__init__(node=node, type=type, **kwargs)
+        self.goal = HydroacousticCenteringTwistAction.Goal()
+        self.goal.bbox_name = bbox_name
+        self.goal.bbox_topic = bbox_topic
+        self.goal.hydroacoustic_topic = hydroacoustic_topic
+        self.goal.angle_threshold = float(angle_threshold)
+        self.goal.distance_threshold = float(distance_threshold)
+        self.goal.lost_threshold = int(lost_threshold)
+        self.goal.surge = float(surge)
+        self.goal.sway = float(sway)
+        self.goal.depth = float(depth)
+        self.goal.roll = float(roll)
+        self.goal.pitch = float(pitch)
+        self.goal.duration = float(duration)
+        self.goal.centering_rate = float(centering_rate)
+
+        self.hydroacoustic_centering_twist_action_client = AsyncActionClient(
+            self.node, HydroacousticCenteringTwistAction, self.node.get_parameter('hydroacoustic_centering_twist_action').get_parameter_value().string_value)
+
+    def __repr__(self) -> str:
+        return f"type: {self.type}, bbox_name: {self.goal.bbox_name}"
+
+    def stop(self):
+        self.hydroacoustic_centering_twist_action_client.cancel()
+        return super().stop()
+
+    async def execute(self) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action")
+        result: HydroacousticCenteringTwistAction_GetResult_Response = await self.hydroacoustic_centering_twist_action_client.send_goal_async(self.goal)
+        self.executed = True
+        return result.result.success
+
 
 class SetDeviceValueStateAction(StateAction):
     def __init__(self,
@@ -527,6 +585,8 @@ def create_action(node: Node, action: dict) -> StateAction:
         return BboxSearchTwistStateAction(node=node, **action)
     elif action['type'] == "SequencePunchBboxTwist":
         return SequencePunchBboxTwistStateAction(node=node, **action)
+    elif action['type'] == "HydroacousticCenteringTwist":
+        return HydroacousticCenteringTwistStateAction(node=node, **action)
     elif action['type'] == "SetDeviceValue":
         return SetDeviceValueStateAction(node=node, **action)
     else:

@@ -52,6 +52,14 @@ add_executable(bbox_search_twist_action_server
         )
 ament_target_dependencies(bbox_search_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
 
+add_executable(hydroacoustic_centering_twist_action_server
+        include/stingray_movement/AbstractTwistActionServer.h
+        include/stingray_movement/AbstractCenteringTwistActionServer.h
+        include/stingray_movement/HydroacousticCenteringTwistActionServer.h
+        src/HydroacousticCenteringTwistActionServer.cpp
+        )
+ament_target_dependencies(hydroacoustic_centering_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+
 ## Install headers
 install(
         DIRECTORY include/${PROJECT_NAME}
@@ -62,6 +70,7 @@ install(TARGETS
         twist_action_server
         bbox_centering_twist_action_server
         bbox_search_twist_action_server
+        hydroacoustic_centering_twist_action_server
         ${PROJECT_NAME}
         DESTINATION lib/${PROJECT_NAME}
         EXPORT ${PROJECT_NAME}

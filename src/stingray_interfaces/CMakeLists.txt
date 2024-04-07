@@ -16,6 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/BboxCenteringTwistAction.action"
   "action/BboxSearchTwistAction.action"
   "action/DeviceAction.action"
+  "action/HydroacousticCenteringTwistAction.action"
   "msg/Bbox.msg"
   "msg/BboxArray.msg"
   "msg/EnableObjectDetection.msg"
