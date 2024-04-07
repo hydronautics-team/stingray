@@ -4,23 +4,14 @@ HydroacousticCenteringTwistActionServer::HydroacousticCenteringTwistActionServer
     current_target_bbox.pos_x = 1000.0;
     current_target_bbox.pos_y = 1000.0;
     current_target_bbox.pos_z = 1000.0;
-
-    current_avoid_target_bbox.pos_x = 1000.0;
-    current_avoid_target_bbox.pos_y = 1000.0;
-    current_avoid_target_bbox.pos_z = 1000.0;
+    current_target_bbox.horizontal_angle = 1000.0;
 };
 
 
 void HydroacousticCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces::msg::BboxArray &msg) {
     bool found_target = false;
     for (auto bbox : msg.bboxes) {
-        if (std::find(target_avoid_bbox_name_array.begin(), target_avoid_bbox_name_array.end(), bbox.name) != target_avoid_bbox_name_array.end()) {
-            if (bbox.pos_z < current_avoid_target_bbox.pos_z) {
-                current_avoid_target_bbox = bbox;
-            }
-        }
-
-        if (bbox.name == target_bbox_name) {
+        if (bbox.name == target_bbox_name && abs(bbox.horizontal_angle) < target_angle_threshold && abs(bbox.horizontal_angle) < abs(current_target_bbox.horizontal_angle)) {
             current_target_bbox = bbox;
             found_target = true;
             target_disappeared_counter = 0;
@@ -28,23 +19,18 @@ void HydroacousticCenteringTwistActionServer::bboxArrayCallback(const stingray_i
     }
     if (!found_target) {
         target_disappeared_counter++;
+        current_target_bbox.pos_x = 1000.0;
+        current_target_bbox.pos_y = 1000.0;
+        current_target_bbox.pos_z = 1000.0;
+        current_target_bbox.horizontal_angle = 1000.0;
     }
 };
 
-void HydroacousticCenteringTwistActionServer::hydroacousticCallback(const std_msgs::msg::Float64 &msg) {
-
-        if (bbox.name == target_bbox_name) {
-            current_target_bbox = *msg;
-            found_target = true;
-            target_disappeared_counter = 0;
-        }
-    }
-    if (!found_target) {
-        target_disappeared_counter++;
-    }
+void HydroacousticCenteringTwistActionServer::hydroacousticCallback(const std_msgs::msg::Float32 &msg) {
+    current_hydroacoustic_angle = msg.data;
 };
 
-bool HydroacousticCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::BboxCenteringTwistAction_Goal> goal) {
+bool HydroacousticCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::HydroacousticCenteringTwistAction_Goal> goal) {
     return isDepthDone(goal->depth) && isRollDone(goal->roll) && isPitchDone(goal->pitch);
 };
 
@@ -56,7 +42,7 @@ bool HydroacousticCenteringTwistActionServer::isTargetLost() {
     return target_disappeared_counter > target_lost_thresh;
 };
 
-void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::BboxCenteringTwistAction>> goal_handle) {
+void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::HydroacousticCenteringTwistAction>> goal_handle) {
 
     auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
 
@@ -79,8 +65,8 @@ void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclc
         goal->bbox_topic, 10,
         std::bind(&HydroacousticCenteringTwistActionServer::bboxArrayCallback, this, std::placeholders::_1));
 
-    AngleHydroacousticSub = _node->create_subscription<std_msgs::msg::Float64>(goal->hydroacoustic_topic, 10,
-            std::bind(&HydroacousticCenteringTwistActionServer::hydroacousticCallback, this, std::placeholders::_1));
+    angleHydroacousticSub = _node->create_subscription<std_msgs::msg::Float32>(goal->hydroacoustic_topic, 10,
+        std::bind(&HydroacousticCenteringTwistActionServer::hydroacousticCallback, this, std::placeholders::_1));
 
     // check duration
     if (goal->duration < 0.0) {
@@ -92,8 +78,8 @@ void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclc
 
     // send service request
     target_bbox_name = goal->bbox_name;
-    target_avoid_bbox_name_array = goal->avoid_bbox_name_array;
     target_distance_threshold = goal->distance_threshold;
+    target_angle_threshold = goal->angle_threshold;
     target_lost_thresh = goal->lost_threshold;
     twistSrvRequest->surge = goal->surge;
     twistSrvRequest->depth = goal->depth;
@@ -118,18 +104,10 @@ void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclc
             RCLCPP_INFO(_node->get_logger(), "Twist done, target distance: %f, closer than: %f", current_target_bbox.pos_z, target_distance_threshold);
             break;
         }
-        if (current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold && abs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold) {
-            if (current_avoid_target_bbox.pos_x < 0.0) {
-                twistSrvRequest->sway = - goal->sway;
-            } else {
-                twistSrvRequest->sway = goal->sway;
-            }
-        } 
-        twistSrvRequest->yaw = current_target_angle;
+        twistSrvRequest->yaw = current_hydroacoustic_angle;
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
         // check if service success
         twistSrvClient->async_send_request(twistSrvRequest).wait();
-        current_target_angle = 0.0;
         twistSrvRequest->yaw = 0.0;
 
         if (goal_handle->is_canceling()) {
@@ -141,9 +119,9 @@ void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclc
         // rclcpp::spin_some(_node);
         checkRate.sleep();
     }
-    current_target_angle = 0.0;
     target_disappeared_counter = 0;
     target_bbox_name = "";
+    angleHydroacousticSub.reset();
     bboxArraySub.reset();
 
     RCLCPP_INFO(_node->get_logger(), "Done moving");
@@ -161,9 +139,9 @@ void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclc
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
-    std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("hydronautics_centering_twist_action_server");
-    node->declare_parameter("bbox_centering_twist_action", "/stingray/actions/bbox_centering_twist");
-    HydroacousticCenteringTwistActionServer server = HydroacousticCenteringTwistActionServer(node, node->get_parameter("hydronautics_centering_twist_action").as_string());
+    std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("hydroacoustic_centering_twist_action_server");
+    node->declare_parameter("hydroacoustic_centering_twist_action", "/stingray/actions/hydroacoustic_centering_twist");
+    HydroacousticCenteringTwistActionServer server = HydroacousticCenteringTwistActionServer(node, node->get_parameter("hydroacoustic_centering_twist_action").as_string());
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;

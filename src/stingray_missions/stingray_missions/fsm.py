@@ -270,6 +270,8 @@ class FSM(object):
         self.node.declare_parameter(
             'bbox_centering_twist_action', '/stingray/actions/bbox_centering_twist')
         self.node.declare_parameter(
+            'hydroacoustic_centering_twist_action', '/stingray/actions/hydroacoustic_centering_twist')
+        self.node.declare_parameter(
             'device_action', '/stingray/actions/device')
         self.node.declare_parameter(
             'reset_imu_srv', '/stingray/services/reset_imu')
