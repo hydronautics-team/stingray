@@ -1,0 +1,14 @@
+# Goal
+# TODO: PUT ACTUAL DEVICE ID
+# uint8 DEVICE_DROPPER=1
+# uint8 DEVICE_LIFTER=2
+
+uint8 device
+int32 value
+float32 timeout
+---
+# Result
+bool success
+---
+# Feedback
+std_msgs/Empty empty

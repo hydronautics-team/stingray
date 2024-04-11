@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/opt/ros/iron/include/**",
+                    "/usr/include/**"
+                ]
+            },
+            "includePath": [
+                "/opt/ros/iron/include/**",
+                "/usr/include/**",
+                "${workspaceFolder}/src/stingray_movement/include",
+                "${workspaceFolder}/src/stingray_utils/include",
+                "${workspaceFolder}/install/stingray_interfaces/include/stingray_interfaces",
+                "${workspaceFolder}/src/stingray_core/src/stingray_core_communication/include",
+                "${workspaceFolder}/install/stingray_core_interfaces/include/stingray_core_interfaces",
+                "${workspaceFolder}/src/stingray_core/src/serial/include",
+                "/opt/ros/iron/include/geometry_msgs",
+                "/opt/ros/iron/include/rclcpp_action"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "c++20",
+            "compilerPathInCppPropertiesJson": "/usr/bin/gcc",
+            "mergeConfigurations": false
+        }
+    ],
+    "version": 4
+}

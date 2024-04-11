@@ -1,0 +1,36 @@
+initial: DISABLE_OBJECT_DETECTION
+states:
+  DISABLE_OBJECT_DETECTION:
+    action:
+      type: EnableObjectDetection
+      camera_topic: all
+      enable: false
+  DISABLE_STABILIZATION:
+    action:
+      type: EnableStabilization
+      depth: true
+      roll: false
+      pitch: false
+      yaw: false
+  EMERGE:
+    action: 
+      type: Twist
+      surge: 0.0
+      sway: 0.0
+      depth: -0.5
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+      duration: 15.0
+  DISABLE_DEPTH_STABILIZATION:
+    action:
+      type: EnableStabilization
+      depth: false
+      roll: false
+      pitch: false
+      yaw: false
+transitions:
+  - { trigger: ok, source: DISABLE_OBJECT_DETECTION, dest: DISABLE_STABILIZATION }
+  - { trigger: ok, source: DISABLE_STABILIZATION, dest: EMERGE }
+  - { trigger: ok, source: EMERGE, dest: DISABLE_DEPTH_STABILIZATION }
+  - { trigger: ok, source: DISABLE_DEPTH_STABILIZATION, dest: OK }

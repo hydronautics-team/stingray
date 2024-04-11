@@ -1,0 +1,11 @@
+initial: INIT
+ok_state_package_name: stingray_missions
+failed_state_package_name: stingray_missions
+abort_state_package_name: stingray_missions
+missions:
+  INIT:
+    config_name: init
+    package_name: stingray_missions
+transitions:
+  - { source: INIT, outcome: OK, dest: OK }
+  - { source: INIT, outcome: FAILED, dest: FAILED }

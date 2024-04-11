@@ -1,0 +1,37 @@
+initial: THRUSTER_PRE_INIT_INDICATION
+states:
+  THRUSTER_PRE_INIT_INDICATION:
+    action:
+      type: ThrusterIndication
+      repeat: 3
+  RESET_IMU:
+    action:
+      type: ResetIMU
+      duration: 1
+    timeout: 10
+  THRUSTER_AFTER_IMU_INDICATION:
+    action:
+      type: ThrusterIndication
+      repeat: 3
+  WAIT_SUBMERGE:
+    action:
+      type: Duration
+      duration: 10.0
+  ENABLE_STABILIZATION:
+    action:
+      type: EnableStabilization
+      depth: true
+      roll: true
+      pitch: true
+      yaw: true
+  WAIT_RUN:
+    action:
+      type: Duration
+      duration: 3.0
+transitions:
+  - { trigger: ok, source: THRUSTER_PRE_INIT_INDICATION, dest: RESET_IMU }
+  - { trigger: ok, source: RESET_IMU, dest: THRUSTER_AFTER_IMU_INDICATION }
+  - { trigger: ok, source: THRUSTER_AFTER_IMU_INDICATION, dest: WAIT_SUBMERGE }
+  - { trigger: ok, source: WAIT_SUBMERGE, dest: ENABLE_STABILIZATION }
+  - { trigger: ok, source: ENABLE_STABILIZATION, dest: WAIT_RUN }
+  - { trigger: ok, source: WAIT_RUN, dest: OK }

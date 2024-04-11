@@ -1,5 +1,5 @@
 # Special
-weights/best.pt
+*.pt
 
 # Prerequisites
 *.d
@@ -38,6 +38,8 @@ weights/best.pt
 devel/
 logs/
 build/
+log/
+install/
 bin/
 lib/
 msg_gen/
@@ -115,4 +117,3 @@ CATKIN_IGNORE
 /**/cmake-build-debug/
 
 # Visual Studio Code
-/.vscode

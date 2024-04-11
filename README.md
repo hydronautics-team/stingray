@@ -7,10 +7,10 @@ Stingray is a ROS based framework for autonomous underwater vehicles (AUV)
 </div>
 
 ## Dependencies
-- [ROS Noetic](https://wiki.ros.org/noetic) - base framework
+- [ROS2 iron](https://docs.ros.org/en/iron/index.html) - base framework
 - [YOLOv5](https://github.com/ultralytics/yolov5) - for object detection
 - [pytransitions](https://github.com/pytransitions/transitions) - for state machine
-
+- [serial](https://github.com/jinmenglei/serial.git) - for communication with stm32 and etc.
 
 # Setup Stingray framework
 
@@ -25,7 +25,7 @@ git submodule update --init --recursive
 - Install ros packages:
 
 ```bash
-sudo apt-get install ros-noetic-serial ros-noetic-usb-cam ros-noetic-rosbridge-server ros-noetic-image-view ros-noetic-actionlib ros-noetic-zbar-ros
+sudo apt-get install ros-iron-serial ros-iron-usb-cam ros-iron-rosbridge-server ros-iron-image-view ros-iron-zbar-ros
 ```
 
 - Install pytransitions dependencies
@@ -38,13 +38,13 @@ pip3 install pygraphviz transitions
 - Build
 
 ```bash
-source /opt/ros/noetic/setup.bash
+source /opt/ros/iron/setup.bash
 catkin_make
 ```
 Setup workspace before you start to work:
 
 ```bash
-source devel/setup.bash
+source install/setup.bash
 ```
 
 # Run
@@ -165,7 +165,7 @@ Provide the name of the package with weights: `WEIGHTS_PACKAGE_NAME`.
 
 # Packages
 
-## stingray_communication
+## stingray_core_communication
 
 Nodes:
 - harware_bridge - abstract bridge node between hardware and ros
@@ -188,7 +188,7 @@ Contain nodes for working with lifter device.
 FSM package allows you to create a missions for robot.
 - `AUVController` class is a high-level mission controller. 
 - `AUVMission` allows you to create custom missions.
-- `TopicEvent` listens to the topic and triggers the event when the message is received. Allows you to create custom events.
+- `SubscriptionEvent` listens to the topic and triggers the event when the message is received. Allows you to create custom events.
 
 Use `ObjectDetectionEvent` to trigger the event when the object is detected.
 

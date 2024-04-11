@@ -1,6 +1,0 @@
-# Request
-float64 value
----
-# Response
-bool success
-string message

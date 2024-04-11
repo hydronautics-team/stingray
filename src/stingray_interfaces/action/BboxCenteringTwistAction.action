@@ -1,0 +1,20 @@
+string bbox_name 
+string bbox_topic
+float32 distance_threshold
+int32 lost_threshold
+string[] avoid_bbox_name_array 
+float32 avoid_distance_threshold
+float32 avoid_horizontal_threshold
+float32 surge 
+float32 sway 
+float32 depth
+float32 roll
+float32 pitch
+float32 duration
+float32 centering_rate
+---
+# Result
+bool success
+---
+# Feedback
+std_msgs/Empty empty

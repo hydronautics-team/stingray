@@ -1,0 +1,16 @@
+string bbox_name 
+string bbox_topic
+bool first_clockwise
+int32 found_threshold
+float32 max_yaw
+float32 yaw_step
+float32 depth
+float32 roll
+float32 pitch
+float32 search_rate
+---
+# Result
+bool success
+---
+# Feedback
+std_msgs/Empty empty
