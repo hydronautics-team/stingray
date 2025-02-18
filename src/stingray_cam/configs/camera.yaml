@@ -1,0 +1,20 @@
+image_width: 640
+image_height: 480
+camera_name: front_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [447.3296, 0.000000, 326.9216, 0.000000, 600.2483, 259.8586, 0.000000, 0.000000, 1.000000]
+distortion_model: radtan
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.36871094084873407, 0.13770812146992423, -0.002057012920641659, 0.0022137169808520724, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [447.3296, 0.000000, 326.9216, 0.000000, 0.000000, 600.2483, 259.8586, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]
