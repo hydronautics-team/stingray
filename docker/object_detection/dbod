@@ -1,0 +1,1 @@
+docker build -t hydronautics/stingray:cam -f Dockerfile.od --push .

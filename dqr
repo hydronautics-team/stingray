@@ -1,0 +1,36 @@
+#!/bin/bash
+
+CONTAINER_NAME="stingray_qr_trigger"
+
+# Проверяем, запущен ли контейнер с данным именем
+RUNNING_CONTAINER=$(docker ps -q -f name="${CONTAINER_NAME}")
+
+if [ -n "$RUNNING_CONTAINER" ]; then
+    echo "Контейнер ${CONTAINER_NAME} уже запущен. Подключаемся к нему..."
+    docker exec -it "${CONTAINER_NAME}" bash
+    exit 0
+fi
+
+# Если контейнер с таким именем не запущен, то проверяем,
+# возможно он есть, но остановлен:
+STOPPED_CONTAINER=$(docker ps -aq -f name="${CONTAINER_NAME}")
+if [ -n "$STOPPED_CONTAINER" ]; then
+    echo "Контейнер ${CONTAINER_NAME} найден, но не запущен. Запускаем..."
+    docker start "${CONTAINER_NAME}"
+    # Далее заходим в bash контейнера:
+    docker exec -it "${CONTAINER_NAME}" bash
+    exit 0
+fi
+
+echo "Контейнер ${CONTAINER_NAME} не найден. Создаём и запускаем новый..."
+
+# Запускаем новый контейнер в интерактивном режиме
+docker run -it --rm \
+    --name "${CONTAINER_NAME}" \
+    --mount type=bind,source="$(pwd)",target=/stingray \
+    --mount type=bind,source="/etc/timezone",target="/etc/timezone" \
+    --mount type=bind,source="/etc/localtime",target="/etc/localtime" \
+    --ipc=host \
+    --device=/dev/video0 \
+    --net=host \
+    hydronautics/stingray:qr_trigger 
