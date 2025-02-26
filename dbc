@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CONTAINER_NAME="stingray_control_build"
+
+echo "Билдим код ..."
+
+# Запускаем новый контейнер в интерактивном режиме
+docker run -it --rm \
+    --name "${CONTAINER_NAME}" \
+    --mount type=bind,source="$(pwd)",target=/stingray \
+    --mount type=bind,source="/etc/timezone",target="/etc/timezone" \
+    --mount type=bind,source="/etc/localtime",target="/etc/localtime" \
+    --ipc=host \
+    --net=host \
+    hydronautics/stingray:control colcon build --packages-select stingray_devices stingray_interfaces stingray_launch stingray_missions stingray_movement stingray_utils

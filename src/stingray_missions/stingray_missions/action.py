@@ -4,11 +4,11 @@ import asyncio
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 from stingray_utils.acyncio import AsyncActionClient
-from stingray_interfaces.action import TwistAction, TwistAction_GetResult_Response
-from stingray_interfaces.action import BboxCenteringTwistAction, BboxCenteringTwistAction_GetResult_Response
-from stingray_interfaces.action import BboxSearchTwistAction, BboxSearchTwistAction_GetResult_Response
-from stingray_interfaces.action import HydroacousticCenteringTwistAction, HydroacousticCenteringTwistAction_GetResult_Response
-from stingray_interfaces.action import DeviceAction, DeviceAction_GetResult_Response
+from stingray_interfaces.action import TwistAction
+from stingray_interfaces.action import BboxCenteringTwistAction
+from stingray_interfaces.action import BboxSearchTwistAction
+from stingray_interfaces.action import HydroacousticCenteringTwistAction
+from stingray_interfaces.action import DeviceAction
 from stingray_interfaces.msg import EnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
 from std_srvs.srv import Trigger
@@ -211,7 +211,7 @@ class ThrusterIndicationStateAction(StateAction):
                 return False
             get_logger("action").info(
                 f"Thruster indication {i+1}/{self.repeat}")
-            result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal)
+            result = await self.twist_action_client.send_goal_async(self.goal)
             await asyncio.sleep(self.goal.duration)
         self.executed = True
         return result.result.success
@@ -251,7 +251,7 @@ class TwistStateAction(StateAction):
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(self.goal)
+        result = await self.twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
@@ -305,7 +305,7 @@ class BboxCenteringTwistStateAction(StateAction):
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: BboxCenteringTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(self.goal)
+        result = await self.bbox_centering_twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
@@ -350,7 +350,7 @@ class BboxSearchTwistStateAction(StateAction):
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: BboxSearchTwistAction_GetResult_Response = await self.bbox_search_twist_action_client.send_goal_async(self.goal)
+        result = await self.bbox_search_twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
@@ -449,7 +449,7 @@ class SequencePunchBboxTwistStateAction(StateAction):
             search_goal.roll = float(self.roll)
             search_goal.pitch = float(self.pitch)
             search_goal.search_rate = float(self.search_rate)
-            result: BboxSearchTwistAction_GetResult_Response = await self.bbox_search_twist_action_client.send_goal_async(search_goal)
+            result = await self.bbox_search_twist_action_client.send_goal_async(search_goal)
 
             centering_goal = BboxCenteringTwistAction.Goal()
             centering_goal.bbox_name = self.get_bbox_name(flare_id=flare)
@@ -469,7 +469,7 @@ class SequencePunchBboxTwistStateAction(StateAction):
             centering_goal.pitch = float(self.pitch)
             centering_goal.duration = float(self.centering_duration)
             centering_goal.centering_rate = float(self.centering_rate)
-            result: BboxCenteringTwistAction_GetResult_Response = await self.bbox_centering_twist_action_client.send_goal_async(centering_goal)
+            result = await self.bbox_centering_twist_action_client.send_goal_async(centering_goal)
 
             punch_goal = TwistAction.Goal()
             punch_goal.surge = float(70.0)
@@ -479,7 +479,7 @@ class SequencePunchBboxTwistStateAction(StateAction):
             punch_goal.pitch = float(self.pitch)
             punch_goal.yaw = float(0.0)
             punch_goal.duration = float(self.punch_duration)
-            # result: TwistAction_GetResult_Response = await self.twist_action_client.send_goal_async(punch_goal)
+            # result = await self.twist_action_client.send_goal_async(punch_goal)
         self.executed = True
         return result.result.success
 
@@ -530,7 +530,7 @@ class HydroacousticCenteringTwistStateAction(StateAction):
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: HydroacousticCenteringTwistAction_GetResult_Response = await self.hydroacoustic_centering_twist_action_client.send_goal_async(self.goal)
+        result = await self.hydroacoustic_centering_twist_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 
@@ -561,7 +561,7 @@ class SetDeviceValueStateAction(StateAction):
 
     async def execute(self) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        result: DeviceAction_GetResult_Response = await self.device_action_client.send_goal_async(self.goal)
+        result = await self.device_action_client.send_goal_async(self.goal)
         self.executed = True
         return result.result.success
 

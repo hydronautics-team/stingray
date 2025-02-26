@@ -32,4 +32,4 @@ docker run -it --rm \
     --mount type=bind,source="/etc/localtime",target="/etc/localtime" \
     --ipc=host \
     --net=host \
-    hydronautics/stingray:control
+    hydronautics/stingray:control ros2 launch stingray_launch control.launch.py
