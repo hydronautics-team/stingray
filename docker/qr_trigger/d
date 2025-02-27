@@ -32,4 +32,4 @@ docker run -it --rm \
     --device=/dev/video0 \
     --ipc=host \
     --net=host \
-    hydronautics/stingray:qr_trigger
+    hydronautics/stingray:qr_trigger ros2 launch stingray_launch zbar.launch.py
