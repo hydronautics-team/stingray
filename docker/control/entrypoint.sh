@@ -2,7 +2,7 @@
 set -e
 
 # Проверяем, существует ли файл setup.bash
-if [ -f install/setup.bash ]; then
+if [ -f /stingray/install/setup.bash ]; then
   echo "[INFO] Код уже сбилжен"
   source /stingray/install/setup.bash
 else

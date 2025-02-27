@@ -1,1 +1,0 @@
-colcon build --packages-select stingray_cam stingray_interfaces stingray_launch
