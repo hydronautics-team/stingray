@@ -1,3 +1,0 @@
-#!/bin/bash
-
-docker build -t hydronautics/stingray:qr_trigger -f Dockerfile.qr_trigger .
