@@ -86,9 +86,9 @@ class ResetIMUStateAction(DurationStateAction):
         self.reset_imu_client = self.node.create_client(
             Trigger, self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value)
 
-        while not self.reset_imu_client.wait_for_service(timeout_sec=10.0):
-            get_logger('action').info(
-                f"{self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} not available, waiting again...")
+        # if not self.reset_imu_client.wait_for_service(timeout_sec=10.0):
+        #     get_logger('action').info(
+        #         f"{self.node.get_parameter('reset_imu_srv').get_parameter_value().string_value} not available...")
 
     def __repr__(self) -> str:
         return f"type: {self.type}, duration: {self.duration}"
@@ -128,9 +128,9 @@ class EnableStabilizationStateAction(StateAction):
         self.set_stabilization_client = self.node.create_client(
             SetStabilization, self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value)
 
-        while not self.set_stabilization_client.wait_for_service(timeout_sec=10.0):
-            get_logger('action').info(
-                f'set_stabilization_srv not available, waiting again...')
+        # if not self.set_stabilization_client.wait_for_service(timeout_sec=10.0):
+        #     get_logger('action').info(
+        #         f'set_stabilization_srv not available...')
 
     def __repr__(self) -> str:
         return f"type: {self.type}, depth_stabilization: {self.srv_request.depth_stabilization}, roll_stabilization: {self.srv_request.roll_stabilization}, pitch_stabilization: {self.srv_request.pitch_stabilization}, yaw_stabilization: {self.srv_request.yaw_stabilization}"

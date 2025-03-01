@@ -1,0 +1,11 @@
+initial: CHECK
+ok_state_package_name: stingray_missions
+failed_state_package_name: stingray_missions
+chill_state_package_name: stingray_missions
+missions:
+  CHECK:
+    config_name: check
+    package_name: stingray_missions
+transitions:
+  - { source: CHECK, outcome: OK, dest: IDLE }
+  - { source: CHECK, outcome: FAILED, dest: IDLE }

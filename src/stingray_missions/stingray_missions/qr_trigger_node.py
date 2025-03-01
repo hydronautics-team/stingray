@@ -18,8 +18,8 @@ class TransitionTriggerNode(Node):
 
         self.transition_client = self.create_client(SetTransition, self.get_parameter(
             'transition_srv').get_parameter_value().string_value)
-        while not self.transition_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service not available, waiting again...')
+        if not self.transition_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service not available...')
 
         self.get_logger().info('Service avaible, waiting qr-code')
         self.subscription = self.create_subscription(
@@ -32,15 +32,18 @@ class TransitionTriggerNode(Node):
 
     def qr_callback(self, msg: String):
         self.get_logger().info("Got code: " + msg.data)
-        if (self.saved_transition == msg.data):
-            self.msg_repeated += 1
-            if (self.msg_repeated > 5):
-                self.send_request()
-                self.msg_repeated = 0
-                time.sleep(5)
-        else:
-            self.msg_repeated = 0
-            self.saved_transition = msg.data
+        self.saved_transition = msg.data
+        self.send_request()
+
+        # if (self.saved_transition == msg.data):
+        #     self.msg_repeated += 1
+        #     if (self.msg_repeated > 5):
+        #         self.send_request()
+        #         self.msg_repeated = 0
+        #         time.sleep(5)
+        # else:
+        #     self.msg_repeated = 0
+        #     self.saved_transition = msg.data
 
     def send_request(self):
         self.future = self.transition_client.call_async(SetTransition.Request(transition=self.saved_transition))

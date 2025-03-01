@@ -195,25 +195,38 @@ class ScenarioDescription:
             [self.name.lower(), State.IDLE, self.initial_state]
         ]
         for transition in self.scenario_transitions:
-            source = transition['source']
-            outcome = transition['outcome']
-            dest = transition['dest']
-            if outcome == State.OK:
+            source: str | list[str] = transition['source']
+            outcome: str = transition['outcome']
+            dest: str = transition['dest']
+            if dest == State.IDLE:
                 if isinstance(source, list):
                     for mission in source:
                         self.missions[self._custom_mission_name(mission)].set_OK_outcome(
-                            self.missions[self._custom_mission_name(dest)].initial_state)
+                            State.IDLE)
                 else:
                     self.missions[self._custom_mission_name(source)].set_OK_outcome(
-                        self.missions[self._custom_mission_name(dest)].initial_state)
-            elif outcome == State.FAILED:
-                if isinstance(source, list):
-                    for mission in source:
-                        self.missions[self._custom_mission_name(mission)].set_FAILED_outcome(
-                            self.missions[self._custom_mission_name(dest)].initial_state)
-                else:
-                    self.missions[self._custom_mission_name(source)].set_FAILED_outcome(
-                        self.missions[self._custom_mission_name(dest)].initial_state)
+                        State.IDLE)
+            else:
+                match outcome.upper():
+                    case State.OK:
+                        if isinstance(source, list):
+                            for mission in source:
+                                self.missions[self._custom_mission_name(mission)].set_OK_outcome(
+                                    self.missions[self._custom_mission_name(dest)].initial_state)
+                        else:
+                            self.missions[self._custom_mission_name(source)].set_OK_outcome(
+                                self.missions[self._custom_mission_name(dest)].initial_state)
+                    case State.FAILED:
+                        if isinstance(source, list):
+                            for mission in source:
+                                self.missions[self._custom_mission_name(mission)].set_FAILED_outcome(
+                                    self.missions[self._custom_mission_name(dest)].initial_state)
+                        else:
+                            self.missions[self._custom_mission_name(source)].set_FAILED_outcome(
+                                self.missions[self._custom_mission_name(dest)].initial_state)
+                    case _:
+                        raise ValueError(
+                            f"Invalid outcome: {outcome} in scenario {self.name}")
 
         for mission in self.missions.values():
             scenario_transitions.extend(mission.transitions)
@@ -336,7 +349,8 @@ class FSM(object):
         #     self.add_pending_transition(Transition.fail)
         else:
             self.flare_sequence = ["Y", "R", "B"]
-        get_logger("fsm").info(f"flare_sequence: {self.flare_sequence}, len: {len(self.flare_sequence)}")
+        get_logger("fsm").info(
+            f"flare_sequence: {self.flare_sequence}, len: {len(self.flare_sequence)}")
 
     def _transition_callback(self, request: SetTransition.Request, response: SetTransition.Response):
         self.add_pending_transition(request.transition)
