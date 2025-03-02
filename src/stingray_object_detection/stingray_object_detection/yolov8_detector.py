@@ -22,11 +22,13 @@ from ultralytics.data.augment import LetterBox
 from ultralytics.utils.torch_utils import select_device, time_sync
 from ultralytics.utils.ops import scale_boxes
 
+
 class YoloV8Detector(YoloDetectorBase):
     def __init__(self):
         """ YOLO v8"""
         super().__init__('yolov8_detector')
 
+    def init_yolo(self, topic: str):
         # get weights path
         self.weights_pkg_path = f'{get_package_share_directory(self.get_parameter("weights_pkg_name").get_parameter_value().string_value)}'
         self.weights_path = os.path.join(
@@ -34,12 +36,13 @@ class YoloV8Detector(YoloDetectorBase):
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "yolov8.yaml")
 
-    def init_yolo(self, topic: str):
         with torch.no_grad():
             # Load model
             self.device = select_device(self.device)
             self.model = YOLO(model=self.weights_path)
             self.names = self.model.names
+            self.get_logger().info(
+                f'Model inited from {self.weights_path} for topic {topic}')
 
     def detect(self, input_img: np.ndarray, topic: str):
         """ YOLO inference
@@ -83,7 +86,7 @@ class YoloV8Detector(YoloDetectorBase):
                     im0 = input_img.copy()
                     annotator = Annotator(
                         im0, line_width=3, example=str(self.names))
-                    
+
                 # Rescale boxes from img_size to im0 size
                 # self.get_logger().info(f"im.shape: {im.shape}")
                 # self.get_logger().info(f"input_img.shape: {input_img.shape}")
@@ -113,7 +116,8 @@ class YoloV8Detector(YoloDetectorBase):
                         annotator.box_label(
                             xyxy, label, color=colors(int(label_id), True))
 
-                    pos_x, pos_y, pos_z, horizontal_angle, vertical_angle = self.dist_calc.calcDistanceAndAngle(xyxy, label, self.camera_info[topic])
+                    pos_x, pos_y, pos_z, horizontal_angle, vertical_angle = self.dist_calc.calcDistanceAndAngle(
+                        xyxy, label, self.camera_info[topic])
 
                     bbox_msg = Bbox()
                     bbox_msg.name = label

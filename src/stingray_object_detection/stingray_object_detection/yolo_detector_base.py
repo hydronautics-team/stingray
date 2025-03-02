@@ -98,7 +98,7 @@ class YoloDetectorBase(Node):
         self.camera_info: dict[str, CameraInfo] = {}
         self.bbox_array_publishers: dict[str, Publisher] = {}
         self.image_publishers: dict[str, Publisher] = {}
-        self.inited: dict[str, bool] = {}
+        # self.inited: dict[str, bool] = {}
 
         # init cv_bridge
         self.bridge = CvBridge()
@@ -139,7 +139,8 @@ class YoloDetectorBase(Node):
                 camera_info_callback,
                 1,
             )
-            self.inited[input_topic] = False
+            self.init_yolo(input_topic)
+            # self.inited[input_topic] = False
 
             # ROS publishers
             bbox_array_pub = self.create_publisher(
@@ -175,10 +176,10 @@ class YoloDetectorBase(Node):
 
     def _camera_info_callback(self, camera_info: CameraInfo, topic: str):
         self.camera_info[topic] = camera_info
-        self.destroy_subscription(self.camera_info_subscriptions[topic])
-        del self.camera_info_subscriptions[topic]
-        self.init_yolo(topic)
-        self.inited[topic] = True
+        # self.destroy_subscription(self.camera_info_subscriptions[topic])
+        # del self.camera_info_subscriptions[topic]
+        # self.init_yolo(topic)
+        # self.inited[topic] = True
 
     def _image_callback(self, input_image: Image, topic: str):
         """ Input image callback
@@ -189,21 +190,20 @@ class YoloDetectorBase(Node):
         """
         if not self.detection_enabled[topic]:
             return
-        if self.inited[topic]:
-            try:
-                # convert ROS image to OpenCV image
-                cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
+        try:
+            # convert ROS image to OpenCV image
+            cv_image = self.bridge.imgmsg_to_cv2(input_image, "bgr8")
 
-                # detect our objects
-                bbox_array_msg, drawed_image = self.detect(cv_image, topic)
+            # detect our objects
+            bbox_array_msg, drawed_image = self.detect(cv_image, topic)
 
-                # publish results
-                self.bbox_array_publishers[topic].publish(bbox_array_msg)
-                if self.debug:
-                    ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
-                    # publish output image
-                    self.image_publishers[topic].publish(ros_image)
-            except CvBridgeError as e:
-                self.get_logger().error(f'CV Bridge error: {e}')
-            except Exception as e:
-                self.get_logger().error(f'Error: {e}')
+            # publish results
+            self.bbox_array_publishers[topic].publish(bbox_array_msg)
+            if self.debug:
+                ros_image = self.bridge.cv2_to_imgmsg(drawed_image, "bgr8")
+                # publish output image
+                self.image_publishers[topic].publish(ros_image)
+        except CvBridgeError as e:
+            self.get_logger().error(f'CV Bridge error: {e}')
+        except Exception as e:
+            self.get_logger().error(f'Error: {e}')
