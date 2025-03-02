@@ -1,0 +1,11 @@
+initial: CHECK_VISION
+ok_state_package_name: stingray_missions
+failed_state_package_name: stingray_missions
+chill_state_package_name: stingray_missions
+missions:
+  CHECK_VISION:
+    config_name: check_vision
+    package_name: stingray_missions
+transitions:
+  - { source: CHECK_VISION, outcome: OK, dest: IDLE }
+  - { source: CHECK_VISION, outcome: FAILED, dest: IDLE }

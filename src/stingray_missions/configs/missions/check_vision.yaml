@@ -1,0 +1,20 @@
+initial: ENABLE_OBJECT_DETECTION
+states:
+  ENABLE_OBJECT_DETECTION:
+    action:
+      type: EnableObjectDetection
+      camera_topic: all
+      enable: true
+  WAIT_OD_TOPIC_CHECK:
+    action:
+      type: Duration
+      duration: 10.0
+  DISABLE_OBJECT_DETECTION:
+    action:
+      type: EnableObjectDetection
+      camera_topic: all
+      enable: false
+transitions:
+  - { trigger: ok, source: ENABLE_OBJECT_DETECTION, dest: WAIT_OD_TOPIC_CHECK }
+  - { trigger: ok, source: WAIT_OD_TOPIC_CHECK, dest: DISABLE_OBJECT_DETECTION }
+  - { trigger: ok, source: DISABLE_OBJECT_DETECTION, dest: OK }
