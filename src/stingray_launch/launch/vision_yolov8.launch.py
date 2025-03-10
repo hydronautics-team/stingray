@@ -19,6 +19,9 @@ def generate_launch_description():
     image_topic_list_arg = DeclareLaunchArgument(
         "image_topic_list", default_value='[/stingray/topics/camera]'
     )
+    camera_info_topic_arg = DeclareLaunchArgument(
+        "camera_info_topic", default_value='[/stingray/topics/camera/camera_info]'
+    )
     enable_object_detection_topic_arg = DeclareLaunchArgument(
         "enable_object_detection_topic", default_value='/stingray/topics/enable_object_detection'
     )
@@ -37,6 +40,7 @@ def generate_launch_description():
         zbar_camera_topic_arg,
         zbar_topic_arg,
         image_topic_list_arg,
+        camera_info_topic_arg,
         enable_object_detection_topic_arg,
         weights_pkg_name_arg,
         bbox_attrs_pkg_name_arg,
@@ -64,6 +68,7 @@ def generate_launch_description():
                 {'weights_pkg_name': LaunchConfiguration("weights_pkg_name")},
                 {'bbox_attrs_pkg_name': LaunchConfiguration("bbox_attrs_pkg_name")},
                 {'image_topic_list': LaunchConfiguration("image_topic_list")},
+                {'camera_info_topic': LaunchConfiguration("camera_info_topic")},
                 {'enable_object_detection_topic': LaunchConfiguration(
                     "enable_object_detection_topic")},
                 {'debug': LaunchConfiguration("debug")},
