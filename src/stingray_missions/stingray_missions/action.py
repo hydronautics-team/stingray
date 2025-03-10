@@ -220,7 +220,7 @@ class ThrusterIndicationStateAction(StateAction):
 class TwistStateAction(StateAction):
     def __init__(self,
                  node: Node,
-                 type: str = "Move",
+                 type: str = "Twist",
                  surge: float = 0.0,
                  sway: float = 0.0,
                  depth: float = 0.0,

@@ -141,7 +141,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
     RCLCPP_INFO(_node->get_logger(), "Done moving");
 
     // stop maneuvr service request
-    stopTwist();
+    stopTwist(twistSrvRequest);
 
     if (rclcpp::ok()) {
         goal_result->success = true;

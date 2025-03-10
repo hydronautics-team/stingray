@@ -127,7 +127,7 @@ void HydroacousticCenteringTwistActionServer::execute(const std::shared_ptr<rclc
     RCLCPP_INFO(_node->get_logger(), "Done moving");
 
     // stop maneuvr service request
-    stopTwist();
+    stopTwist(twistSrvRequest);
 
     if (rclcpp::ok()) {
         goal_result->success = true;
