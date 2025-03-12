@@ -99,8 +99,8 @@ class YoloV8Detector(YoloDetectorBase):
                     label = self.names[int(label_id)]
 
                     # self.get_logger().info(f"prev xyxy: {xyxy}")
-                    # xyxy = scale_boxes(
-                    #     im.shape[2:], xyxy, input_img.shape).round()
+                    xyxy = scale_boxes(
+                        im.shape[2:], xyxy, input_img.shape).round()
                     # self.get_logger().info(f"xyxy: {xyxy}")
 
                     # left, top, right, bottom = xyxy

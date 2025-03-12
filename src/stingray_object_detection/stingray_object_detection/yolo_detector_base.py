@@ -51,6 +51,8 @@ class YoloDetectorBase(Node):
         self.declare_parameter(
             'image_topic_list', ['/stingray/topics/front_camera'])
         self.declare_parameter(
+            'camera_info_topic_list', ['/stingray/topics/front_camera/camera_info'])
+        self.declare_parameter(
             'debug', True)
         self.declare_parameter(
             'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
