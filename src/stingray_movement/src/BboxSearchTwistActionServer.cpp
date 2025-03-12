@@ -21,7 +21,8 @@ void BboxSearchTwistActionServer::bboxArrayCallback(const stingray_interfaces::m
 
 bool BboxSearchTwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::BboxSearchTwistAction_Goal> goal) {
 
-    return isDepthDone(goal->depth) && isRollDone(goal->roll) && isPitchDone(goal->pitch);
+    return true;
+    isDepthDone(goal->depth) && isRollDone(goal->roll) && isPitchDone(goal->pitch);
 };
 
 bool BboxSearchTwistActionServer::isSearchTwistDone() {
@@ -89,7 +90,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
         // check if service success
         twistSrvClient->async_send_request(twistSrvRequest).wait();
-        twistSrvRequest->yaw = 0.0;
+        //twistSrvRequest->yaw = 0.0;
 
         if (goal_handle->is_canceling()) {
             goal_result->success = false;
@@ -117,10 +118,11 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
             break;
         }
         twistSrvRequest->yaw -= target_yaw_step;
+        if (twistSrvRequest->yaw < 0) { twistSrvRequest->yaw = 360 - twistSrvRequest->yaw; }
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
         // check if service success
         twistSrvClient->async_send_request(twistSrvRequest).wait();
-        twistSrvRequest->yaw = 0.0;
+        //twistSrvRequest->yaw = 0.0;
 
         if (goal_handle->is_canceling()) {
             goal_result->success = false;
