@@ -49,9 +49,9 @@ class YoloDetectorBase(Node):
         self.declare_parameter(
             'bbox_attrs_pkg_name', 'stingray_object_detection')
         self.declare_parameter(
-            'image_topic_list', ['/stingray/topics/front_camera'])
+            'image_topic_list', ['/stingray/topics/camera/front'])
         self.declare_parameter(
-            'camera_info_topic_list', ['/stingray/topics/front_camera/camera_info'])
+            'camera_info_topic_list', ['/stingray/topics/camera/front/camera_info'])
         self.declare_parameter(
             'debug', True)
         self.declare_parameter(
