@@ -140,7 +140,7 @@ class EnableStabilizationStateAction(StateActionBase):
             get_logger('action').error(
                 f"Wait for {self.node.get_parameter('set_stabilization_srv').get_parameter_value().string_value} timed out")
             return False
-        await super().execute(**kwargs)
+        return await super().execute(**kwargs)
 
 
 class EnableObjectDetectionStateAction(StateActionBase):
@@ -166,7 +166,7 @@ class EnableObjectDetectionStateAction(StateActionBase):
         self.msg.enable = enable
 
         self._enable_object_detection_pub.publish(self.msg)
-        await super().execute(**kwargs)
+        return await super().execute(**kwargs)
 
 
 class ThrusterIndicationStateAction(StateActionBase):
