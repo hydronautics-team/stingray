@@ -81,6 +81,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
             break;
         }
         if (abs(current_uv_state.yaw - start_yaw) > goal->max_yaw) {
+            RCLCPP_INFO(_node->get_logger(), "Max reached max_yaw: %f", goal->max_yaw, current_uv_state.yaw, start_yaw);
             twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
             twistSrvClient->async_send_request(twistSrvRequest).wait();
             twistSrvRequest->yaw = 0.0;
