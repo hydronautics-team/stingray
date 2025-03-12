@@ -105,22 +105,22 @@ public:
     {
         twistSrvRequest->surge = 0.0;
         twistSrvRequest->sway = 0.0;
-        if (!current_uv_state.yaw_stabilization)
-        {
-            twistSrvRequest->yaw = 0.0;
-        }
-        if (!current_uv_state.depth_stabilization)
-        {
-            twistSrvRequest->depth = 0.0;
-        }
-        if (!current_uv_state.roll_stabilization)
-        {
-            twistSrvRequest->roll = 0.0;
-        }
-        if (!current_uv_state.pitch_stabilization)
-        {
-            twistSrvRequest->pitch = 0.0;
-        }
+        // if (!current_uv_state.yaw_stabilization)
+        // {
+        //     twistSrvRequest->yaw = 0.0;
+        // }
+        // if (!current_uv_state.depth_stabilization)
+        // {
+        //     twistSrvRequest->depth = 0.0;
+        // }
+        // if (!current_uv_state.roll_stabilization)
+        // {
+        //     twistSrvRequest->roll = 0.0;
+        // }
+        // if (!current_uv_state.pitch_stabilization)
+        // {
+        //     twistSrvRequest->pitch = 0.0;
+        // }
         RCLCPP_INFO(this->_node->get_logger(), "Twist action request stop yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
         twistSrvClient->async_send_request(twistSrvRequest).wait();
     }

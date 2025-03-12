@@ -81,10 +81,10 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
             break;
         }
         if (abs(current_uv_state.yaw - start_yaw) > goal->max_yaw) {
-            RCLCPP_INFO(_node->get_logger(), "Max reached max_yaw: %f", goal->max_yaw, current_uv_state.yaw, start_yaw);
-            twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
-            twistSrvClient->async_send_request(twistSrvRequest).wait();
-            twistSrvRequest->yaw = 0.0;
+            RCLCPP_INFO(_node->get_logger(), "Max reached max_yaw: %f, current yaw: %f, start yaw:  %f", goal->max_yaw, current_uv_state.yaw, start_yaw);
+            // twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
+            // twistSrvClient->async_send_request(twistSrvRequest).wait();
+            // twistSrvRequest->yaw = 0.0;
             break;
         }
         twistSrvRequest->yaw += target_yaw_step;
@@ -103,37 +103,37 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
         checkRate.sleep();
     }
 
-    start_yaw = current_uv_state.yaw;
+    // start_yaw = current_uv_state.yaw;
 
-    while (rclcpp::ok()) {
-        if (isTwistDone(goal) && isSearchTwistDone()) {
-            RCLCPP_INFO(_node->get_logger(), "Twist done, target found, target yaw: %f", found_target_yaw);
-            twistSrvRequest->yaw = found_target_yaw;
-            twistSrvClient->async_send_request(twistSrvRequest).wait();
-            break;
-        }
-        if (abs(current_uv_state.yaw - start_yaw) > 2 * goal->max_yaw) {
-            twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
-            twistSrvClient->async_send_request(twistSrvRequest).wait();
-            twistSrvRequest->yaw = 0.0;
-            break;
-        }
-        twistSrvRequest->yaw -= target_yaw_step;
-        if (twistSrvRequest->yaw < 0) { twistSrvRequest->yaw = 360 - twistSrvRequest->yaw; }
-        RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
-        // check if service success
-        twistSrvClient->async_send_request(twistSrvRequest).wait();
-        //twistSrvRequest->yaw = 0.0;
+    // while (rclcpp::ok()) {
+    //     if (isTwistDone(goal) && isSearchTwistDone()) {
+    //         RCLCPP_INFO(_node->get_logger(), "Twist done, target found, target yaw: %f", found_target_yaw);
+    //         twistSrvRequest->yaw = found_target_yaw;
+    //         twistSrvClient->async_send_request(twistSrvRequest).wait();
+    //         break;
+    //     }
+    //     if (abs(current_uv_state.yaw - start_yaw) > 2 * goal->max_yaw) {
+    //         twistSrvRequest->yaw += start_yaw - current_uv_state.yaw;
+    //         twistSrvClient->async_send_request(twistSrvRequest).wait();
+    //         twistSrvRequest->yaw = 0.0;
+    //         break;
+    //     }
+    //     twistSrvRequest->yaw -= target_yaw_step;
+    //     if (twistSrvRequest->yaw < 0) { twistSrvRequest->yaw = 360 - twistSrvRequest->yaw; }
+    //     RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, twistSrvRequest->yaw, twistSrvRequest->surge);
+    //     // check if service success
+    //     twistSrvClient->async_send_request(twistSrvRequest).wait();
+    //     //twistSrvRequest->yaw = 0.0;
 
-        if (goal_handle->is_canceling()) {
-            goal_result->success = false;
-            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
-            goal_handle->canceled(goal_result);
-            return;
-        }
-        // rclcpp::spin_some(_node);
-        checkRate.sleep();
-    }
+    //     if (goal_handle->is_canceling()) {
+    //         goal_result->success = false;
+    //         RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+    //         goal_handle->canceled(goal_result);
+    //         return;
+    //     }
+    //     // rclcpp::spin_some(_node);
+    //     checkRate.sleep();
+    // }
 
     target_yaw_step = 0.0;
     target_found_threshold = 0;
