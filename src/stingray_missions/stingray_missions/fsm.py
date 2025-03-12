@@ -25,6 +25,8 @@ class FSM(object):
         self.registered_states: dict[str, StateDescription] = {}
         self.registered_actions: dict[str, StateActionBase] = actions
 
+        get_logger("fsm").info(f"Registering actions: {list(self.registered_actions.keys())}")
+
         self.expiration_timer = None
         self.wait_action_success_event = asyncio.Event()
         self.lock_coroutine = asyncio.Lock()
@@ -84,7 +86,7 @@ class FSM(object):
 
     def set_failed(self):
         self.add_pending_transition(Transition.fail)
-    
+
     def set_timeout(self):
         self.add_pending_transition(Transition.timeout)
 
@@ -108,15 +110,24 @@ class FSM(object):
 
     async def process_pending_action(self):
         if self.pending_action:
+            if self.registered_actions is None:
+                get_logger("fsm").error(
+                    f"No actions registered")
+                self.pending_action = None
+                self.set_failed()
+                return
+            
+            get_logger("fsm").info(
+                f'{self.pending_action["type"]} executing: {self.pending_action}')
             if not "type" in self.pending_action:
                 get_logger("fsm").warning(
                     f'No action type in {self.pending_action}')
                 self.set_failed()
                 return
+            
             self.wait_action_success_event.clear()
             if self.pending_action["type"] in self.registered_actions:
-                get_logger("fsm").info(
-                    f'{self.pending_action["type"]} executing: {self.pending_action}')
+
                 action = self.registered_actions[self.pending_action["type"]]
                 result = await action.execute(**self.pending_action)
                 get_logger("fsm").info(
@@ -185,29 +196,33 @@ class FSM(object):
                     f"Cancel expiration timer for {self.state}")
             self.node.destroy_timer(self.expiration_timer)
             self.expiration_timer = None
+
         # stop action and wait until executed
         if self.pending_action:
+            if self.registered_actions is None:
+                get_logger("fsm").error(
+                    f"No actions registered")
+                self.pending_action = None
+                return
+            
+            get_logger("fsm").info(
+                    f'{self.pending_action["type"]} stopping: {self.pending_action}')
             if self.pending_action["type"] in self.registered_actions:
-                get_logger("fsm").info(
-                    f'{self.pending_action["type"]} executing: {self.pending_action}')
                 action = self.registered_actions[self.pending_action["type"]]
                 if not action.executed:
                     action.stop()
                 try:
-                    await asyncio.wait_for(self.wait_action_success_event.wait(), timeout=5)
+                    await asyncio.wait_for(self.wait_action_success_event.wait(), timeout=1)
                 except asyncio.TimeoutError:
                     get_logger("fsm").error(
                         f"Stopping {action.type} timed out")
-                    action.stopped = False
-                    action.executed = False 
-                    self.pending_action = None
-                    self.set_timeout()
-                    return
+                action.stopped = False
+                action.executed = False
+                self.pending_action = None
                 self.wait_action_success_event.clear()
             else:
                 get_logger("fsm").error(
                     f'Action {self.pending_action["type"]} not found')
-                self.set_failed()
                 return
 
         get_logger("fsm").info(f"{self.state} ended")

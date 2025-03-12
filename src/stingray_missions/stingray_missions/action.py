@@ -221,9 +221,6 @@ class TwistStateAction(StateActionBase):
         self.twist_action_client = AsyncActionClient(
             self.node, TwistAction, self.node.get_parameter('twist_action').get_parameter_value().string_value)
 
-    def __repr__(self) -> str:
-        return f"type: {self.type}, surge: {self.goal.surge}, sway: {self.goal.sway}, depth: {self.goal.depth}, roll: {self.goal.roll}, pitch: {self.goal.pitch}, yaw: {self.goal.yaw}, duration: {self.goal.duration}"
-
     def stop(self):
         get_logger("action").info(
             f"Stopping {self.type} action")
@@ -271,9 +268,6 @@ class BboxCenteringTwistStateAction(StateActionBase):
 
         self.bbox_centering_twist_action_client = AsyncActionClient(
             self.node, BboxCenteringTwistAction, self.node.get_parameter('bbox_centering_twist_action').get_parameter_value().string_value)
-
-    def __repr__(self) -> str:
-        return f"type: {self.type}, bbox_name: {self.goal.bbox_name}"
 
     def stop(self):
         get_logger("action").info(
