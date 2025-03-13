@@ -1,20 +1,12 @@
 import rclpy
-from rclpy.logging import get_logger
-from rclpy.node import Node
-from rclpy.publisher import Publisher
-from sensor_msgs.msg import Image, CameraInfo
 from ament_index_python import get_package_share_directory
-from cv_bridge import CvBridge, CvBridgeError
 
 import numpy as np
 import os
 import torch
-from functools import partial
 
 from stingray_object_detection.yolo_detector_base import YoloDetectorBase
 from stingray_interfaces.msg import Bbox, BboxArray
-from stingray_interfaces.msg import EnableObjectDetection
-from stingray_object_detection.distance import DistanceCalculator
 
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors

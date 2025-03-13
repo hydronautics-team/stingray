@@ -19,7 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/HydroacousticCenteringTwistAction.action"
   "msg/Bbox.msg"
   "msg/BboxArray.msg"
-  "msg/EnableObjectDetection.msg"
+  "msg/EnableTopic.msg"
   DEPENDENCIES std_msgs
 )
 
