@@ -19,16 +19,19 @@ def generate_launch_description():
         DeclareLaunchArgument('record_dir', default_value='./records/',
                                 description='Путь к папке для сохранения записей'),
         # Аргументы для первой камеры
-        DeclareLaunchArgument('camera_topic', default_value='/stingray/topics/camera/front',
+        DeclareLaunchArgument('source_topic', default_value='/stingray/topics/camera',
                                 description='Топик с изображениями для первой камеры'),
+        DeclareLaunchArgument('recorder_name', default_value='camera_recorder',
+                                description='Название ноды'),
+        
 
         # Нода для первой камеры
         Node(
             package='stingray_recorder',  # замените на имя вашего пакета
             executable='video_recorder_node',  # имя исполняемого файла ноды
-            name='front_camera_video_recorder',
+            name=LaunchConfiguration('recorder_name'),
             parameters=[
-                {'source_topic': LaunchConfiguration('camera_topic')},
+                {'source_topic': LaunchConfiguration('source_topic')},
                 {'output_width': LaunchConfiguration('output_width')},
                 {'output_height': LaunchConfiguration('output_height')},
                 {'output_fps': LaunchConfiguration('output_fps')},
