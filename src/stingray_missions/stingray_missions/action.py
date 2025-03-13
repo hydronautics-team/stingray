@@ -11,7 +11,7 @@ from stingray_interfaces.action import HydroacousticCenteringTwistAction
 from stingray_interfaces.action import DeviceAction
 from stingray_interfaces.msg import EnableObjectDetection
 from stingray_core_interfaces.srv import SetStabilization
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, SetBool
 
 
 class StateActionBase():
@@ -169,6 +169,42 @@ class EnableObjectDetectionStateAction(StateActionBase):
         return await super().execute(**kwargs)
 
 
+class EnableVideoRecordingStateAction(StateActionBase):
+    type = "EnableVideoRecording"
+
+    def __init__(self, node: Node):
+        super().__init__(node=node)
+
+        self.set_recording_client = self.node.create_client(
+            SetBool, self.node.get_parameter('set_recording_srv').get_parameter_value().string_value)
+
+    async def execute(self,
+                      enable: bool = False,
+                      **kwargs) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action. Enable recording: {enable}")
+
+        self.srv_request = SetBool.Request()
+        self.srv_request.data = enable
+
+        if not self.set_recording_client.wait_for_service(timeout_sec=1.0):
+            get_logger('action').info(
+                f"{self.set_recording_client.srv_name} not available...")
+            return False
+
+        try:
+            self.future: SetBool.Response = await asyncio.wait_for(self.set_recording_client.call_async(self.srv_request), timeout=1.0)
+            if not self.future.success:
+                get_logger('action').error(
+                    f"Error while waiting for {self.set_recording_client.srv_name}: {self.future.message}")
+                return False
+        except asyncio.TimeoutError:
+            get_logger('action').error(
+                f"Wait for {self.set_recording_client.srv_name} timed out")
+            return False
+
+        return await super().execute(**kwargs)
+
+
 class ThrusterIndicationStateAction(StateActionBase):
     type = "ThrusterIndication"
 
@@ -189,7 +225,7 @@ class ThrusterIndicationStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
 
-        if not self.twist_action_client.wait_for_server(timeout_sec=1.0): 
+        if not self.twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.twist_action_client._action_name} action server")
             return False
@@ -237,8 +273,8 @@ class TwistStateAction(StateActionBase):
                       duration: float = 0.0,
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        
-        if not self.twist_action_client.wait_for_server(timeout_sec=1.0): 
+
+        if not self.twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.twist_action_client._action_name} action server")
             return False
@@ -293,7 +329,7 @@ class BboxCenteringTwistStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
 
-        if not self.bbox_centering_twist_action_client.wait_for_server(timeout_sec=1.0): 
+        if not self.bbox_centering_twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.bbox_centering_twist_action_client._action_name} action server")
             return False
@@ -352,11 +388,11 @@ class BboxSearchTwistStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
 
-        if not self.bbox_search_twist_action_client.wait_for_server(timeout_sec=1.0): 
+        if not self.bbox_search_twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.bbox_search_twist_action_client._action_name} action server")
             return False
-        
+
         self.goal = BboxSearchTwistAction.Goal()
         self.goal.bbox_name = bbox_name
         self.goal.bbox_topic = bbox_topic
@@ -399,8 +435,8 @@ class SetDeviceValueStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(
             f"Executing {self.type}. Device: {device}, Value: {value}")
-        
-        if not self.device_action_client.wait_for_server(timeout_sec=1.0): 
+
+        if not self.device_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.device_action_client._action_name} action server")
             return False
@@ -425,6 +461,7 @@ def load_stingray_actions(node: Node) -> dict[str, StateActionBase]:
         ResetIMUStateAction.type: ResetIMUStateAction(node),
         EnableStabilizationStateAction.type: EnableStabilizationStateAction(node),
         EnableObjectDetectionStateAction.type: EnableObjectDetectionStateAction(node),
+        EnableVideoRecordingStateAction.type: EnableVideoRecordingStateAction(node),
         ThrusterIndicationStateAction.type: ThrusterIndicationStateAction(node),
         TwistStateAction.type: TwistStateAction(node),
         BboxCenteringTwistStateAction.type: BboxCenteringTwistStateAction(node),

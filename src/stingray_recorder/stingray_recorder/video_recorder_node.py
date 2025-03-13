@@ -6,7 +6,7 @@ from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
-from std_srvs.srv import Trigger
+from std_srvs.srv import SetBool
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -33,14 +33,24 @@ class VideoRecorderNode(Node):
         self.declare_parameter('output_fps', 15)
         self.declare_parameter('output_format', 'h264')
         self.declare_parameter('record_dir', "./records/")
+        self.declare_parameter('set_recording_srv',
+                               '/stingray/services/set_recording_srv')
 
         # Получение параметров
-        self.source_topic = self.get_parameter('source_topic').get_parameter_value().string_value
-        self.output_width = self.get_parameter('output_width').get_parameter_value().integer_value
-        self.output_height = self.get_parameter('output_height').get_parameter_value().integer_value
-        self.output_fps = self.get_parameter('output_fps').get_parameter_value().integer_value
-        self.output_format = self.get_parameter('output_format').get_parameter_value().string_value
-        self.record_dir = self.get_parameter('record_dir').get_parameter_value().string_value
+        self.source_topic = self.get_parameter(
+            'source_topic').get_parameter_value().string_value
+        self.output_width = self.get_parameter(
+            'output_width').get_parameter_value().integer_value
+        self.output_height = self.get_parameter(
+            'output_height').get_parameter_value().integer_value
+        self.output_fps = self.get_parameter(
+            'output_fps').get_parameter_value().integer_value
+        self.output_format = self.get_parameter(
+            'output_format').get_parameter_value().string_value
+        self.record_dir = self.get_parameter(
+            'record_dir').get_parameter_value().string_value
+        self.set_recording_srv = self.get_parameter(
+            'set_recording_srv').get_parameter_value().string_value
 
         self.bridge = CvBridge()
 
@@ -49,8 +59,8 @@ class VideoRecorderNode(Node):
             Image, self.source_topic, self.callback_image, 10)
 
         # Сервисы для старта и остановки записи
-        self.start_service = self.create_service(Trigger, 'start_recording', self.handle_start_recording)
-        self.stop_service = self.create_service(Trigger, 'stop_recording', self.handle_stop_recording)
+        self.enable_recording_service = self.create_service(SetBool, self.get_parameter(
+            'set_recording_srv').get_parameter_value().string_value, self.enable_recording)
 
         self.recording = False
         self.video_writer = None
@@ -67,7 +77,13 @@ class VideoRecorderNode(Node):
         if self.recording and self.video_writer is not None:
             self.video_writer.write(cv_image)
 
-    def handle_start_recording(self, request, response):
+    def enable_recording(self, request: SetBool.Request, response: SetBool.Response):
+        if request.data:
+            return self.start_recording(response)
+        else:
+            return self.stop_recording(response)
+
+    def start_recording(self, response: SetBool.Response):
         if self.recording:
             response.success = False
             response.message = "Запись уже запущена."
@@ -110,7 +126,7 @@ class VideoRecorderNode(Node):
         self.get_logger().info(response.message)
         return response
 
-    def handle_stop_recording(self, request, response):
+    def stop_recording(self, response: SetBool.Response):
         if not self.recording:
             response.success = False
             response.message = "Запись не активна."
