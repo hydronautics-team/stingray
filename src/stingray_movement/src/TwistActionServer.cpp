@@ -44,7 +44,7 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
     twistSrvRequest->depth = goal->depth;
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
-    twistSrvRequest->yaw = goal->yaw;
+    twistSrvRequest->yaw = current_uv_state.yaw + goal->yaw;
     target_yaw = current_uv_state.yaw + goal->yaw;
 
     RCLCPP_INFO(_node->get_logger(), "request target_yaw: %f, surge: %f", target_yaw, twistSrvRequest->surge);
@@ -66,6 +66,9 @@ void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalH
             goal_result->success = false;
             goal_handle->canceled(goal_result);
             RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+
+            // stop maneuvr service request
+            stopTwist(twistSrvRequest);
             return;
         }
         // rclcpp::spin_some(_node);

@@ -97,6 +97,14 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
             goal_result->success = false;
             RCLCPP_INFO(_node->get_logger(), "Goal canceled");
             goal_handle->canceled(goal_result);
+
+            target_yaw_step = 0.0;
+            target_found_threshold = 0;
+            target_found_counter = 0;
+            target_bbox_name = "";
+            bboxArraySub.reset();
+            // stop maneuvr service request
+            stopTwist(twistSrvRequest);
             return;
         }
         // rclcpp::spin_some(_node);
