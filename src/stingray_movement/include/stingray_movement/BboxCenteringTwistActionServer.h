@@ -7,6 +7,8 @@
 #include "stingray_utils/AsyncTimer.h"
 #include "stingray_interfaces/msg/bbox_array.hpp"
 
+#include <string.h>
+
 using namespace std::chrono_literals;
 
 /**
