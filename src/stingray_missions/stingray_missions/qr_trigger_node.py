@@ -38,7 +38,7 @@ class TransitionTriggerNode(Node):
         # Если код совпадает с предыдущим, проверяем задержку 3 секунды
         if self.saved_transition == msg.data:
             if current_time - self.last_sent_time < 3:
-                self.get_logger().info("Получен тот же QR-код, ждем 3 секунды перед повторной отправкой")
+                # self.get_logger().info("Получен тот же QR-код, ждем 3 секунды перед повторной отправкой")
                 return
 
         # Обновляем сохранённый код и время последней отправки

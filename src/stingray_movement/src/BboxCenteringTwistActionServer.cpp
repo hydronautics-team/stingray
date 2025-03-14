@@ -24,7 +24,7 @@ void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces
         // RCLCPP_INFO(_node->get_logger(), "Current Avoid x: %f, y: %f, z: %f", current_avoid_target_bbox.pos_x, current_avoid_target_bbox.pos_y, current_avoid_target_bbox.pos_z);
         
         if (std::find(target_avoid_bbox_name_array.begin(), target_avoid_bbox_name_array.end(), bbox.name) != target_avoid_bbox_name_array.end()) {
-            // RCLCPP_INFO(_node->get_logger(), "Found %s: %f, y: %f, z: %f", bbox.name.c_str(), bbox.pos_x, bbox.pos_y, bbox.pos_z);
+            RCLCPP_INFO(_node->get_logger(), "Found %s: %f, y: %f, z: %f", bbox.name.c_str(), bbox.pos_x, bbox.pos_y, bbox.pos_z);
             if (bbox.pos_z < current_avoid_target_bbox.pos_z) {
                 current_avoid_target_bbox = bbox;
             }
@@ -108,11 +108,46 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     while (rclcpp::ok()) {
         if (isTargetLost()) {
             RCLCPP_ERROR(_node->get_logger(), "Target lost!");
+            goal_result->success = false;
+            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+            
+            target_disappeared_counter = 0;
+            current_target_bbox.pos_x = 1000.0;
+            current_target_bbox.pos_y = 1000.0;
+            current_target_bbox.pos_z = 1000.0;
+            current_target_bbox.horizontal_angle = 0.0;
+            current_avoid_target_bbox.pos_x = 1000.0;
+            current_avoid_target_bbox.pos_y = 1000.0;
+            current_avoid_target_bbox.pos_z = 1000.0;
+            target_bbox_name = "";
+            bboxArraySub.reset();
+            
+            // stop maneuvr service request
+            stopTwist(twistSrvRequest);
+            goal_handle->succeed(goal_result);
+            return;
         }
 
         if (!timer.isBusy() && isTargetLost()) {
             RCLCPP_ERROR(_node->get_logger(), "Twist done by duration %f, target lost!", goal->duration);
-            break;
+            goal_result->success = false;
+            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+            
+            target_disappeared_counter = 0;
+            current_target_bbox.pos_x = 1000.0;
+            current_target_bbox.pos_y = 1000.0;
+            current_target_bbox.pos_z = 1000.0;
+            current_target_bbox.horizontal_angle = 0.0;
+            current_avoid_target_bbox.pos_x = 1000.0;
+            current_avoid_target_bbox.pos_y = 1000.0;
+            current_avoid_target_bbox.pos_z = 1000.0;
+            target_bbox_name = "";
+            bboxArraySub.reset();
+            
+            // stop maneuvr service request
+            stopTwist(twistSrvRequest);
+            goal_handle->succeed(goal_result);
+            return;
         }
 
         if (isTwistDone(goal) && isCenteringTwistDone()) {
@@ -146,7 +181,7 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
             RCLCPP_INFO(_node->get_logger(), "Move sway to gate: %f", twistSrvRequest->sway);
         }
 
-        RCLCPP_INFO(_node->get_logger(), "Target x: %f, y: %f, z: %f", current_target_bbox.pos_x, current_target_bbox.pos_y, current_target_bbox.pos_z);
+        RCLCPP_INFO(_node->get_logger(), "Target dist: %f", current_target_bbox.pos_z);
         twistSrvRequest->yaw = current_uv_state.yaw + current_target_bbox.horizontal_angle;
         RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, current_target_bbox.horizontal_angle, twistSrvRequest->surge);
         // check if service success

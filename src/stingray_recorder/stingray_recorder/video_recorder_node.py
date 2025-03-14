@@ -76,7 +76,36 @@ class VideoRecorderNode(Node):
             self.get_logger().error(f'Ошибка конвертации изображения: {e}')
             return
 
-        if self.recording and self.video_writer is not None:
+        if self.recording:
+            # Если VideoWriter ещё не создан, создаём его при первом полученном кадре
+            if self.video_writer is None:
+                date_str = datetime.datetime.now().strftime("%Y_%m_%d")
+                topic_name = self.source_topic.lstrip('/').replace('/', '_')
+                base_path = Path(self.record_dir) / date_str / topic_name
+                base_path.mkdir(parents=True, exist_ok=True)
+
+                timestamp_str = datetime.datetime.now().strftime("%H_%M_%S")
+                filename = f"{timestamp_str}.avi"
+                full_path = str(base_path / filename)
+
+                opencv_ver = opencv_version()
+                if opencv_ver == 2:
+                    fourcc = cv2.cv.FOURCC(*self.output_format)
+                elif opencv_ver in [3, 4]:
+                    fourcc = cv2.VideoWriter_fourcc(*self.output_format)
+                else:
+                    self.get_logger().error("Неподдерживаемая версия OpenCV.")
+                    return
+
+                self.video_writer = cv2.VideoWriter(full_path, fourcc, self.output_fps,
+                                                    (self.output_width, self.output_height))
+                if not self.video_writer.isOpened():
+                    self.get_logger().error(f"Не удалось открыть видеозапись для файла {full_path}.")
+                    self.recording = False
+                    return
+
+                self.get_logger().info(f"Начата запись видео в файл {full_path}")
+
             self.video_writer.write(cv_image)
 
     def enable_recording(self, msg: EnableTopic):
@@ -93,36 +122,8 @@ class VideoRecorderNode(Node):
             self.get_logger().info("Запись уже запущена.")
             return
 
-        # Формирование пути для сохранения: record_dir/YYYY_MM_DD/topic_name/
-        date_str = datetime.datetime.now().strftime("%Y_%m_%d")
-        topic_name = self.source_topic.lstrip('/').replace('/', '_')
-        base_path = Path(self.record_dir) / date_str / topic_name
-        base_path.mkdir(parents=True, exist_ok=True)
-
-        # Формирование имени файла с отметкой времени
-        timestamp_str = datetime.datetime.now().strftime("%H_%M_%S")
-        filename = f"{timestamp_str}.avi"
-        full_path = str(base_path / filename)
-
-        # Инициализация VideoWriter
-        opencv_ver = opencv_version()
-        if opencv_ver == 2:
-            fourcc = cv2.cv.FOURCC(*self.output_format)
-        elif opencv_ver in [3, 4]:
-            fourcc = cv2.VideoWriter_fourcc(*self.output_format)
-        else:
-            self.get_logger().error("Неподдерживаемая версия OpenCV.")
-            return
-
-        self.video_writer = cv2.VideoWriter(full_path, fourcc, self.output_fps,
-                                            (self.output_width, self.output_height))
-        if not self.video_writer.isOpened():
-            self.get_logger().error(
-                f"Не удалось открыть видеозапись для файла {full_path}.")
-            return
-
         self.recording = True
-        self.get_logger().info(f"Запись начата. Файл: {full_path}")
+        self.get_logger().info(f"Запись запущена. Ожидание первого кадра...")
         return
 
     def stop_recording(self):
