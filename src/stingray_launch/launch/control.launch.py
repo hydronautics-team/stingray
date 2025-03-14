@@ -22,8 +22,8 @@ def generate_launch_description():
     )
 
     # recording
-    set_recording_srv_arg = DeclareLaunchArgument(
-        "set_recording_srv", default_value='/stingray/services/set_recording'
+    enable_recording_topic_arg = DeclareLaunchArgument(
+        "enable_recording_topic", default_value='/stingray/topics/enable_recording'
     )
 
     # movement
@@ -77,7 +77,7 @@ def generate_launch_description():
         mission_package_names_arg,
         transition_srv_arg,
         enable_object_detection_topic_arg,
-        set_recording_srv_arg,
+        enable_recording_topic_arg,
         zbar_topic_arg,
         twist_action_arg,
         bbox_centering_twist_action_arg,
@@ -117,8 +117,8 @@ def generate_launch_description():
                     "enable_thrusters_srv")},
                 {'enable_object_detection_topic': LaunchConfiguration(
                     "enable_object_detection_topic")},
-                {'set_recording_srv': LaunchConfiguration(
-                    "set_recording_srv")},
+                {'enable_recording_topic': LaunchConfiguration(
+                    "enable_recording_topic")},
             ],
             respawn=True,
             respawn_delay=1,

@@ -34,7 +34,7 @@ class VideoRecorderNode(Node):
         self.declare_parameter('output_format', 'h264')
         self.declare_parameter('record_dir', "./records/")
         self.declare_parameter('enable_recording_topic',
-                               '/stingray/topics/enable_recording_detection')
+                               '/stingray/topics/enable_recording')
 
         # Получение параметров
         self.source_topic = self.get_parameter(

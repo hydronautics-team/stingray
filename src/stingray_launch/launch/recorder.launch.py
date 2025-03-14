@@ -23,6 +23,8 @@ def generate_launch_description():
                                 description='Топик с изображениями для первой камеры'),
         DeclareLaunchArgument('recorder_name', default_value='camera_recorder',
                                 description='Название ноды'),
+        DeclareLaunchArgument("enable_recording_topic", 
+                                default_value='/stingray/topics/enable_recording'),
         
 
         # Нода для первой камеры
@@ -37,6 +39,7 @@ def generate_launch_description():
                 {'output_fps': LaunchConfiguration('output_fps')},
                 {'output_format': LaunchConfiguration('output_format')},
                 {'record_dir': LaunchConfiguration('record_dir')},
+                {'enable_recording_topic': LaunchConfiguration('enable_recording_topic')},
             ]
         )
     ])

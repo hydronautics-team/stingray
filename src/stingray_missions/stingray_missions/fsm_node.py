@@ -51,7 +51,7 @@ def declare_parameters(node: Node):
     node.declare_parameter(
         'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
     node.declare_parameter(
-        'set_recording_srv', '/stingray/services/set_recording_srv')
+        'enable_recording_topic', '/stingray/topics/enable_recording')
 
 
 def main():
