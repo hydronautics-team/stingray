@@ -100,6 +100,9 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
     twistSrvRequest->depth = goal->depth;
     twistSrvRequest->roll = goal->roll;
     twistSrvRequest->pitch = goal->pitch;
+    float sway_sum = 0.0;
+    // закостылил, ибо не знал какой брать
+    int parrot_rate = 5;
 
     rclcpp::Rate checkRate(goal->centering_rate);
     AsyncTimer timer(goal->duration * 1000);
@@ -120,30 +123,51 @@ void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action
             break;
         }
         
+        twistSrvRequest->sway = 0;
         // RCLCPP_INFO(_node->get_logger(), "Avoid x: %f, y: %f, z: %f", current_avoid_target_bbox.pos_x, current_avoid_target_bbox.pos_y, current_avoid_target_bbox.pos_z);
         // RCLCPP_INFO(_node->get_logger(), "First %d", current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold);
         // RCLCPP_INFO(_node->get_logger(), "Second %d", abs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold);
         if (current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold && abs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold) {
-            // RCLCPP_INFO(_node->get_logger(), "Avoid! Avoid! Avoid!");
+            RCLCPP_INFO(_node->get_logger(), "Avoid! Avoid! Avoid!");
             if (current_avoid_target_bbox.pos_x < 0.0) {
                 twistSrvRequest->sway = - goal->sway;
+                sway_sum -= goal->sway;
             } else {
                 twistSrvRequest->sway = goal->sway;
+                sway_sum += goal->sway;
             }
-            RCLCPP_INFO(_node->get_logger(), "Move sway: %f", twistSrvRequest->sway);
+            RCLCPP_INFO(_node->get_logger(), "Move sway AVOID: %f", twistSrvRequest->sway);
         }
         // not only for gate, correcting by lag
         //else if (strcmp(goal->bbox_name.c_str(), "gate") == 0) {
-        else {
-            float new_speed = fmax(abs(goal->sway) / abs(current_target_bbox.pos_x)*abs(current_target_bbox.pos_x) - 0, 0.0);
+        else if (!isTargetLost() && current_target_bbox.pos_x != 1000.0) {
+            float distance = 2.0;
+            float e = 2.71828;
+            float new_speed = fmin((pow(e, abs(current_target_bbox.pos_x)) / pow(e, distance)) * abs(goal->sway), abs(goal->sway));
+            // float new_speed = fmax(abs(goal->sway) / abs(current_target_bbox.pos_x)*abs(current_target_bbox.pos_x) - 0, 0.0);
 
             if (current_target_bbox.horizontal_angle < 0.0) {
                 if (current_target_bbox.pos_x == 0.0) { current_target_bbox.pos_x = 0.1; }
                 twistSrvRequest->sway = -new_speed;
+                sway_sum -= new_speed;
             } else {
                 twistSrvRequest->sway = new_speed;
+                sway_sum += new_speed;
             }
-            RCLCPP_INFO(_node->get_logger(), "Move sway to gate: %f", twistSrvRequest->sway);
+            RCLCPP_INFO(_node->get_logger(), "Move sway to GATE: %f", twistSrvRequest->sway);
+        }
+
+        // не знаю зачем, но goal->sway отрицательно в мисии, поэтому здесь везде изменён знак
+        else {
+            if (sway_sum > -goal->sway*parrot_rate) {
+                twistSrvRequest->sway = goal->sway;
+                sway_sum += goal->sway;
+            }
+            else if (sway_sum < goal->sway*parrot_rate) {
+                twistSrvRequest->sway = -goal->sway;
+                sway_sum -= goal->sway;
+            }
+            RCLCPP_INFO(_node->get_logger(), "Move sway AWAY: %f, SUM: %f", twistSrvRequest->sway, sway_sum);
         }
 
         RCLCPP_INFO(_node->get_logger(), "Target x: %f, y: %f, z: %f", current_target_bbox.pos_x, current_target_bbox.pos_y, current_target_bbox.pos_z);

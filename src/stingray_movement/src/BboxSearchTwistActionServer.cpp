@@ -47,6 +47,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
     const auto goal = goal_handle->get_goal();
     auto goal_result = std::make_shared<stingray_interfaces::action::BboxSearchTwistAction::Result>();
     goal_result->success = false;
+    goal_result->finded = false;
 
     bboxArraySub = _node->create_subscription<stingray_interfaces::msg::BboxArray>(
         goal->bbox_topic, 10,
@@ -69,6 +70,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
     rclcpp::Rate checkRate(goal->search_rate);
 
     float start_yaw = current_uv_state.yaw;
+    twistSrvRequest->yaw = start_yaw;
     twistSrvClient->async_send_request(twistSrvRequest).wait();
 
     checkRate.sleep();
@@ -77,6 +79,7 @@ void BboxSearchTwistActionServer::execute(const std::shared_ptr<rclcpp_action::S
         if (isTwistDone(goal) && isSearchTwistDone()) {
             RCLCPP_INFO(_node->get_logger(), "Twist done, target found, target yaw: %f", found_target_yaw);
             twistSrvRequest->yaw = found_target_yaw;
+            goal_result->finded = true;
             twistSrvClient->async_send_request(twistSrvRequest).wait();
             break;
         }
