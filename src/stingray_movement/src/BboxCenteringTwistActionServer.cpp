@@ -1,7 +1,7 @@
 #include "stingray_movement/BboxCenteringTwistActionServer.h"
 
-#include <algorithm>  // std::find
-#include <cmath>      // fabs
+#include <algorithm> // std::find
+#include <cmath>     // fabs
 
 BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(
     std::shared_ptr<rclcpp::Node> _node,
@@ -27,6 +27,9 @@ void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces
     bool found_avoid_target = false;
 
     // Сбросим перед поиском
+    current_target_bbox.pos_x = 1000.0f;
+    current_target_bbox.pos_y = 1000.0f;
+    current_target_bbox.pos_z = 1000.0f;
     // (если в этом кадре не найдём ни одного avoid, оставим bbox = 1000.f)
     current_avoid_target_bbox.pos_x = 1000.0f;
     current_avoid_target_bbox.pos_y = 1000.0f;
@@ -187,16 +190,16 @@ void BboxCenteringTwistActionServer::execute(
             if (isTargetLost())
             {
                 RCLCPP_ERROR(_node->get_logger(), "Duration ended, target lost!");
+                goal_result->success = false;
+                stopTwist();
+                goal_handle->succeed(goal_result);
+                cleanupAfterFinish();
+                return;
             }
             else
             {
-                RCLCPP_WARN(_node->get_logger(), "Duration ended, finishing action by time");
+                RCLCPP_WARN(_node->get_logger(), "Duration ended, but target still visible");
             }
-            goal_result->success = false;
-            stopTwist();
-            goal_handle->succeed(goal_result);
-            cleanupAfterFinish();
-            return;
         }
 
         // 3. Проверка: потеряли ли цель (слишком много кадров без неё)?
