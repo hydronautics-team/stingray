@@ -1,265 +1,312 @@
 #include "stingray_movement/BboxCenteringTwistActionServer.h"
 
-BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractCenteringTwistActionServer<stingray_interfaces::action::BboxCenteringTwistAction, stingray_interfaces::action::BboxCenteringTwistAction_Goal>(_node, actionName) {
-    current_target_bbox.pos_x = 1000.0;
-    current_target_bbox.pos_y = 1000.0;
-    current_target_bbox.pos_z = 1000.0;
+#include <algorithm>  // std::find
+#include <cmath>      // fabs
 
-    current_avoid_target_bbox.pos_x = 1000.0;
-    current_avoid_target_bbox.pos_y = 1000.0;
-    current_avoid_target_bbox.pos_z = 1000.0;
-};
+BboxCenteringTwistActionServer::BboxCenteringTwistActionServer(
+    std::shared_ptr<rclcpp::Node> _node,
+    const std::string &actionName)
+    : AbstractCenteringTwistActionServer(_node, actionName)
+{
+    // Изначально считаем, что «ничего нет»
+    current_target_bbox.pos_x = 1000.0f;
+    current_target_bbox.pos_y = 1000.0f;
+    current_target_bbox.pos_z = 1000.0f;
 
+    current_avoid_target_bbox.pos_x = 1000.0f;
+    current_avoid_target_bbox.pos_y = 1000.0f;
+    current_avoid_target_bbox.pos_z = 1000.0f;
+}
 
-void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces::msg::BboxArray &msg) {
+/**
+ * @brief Колбэк подписки на топик с массивом bbox
+ */
+void BboxCenteringTwistActionServer::bboxArrayCallback(const stingray_interfaces::msg::BboxArray &msg)
+{
     bool found_target = false;
     bool found_avoid_target = false;
-    current_avoid_target_bbox.pos_x = 1000.0;
-    current_avoid_target_bbox.pos_y = 1000.0;
-    current_avoid_target_bbox.pos_z = 1000.0;
 
-    for (auto bbox : msg.bboxes) {
-        // RCLCPP_INFO(_node->get_logger(), "\nName x: %s", bbox.name.c_str());
-        // RCLCPP_INFO(_node->get_logger(), "Avoid x: %f, y: %f, z: %f", bbox.pos_x, bbox.pos_y, bbox.pos_z);
-        // RCLCPP_INFO(_node->get_logger(), "Current Avoid x: %f, y: %f, z: %f", current_avoid_target_bbox.pos_x, current_avoid_target_bbox.pos_y, current_avoid_target_bbox.pos_z);
-        
-        if (std::find(target_avoid_bbox_name_array.begin(), target_avoid_bbox_name_array.end(), bbox.name) != target_avoid_bbox_name_array.end()) {
-            RCLCPP_INFO(_node->get_logger(), "Found %s: %f, y: %f, z: %f", bbox.name.c_str(), bbox.pos_x, bbox.pos_y, bbox.pos_z);
-            if (bbox.pos_z < current_avoid_target_bbox.pos_z) {
+    // Сбросим перед поиском
+    // (если в этом кадре не найдём ни одного avoid, оставим bbox = 1000.f)
+    current_avoid_target_bbox.pos_x = 1000.0f;
+    current_avoid_target_bbox.pos_y = 1000.0f;
+    current_avoid_target_bbox.pos_z = 1000.0f;
+
+    for (auto &bbox : msg.bboxes)
+    {
+        // Проверяем, не является ли bbox объектом, который надо избегать
+        if (std::find(
+                target_avoid_bbox_name_array.begin(),
+                target_avoid_bbox_name_array.end(),
+                bbox.name) != target_avoid_bbox_name_array.end())
+        {
+            // Выбираем ближайший (по z) avoid
+            if (bbox.pos_z < current_avoid_target_bbox.pos_z)
+            {
                 current_avoid_target_bbox = bbox;
+                found_avoid_target = true;
             }
-            // found_avoid_target = true;
         }
-        // RCLCPP_INFO(_node->get_logger(), "Current Avoid x: %f, y: %f, z: %f", current_avoid_target_bbox.pos_x, current_avoid_target_bbox.pos_y, current_avoid_target_bbox.pos_z);
 
-        if (bbox.name == target_bbox_name) {
+        // Проверяем, не является ли bbox целевым
+        if (bbox.name == target_bbox_name)
+        {
+            // Просто берём первый (или тоже можно выбирать ближайший)
             current_target_bbox = bbox;
             found_target = true;
+            // Сбрасываем счётчик, что цель опять видим
             target_disappeared_counter = 0;
         }
     }
-    // if (!found_avoid_target) {
-    //     current_avoid_target_bbox.pos_x = 1000.0;
-    //     current_avoid_target_bbox.pos_y = 1000.0;
-    //     current_avoid_target_bbox.pos_z = 1000.0;
-    // }
-    if (!found_target) {
+
+    // Если мы target не увидели в этом кадре – увеличиваем счётчик
+    if (!found_target)
+    {
         target_disappeared_counter++;
     }
-};
 
-bool BboxCenteringTwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfaces::action::BboxCenteringTwistAction_Goal> goal) {
+    // Если ни одного avoid-объекта не нашли, оставляем current_avoid_target_bbox = 1000.f
+    // (либо уже сброшен в начале, если хотите)
+    // found_avoid_target – можно использовать, если нужно в логах отмечать, что avoid не найден
+}
+
+/**
+ * @brief Проверка, закончили ли движение (по глубине / крену / тангажу).
+ *
+ * Если, например, в вашей логике нужно проверить, достигли ли желаемых глубины/ролла/питча.
+ */
+bool BboxCenteringTwistActionServer::isTwistDone(
+    const std::shared_ptr<const stingray_interfaces::action::BboxCenteringTwistAction_Goal> goal)
+{
+    // Допустим, мы переопределили эти методы в базовом классе:
+    // isDepthDone(goal->depth), isRollDone(goal->roll), isPitchDone(goal->pitch).
+    // Если их нет — впишите нужную вам логику.
     return isDepthDone(goal->depth) && isRollDone(goal->roll) && isPitchDone(goal->pitch);
-};
+}
 
-bool BboxCenteringTwistActionServer::isCenteringTwistDone() {
-    return current_target_bbox.pos_z < target_distance_threshold;
-};
+/**
+ * @brief Проверка, достаточно ли близко подошли к цели по z
+ */
+bool BboxCenteringTwistActionServer::isCenteringTwistDone()
+{
+    return (current_target_bbox.pos_z < target_distance_threshold);
+}
 
-bool BboxCenteringTwistActionServer::isTargetLost() {
-    return target_disappeared_counter > target_lost_thresh;
-};
+/**
+ * @brief Проверка, не пропала ли цель надолго
+ */
+bool BboxCenteringTwistActionServer::isTargetLost()
+{
+    return (target_disappeared_counter > target_lost_thresh);
+}
 
-void BboxCenteringTwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::BboxCenteringTwistAction>> goal_handle) {
+/**
+ * @brief Основная логика экшена
+ */
+void BboxCenteringTwistActionServer::execute(
+    const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::BboxCenteringTwistAction>> goal_handle)
+{
+    using stingray_interfaces::action::BboxCenteringTwistAction;
 
-    auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+    RCLCPP_INFO(_node->get_logger(), "Execute BboxCenteringTwistActionServer action");
 
-    RCLCPP_INFO(_node->get_logger(), "Execute action");
-    while (!twistSrvClient->wait_for_service(1s)) {
-        if (!rclcpp::ok()) {
-            RCLCPP_ERROR(_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
-            return;
-        }
-        RCLCPP_ERROR(_node->get_logger(), "Service %s not available!", _node->get_parameter("set_twist_srv").as_string().c_str());
-        return;
-    }
-
-    // get goal data
-    const auto goal = goal_handle->get_goal();
-    auto goal_result = std::make_shared<stingray_interfaces::action::BboxCenteringTwistAction::Result>();
+    // Подготовка к работе
+    auto goal_result = std::make_shared<BboxCenteringTwistAction::Result>();
     goal_result->success = false;
 
-    // check duration
-    if (goal->duration < 0.0) {
-        goal_result->success = false;
+    // Извлекаем goal
+    auto goal = goal_handle->get_goal();
+
+    // Проверяем duration
+    if (goal->duration <= 0.0)
+    {
+        RCLCPP_ERROR(_node->get_logger(), "Duration must be > 0.0");
         goal_handle->abort(goal_result);
-        RCLCPP_ERROR(_node->get_logger(), "Duration value must be greater than 0.0");
         return;
     }
 
+    // Подписка на топик детекций
     bboxArraySub = _node->create_subscription<stingray_interfaces::msg::BboxArray>(
         goal->bbox_topic, 10,
         std::bind(&BboxCenteringTwistActionServer::bboxArrayCallback, this, std::placeholders::_1));
 
-    // send service request
+    // Сервис, отвечающий за движение
+    // Проверяем доступность
+    while (!twistSrvClient->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR(_node->get_logger(), "Interrupted while waiting for SetTwist service");
+            goal_handle->abort(goal_result);
+            return;
+        }
+        RCLCPP_WARN(_node->get_logger(), "SetTwist service not available, waiting...");
+    }
+
+    // Запоминаем имя target и avoid
     target_bbox_name = goal->bbox_name;
     target_avoid_bbox_name_array = goal->avoid_bbox_name_array;
     target_distance_threshold = goal->distance_threshold;
     target_lost_thresh = goal->lost_threshold;
-    twistSrvRequest->surge = goal->surge;
-    twistSrvRequest->depth = goal->depth;
-    twistSrvRequest->roll = goal->roll;
-    twistSrvRequest->pitch = goal->pitch;
-    float sway_sum = 0.0;
-    // закостылил, ибо не знал какой брать
-    int parrot_rate = 5;
 
-    rclcpp::Rate checkRate(goal->centering_rate);
+    // Сбрасываем состояние текущих bbox
+    current_target_bbox.pos_x = 1000.0f;
+    current_target_bbox.pos_y = 1000.0f;
+    current_target_bbox.pos_z = 1000.0f;
+    current_avoid_target_bbox.pos_x = 1000.0f;
+    current_avoid_target_bbox.pos_y = 1000.0f;
+    current_avoid_target_bbox.pos_z = 1000.0f;
+    target_disappeared_counter = 0;
+
+    // Запускаем таймер
     AsyncTimer timer(goal->duration * 1000);
     timer.start();
 
-    while (rclcpp::ok()) {
-        if (isTargetLost()) {
-            RCLCPP_ERROR(_node->get_logger(), "Target lost!");
-            goal_result->success = false;
+    // Частота обновления управляющих воздействий
+    rclcpp::Rate checkRate(goal->centering_rate > 0.0 ? goal->centering_rate : 0.5);
+
+    // Основной цикл
+    while (rclcpp::ok())
+    {
+        // 1. Проверка: отмена экшена?
+        if (goal_handle->is_canceling())
+        {
             RCLCPP_INFO(_node->get_logger(), "Goal canceled");
-            
-            target_disappeared_counter = 0;
-            current_target_bbox.pos_x = 1000.0;
-            current_target_bbox.pos_y = 1000.0;
-            current_target_bbox.pos_z = 1000.0;
-            current_target_bbox.horizontal_angle = 0.0;
-            current_avoid_target_bbox.pos_x = 1000.0;
-            current_avoid_target_bbox.pos_y = 1000.0;
-            current_avoid_target_bbox.pos_z = 1000.0;
-            target_bbox_name = "";
-            bboxArraySub.reset();
-            
-            // stop maneuvr service request
-            stopTwist(twistSrvRequest);
-            goal_handle->succeed(goal_result);
-            return;
-        }
-
-        if (!timer.isBusy() && isTargetLost()) {
-            RCLCPP_ERROR(_node->get_logger(), "Twist done by duration %f, target lost!", goal->duration);
             goal_result->success = false;
-            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
-            
-            target_disappeared_counter = 0;
-            current_target_bbox.pos_x = 1000.0;
-            current_target_bbox.pos_y = 1000.0;
-            current_target_bbox.pos_z = 1000.0;
-            current_target_bbox.horizontal_angle = 0.0;
-            current_avoid_target_bbox.pos_x = 1000.0;
-            current_avoid_target_bbox.pos_y = 1000.0;
-            current_avoid_target_bbox.pos_z = 1000.0;
-            target_bbox_name = "";
-            bboxArraySub.reset();
-            
-            // stop maneuvr service request
-            stopTwist(twistSrvRequest);
-            goal_handle->succeed(goal_result);
-            return;
-        }
-
-        if (isTwistDone(goal) && isCenteringTwistDone()) {
-            RCLCPP_INFO(_node->get_logger(), "Twist done, target distance: %f, closer than: %f", current_target_bbox.pos_z, target_distance_threshold);
-            break;
-        }
-        
-        twistSrvRequest->sway = 0;
-        // RCLCPP_INFO(_node->get_logger(), "Avoid x: %f, y: %f, z: %f", current_avoid_target_bbox.pos_x, current_avoid_target_bbox.pos_y, current_avoid_target_bbox.pos_z);
-        // RCLCPP_INFO(_node->get_logger(), "First %d", current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold);
-        // RCLCPP_INFO(_node->get_logger(), "Second %d", abs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold);
-        if (current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold && abs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold) {
-            RCLCPP_INFO(_node->get_logger(), "Avoid! Avoid! Avoid!");
-            if (current_avoid_target_bbox.pos_x < 0.0) {
-                twistSrvRequest->sway = - goal->sway;
-                sway_sum -= goal->sway;
-            } else {
-                twistSrvRequest->sway = goal->sway;
-                sway_sum += goal->sway;
-            }
-            RCLCPP_INFO(_node->get_logger(), "Move sway AVOID: %f", twistSrvRequest->sway);
-        }
-        // not only for gate, correcting by lag
-        //else if (strcmp(goal->bbox_name.c_str(), "gate") == 0) {
-        else if (!isTargetLost() && current_target_bbox.pos_x != 1000.0) {
-            float distance = 2.0;
-            float e = 2.71828;
-            float new_speed = fmin((pow(e, abs(current_target_bbox.pos_x)) / pow(e, distance)) * abs(goal->sway), abs(goal->sway));
-            // float new_speed = fmax(abs(goal->sway) / abs(current_target_bbox.pos_x)*abs(current_target_bbox.pos_x) - 0, 0.0);
-
-            if (current_target_bbox.horizontal_angle < 0.0) {
-                if (current_target_bbox.pos_x == 0.0) { current_target_bbox.pos_x = 0.1; }
-                twistSrvRequest->sway = -new_speed;
-                sway_sum -= new_speed;
-            } else {
-                twistSrvRequest->sway = new_speed;
-                sway_sum += new_speed;
-            }
-            RCLCPP_INFO(_node->get_logger(), "Move sway to GATE: %f", twistSrvRequest->sway);
-        }
-
-        // не знаю зачем, но goal->sway отрицательно в мисии, поэтому здесь везде изменён знак
-        else {
-            if (sway_sum > -goal->sway*parrot_rate) {
-                twistSrvRequest->sway = goal->sway;
-                sway_sum += goal->sway;
-            }
-            else if (sway_sum < goal->sway*parrot_rate) {
-                twistSrvRequest->sway = -goal->sway;
-                sway_sum -= goal->sway;
-            }
-            RCLCPP_INFO(_node->get_logger(), "Move sway AWAY: %f, SUM: %f", twistSrvRequest->sway, sway_sum);
-        }
-
-        RCLCPP_INFO(_node->get_logger(), "Target dist: %f", current_target_bbox.pos_z);
-        twistSrvRequest->yaw = current_uv_state.yaw + current_target_bbox.horizontal_angle;
-        RCLCPP_INFO(_node->get_logger(), "Twist action current yaw: %f, request diff: %f, surge: %f", current_uv_state.yaw, current_target_bbox.horizontal_angle, twistSrvRequest->surge);
-        // check if service success
-        twistSrvClient->async_send_request(twistSrvRequest).wait();
-        //twistSrvRequest->yaw = 0.0;
-
-        if (goal_handle->is_canceling()) {
-            goal_result->success = false;
-            RCLCPP_INFO(_node->get_logger(), "Goal canceled");
+            // Остановка
+            stopTwist();
             goal_handle->canceled(goal_result);
-
-            target_disappeared_counter = 0;
-            current_target_bbox.pos_x = 1000.0;
-            current_target_bbox.pos_y = 1000.0;
-            current_target_bbox.pos_z = 1000.0;
-            current_target_bbox.horizontal_angle = 0.0;
-            current_avoid_target_bbox.pos_x = 1000.0;
-            current_avoid_target_bbox.pos_y = 1000.0;
-            current_avoid_target_bbox.pos_z = 1000.0;
-            target_bbox_name = "";
-            bboxArraySub.reset();
-
-            // stop maneuvr service request
-            stopTwist(twistSrvRequest);
+            cleanupAfterFinish();
             return;
         }
-        // rclcpp::spin_some(_node);
+
+        // 2. Проверка: вышло ли время?
+        if (!timer.isBusy())
+        {
+            // Если к этому моменту потеряли цель – завершим экшен
+            if (isTargetLost())
+            {
+                RCLCPP_ERROR(_node->get_logger(), "Duration ended, target lost!");
+            }
+            else
+            {
+                RCLCPP_WARN(_node->get_logger(), "Duration ended, finishing action by time");
+            }
+            goal_result->success = false;
+            stopTwist();
+            goal_handle->succeed(goal_result);
+            cleanupAfterFinish();
+            return;
+        }
+
+        // 3. Проверка: потеряли ли цель (слишком много кадров без неё)?
+        if (isTargetLost())
+        {
+            RCLCPP_ERROR(_node->get_logger(), "Target lost for too many frames!");
+            goal_result->success = false;
+            stopTwist();
+            goal_handle->succeed(goal_result);
+            cleanupAfterFinish();
+            return;
+        }
+
+        // 4. Проверка: достигли ли нужного «twist» (глубина/ролл/питч) и достаточно близко к цели?
+        if (isTwistDone(goal) && isCenteringTwistDone())
+        {
+            RCLCPP_INFO(_node->get_logger(), "Centering done, finishing action");
+            goal_result->success = true;
+            stopTwist();
+            goal_handle->succeed(goal_result);
+            cleanupAfterFinish();
+            return;
+        }
+
+        // Формируем новый запрос на движение
+        auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+        twistSrvRequest->surge = goal->surge; // как задано в goal
+        twistSrvRequest->depth = goal->depth;
+        twistSrvRequest->roll = goal->roll;
+        twistSrvRequest->pitch = goal->pitch;
+
+        // === 5. Логика обхода (avoid) ===
+        RCLCPP_INFO(_node->get_logger(), "Target distance: %f", current_target_bbox.pos_z);
+        RCLCPP_INFO(_node->get_logger(), "Avoid target distance: %f", current_avoid_target_bbox.pos_z);
+        bool needAvoid = (current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold &&
+                          std::fabs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold);
+        if (needAvoid)
+        {
+            // Уходим в сторону, противоположную bbox.pos_x
+            if (current_avoid_target_bbox.pos_x < 0.0f)
+                twistSrvRequest->sway = -goal->sway;
+            else
+                twistSrvRequest->sway = goal->sway;
+
+            RCLCPP_INFO(_node->get_logger(), "Avoiding obstacle: sway = %f", twistSrvRequest->sway);
+        }
+        // === 6. Логика центрирования по target ===
+        else if (current_target_bbox.pos_x != 1000.0f)
+        {
+            // Простейший P-регулятор
+            // Допустим, pos_x = смещение по горизонтали (пиксели / условная единица)
+            float Kp = 0.5f; // подбирайте под себя
+            float raw_cmd = Kp * current_target_bbox.pos_x;
+            // Ограничим макс. команду
+            if (raw_cmd > goal->sway)
+                raw_cmd = goal->sway;
+            if (raw_cmd < -goal->sway)
+                raw_cmd = -goal->sway;
+
+            twistSrvRequest->sway = raw_cmd;
+            RCLCPP_INFO(_node->get_logger(), "Centering: sway = %f", twistSrvRequest->sway);
+        }
+        // 7. Если цели нет и обходить нечего — можно «шарить» или оставаться на месте
+        else
+        {
+            // Пример: остаёмся на месте по оси sway
+            twistSrvRequest->sway = 0.0f;
+            RCLCPP_INFO(_node->get_logger(), "No target, no avoid, staying still");
+        }
+
+        // Поворот на угол target
+        // (если у вас приходит horizontal_angle - прибавьте к текущему yaw)
+        twistSrvRequest->yaw = current_uv_state.yaw + current_target_bbox.horizontal_angle;
+
+        // 8. Отправляем запрос на сервис
+        twistSrvClient->async_send_request(twistSrvRequest).wait();
+
+        // 9. Делаем небольшой sleep, чтобы не забивать цикл
         checkRate.sleep();
     }
-    target_disappeared_counter = 0;
-    current_target_bbox.pos_x = 1000.0;
-    current_target_bbox.pos_y = 1000.0;
-    current_target_bbox.pos_z = 1000.0;
-    current_target_bbox.horizontal_angle = 0.0;
-    current_avoid_target_bbox.pos_x = 1000.0;
-    current_avoid_target_bbox.pos_y = 1000.0;
-    current_avoid_target_bbox.pos_z = 1000.0;
-    target_bbox_name = "";
+
+    // Если выходим из while — либо rclcpp::ok() = false
+    RCLCPP_INFO(_node->get_logger(), "ROS shutdown or loop ended unexpectedly");
+    stopTwist();
+    goal_handle->abort(goal_result);
+    cleanupAfterFinish();
+}
+
+/**
+ * @brief Вспомогательный метод для очистки после завершения
+ */
+void BboxCenteringTwistActionServer::cleanupAfterFinish()
+{
+    // Сброс подписки
     bboxArraySub.reset();
 
-    RCLCPP_INFO(_node->get_logger(), "Done moving");
+    // Обнуление полей
+    target_bbox_name.clear();
+    target_avoid_bbox_name_array.clear();
+    current_target_bbox.pos_x = 1000.0f;
+    current_target_bbox.pos_y = 1000.0f;
+    current_target_bbox.pos_z = 1000.0f;
+    current_avoid_target_bbox.pos_x = 1000.0f;
+    current_avoid_target_bbox.pos_y = 1000.0f;
+    current_avoid_target_bbox.pos_z = 1000.0f;
+    target_disappeared_counter = 0;
+}
 
-    // stop maneuvr service request
-    stopTwist(twistSrvRequest);
-
-    if (rclcpp::ok()) {
-        goal_result->success = true;
-        RCLCPP_INFO(_node->get_logger(), "Goal succeeded");
-        goal_handle->succeed(goal_result);
-    }
-
-};
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     rclcpp::init(argc, argv);
     std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("bbox_centering_twist_action_server");
     node->declare_parameter("bbox_centering_twist_action", "/stingray/actions/bbox_centering_twist");
