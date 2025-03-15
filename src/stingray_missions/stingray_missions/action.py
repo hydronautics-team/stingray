@@ -6,6 +6,7 @@ from rclpy.publisher import Publisher
 from stingray_utils.acyncio import AsyncActionClient
 from stingray_interfaces.action import TwistAction
 from stingray_interfaces.action import BboxCenteringTwistAction
+from stingray_interfaces.action import BboxBottomCenteringTwistAction
 from stingray_interfaces.action import BboxSearchTwistAction
 from stingray_interfaces.action import HydroacousticCenteringTwistAction
 from stingray_interfaces.action import DeviceAction
@@ -349,6 +350,70 @@ class BboxCenteringTwistStateAction(StateActionBase):
                 f"Error while executing {self.node.get_parameter('bbox_centering_twist_action').get_parameter_value().string_value}")
             return False
         return await super().execute(**kwargs)
+    
+class BboxBottomCenteringTwistStateAction(StateActionBase):
+    type = "BboxBottomCenteringTwist"
+
+    def __init__(self, node: Node):
+        super().__init__(node=node)
+
+        self.bbox_bottom_centering_twist_action_client = AsyncActionClient(
+            self.node, BboxBottomCenteringTwistAction, self.node.get_parameter('bbox_bottom_centering_twist_action').get_parameter_value().string_value)
+
+    def stop(self):
+        get_logger("action").info(
+            f"Stopping {self.type} action")
+        self.bbox_bottom_centering_twist_action_client.cancel()
+        return super().stop()
+
+    async def execute(self,
+                      bbox_name: str = "",
+                      bbox_topic: str = "",
+                      threshold_x: float = 0.2,
+                      threshold_y: float = 0.2,
+                      lost_threshold: int = 0,
+                      avoid_bbox_name_array: list[str] = [],
+                      avoid_distance_threshold: float = 0.0,
+                      avoid_horizontal_threshold: float = 0.0,
+                      surge: float = 0.0,
+                      sway: float = 0.0,
+                      depth: float = 0.0,
+                      roll: float = 0.0,
+                      pitch: float = 0.0,
+                      duration: float = 0.0,
+                      centering_rate: float = 0.0,
+                      **kwargs) -> bool:
+        get_logger("action").info(f"Executing {self.type} state action")
+
+        if not self.bbox_bottom_centering_twist_action_client.wait_for_server(timeout_sec=1.0):
+            get_logger("action").error(
+                f"Timeout while waiting for {self.bbox_bottom_centering_twist_action_client._action_name} action server")
+            return False
+
+        self.goal = BboxBottomCenteringTwistAction.Goal()
+        self.goal.bbox_name = bbox_name
+        self.goal.bbox_topic = bbox_topic
+        self.goal.threshold_x = float(threshold_x)
+        self.goal.threshold_y = float(threshold_y)
+        self.goal.lost_threshold = int(lost_threshold)
+        self.goal.avoid_bbox_name_array = avoid_bbox_name_array
+        self.goal.avoid_distance_threshold = float(avoid_distance_threshold)
+        self.goal.avoid_horizontal_threshold = float(
+            avoid_horizontal_threshold)
+        self.goal.surge = float(surge)
+        self.goal.sway = float(sway)
+        self.goal.depth = float(depth)
+        self.goal.roll = float(roll)
+        self.goal.pitch = float(pitch)
+        self.goal.duration = float(duration)
+        self.goal.centering_rate = float(centering_rate)
+
+        result = await self.bbox_bottom_centering_twist_action_client.send_goal_async(self.goal)
+        if not result.result.success:
+            get_logger('action').error(
+                f"Error while executing {self.node.get_parameter('bbox_bottom_centering_twist_action').get_parameter_value().string_value}")
+            return False
+        return await super().execute(**kwargs)
 
 
 class BboxSearchTwistStateAction(StateActionBase):
@@ -457,6 +522,7 @@ def load_stingray_actions(node: Node) -> dict[str, StateActionBase]:
         ThrusterIndicationStateAction.type: ThrusterIndicationStateAction(node),
         TwistStateAction.type: TwistStateAction(node),
         BboxCenteringTwistStateAction.type: BboxCenteringTwistStateAction(node),
+        BboxBottomCenteringTwistStateAction.type: BboxBottomCenteringTwistStateAction(node),
         BboxSearchTwistStateAction.type: BboxSearchTwistStateAction(node),
         SetDeviceValueStateAction.type: SetDeviceValueStateAction(node),
     }

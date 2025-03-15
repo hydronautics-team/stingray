@@ -40,6 +40,9 @@ def generate_launch_description():
     bbox_centering_twist_action_arg = DeclareLaunchArgument(
         "bbox_centering_twist_action", default_value='/stingray/actions/bbox_centering_twist'
     )
+    bbox_bottom_centering_twist_action_arg = DeclareLaunchArgument(
+        "bbox_bottom_centering_twist_action", default_value='/stingray/actions/bbox_bottom_centering_twist'
+    )
     bbox_search_twist_action_arg = DeclareLaunchArgument(
         "bbox_search_twist_action", default_value='/stingray/actions/bbox_search_twist'
     )
@@ -86,6 +89,7 @@ def generate_launch_description():
         enable_object_detection_topic_arg,
         twist_action_arg,
         bbox_centering_twist_action_arg,
+        bbox_bottom_centering_twist_action_arg,
         hydroacoustic_centering_twist_action_arg,
         bbox_search_twist_action_arg,
         device_action_arg,
@@ -107,6 +111,7 @@ def generate_launch_description():
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
                 {'bbox_centering_twist_action': LaunchConfiguration("bbox_centering_twist_action")},
+                {'bbox_bottom_centering_twist_action': LaunchConfiguration("bbox_bottom_centering_twist_action")},
                 {'bbox_search_twist_action': LaunchConfiguration("bbox_search_twist_action")},
                 {'hydroacoustic_centering_twist_action': LaunchConfiguration("hydroacoustic_centering_twist_action")},
                 {'device_action': LaunchConfiguration("device_action")},

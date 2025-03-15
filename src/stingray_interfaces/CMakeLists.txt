@@ -14,6 +14,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetTransition.srv"
   "action/TwistAction.action"
   "action/BboxCenteringTwistAction.action"
+  "action/BboxBottomCenteringTwistAction.action"
   "action/BboxSearchTwistAction.action"
   "action/DeviceAction.action"
   "action/HydroacousticCenteringTwistAction.action"

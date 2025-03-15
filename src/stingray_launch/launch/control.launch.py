@@ -33,6 +33,9 @@ def generate_launch_description():
     bbox_centering_twist_action_arg = DeclareLaunchArgument(
         "bbox_centering_twist_action", default_value='/stingray/actions/bbox_centering_twist'
     )
+    bbox_bottom_centering_twist_action_arg = DeclareLaunchArgument(
+        "bbox_bottom_centering_twist_action", default_value='/stingray/actions/bbox_bottom_centering_twist'
+    )
     bbox_search_twist_action_arg = DeclareLaunchArgument(
         "bbox_search_twist_action", default_value='/stingray/actions/bbox_search_twist'
     )

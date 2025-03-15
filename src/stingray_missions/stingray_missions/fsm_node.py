@@ -41,6 +41,8 @@ def declare_parameters(node: Node):
     node.declare_parameter(
         'bbox_centering_twist_action', '/stingray/actions/bbox_centering_twist')
     node.declare_parameter(
+        'bbox_bottom_centering_twist_action', '/stingray/actions/bbox_bottom_centering_twist')
+    node.declare_parameter(
         'device_action', '/stingray/actions/device')
     node.declare_parameter(
         'reset_imu_srv', '/stingray/services/reset_imu')
