@@ -43,4 +43,5 @@ transitions:
   - { trigger: ok, source: DISABLE_OBJECT_DETECTION, dest: DISABLE_STABILIZATION }
   - { trigger: ok, source: DISABLE_STABILIZATION, dest: EMERGE }
   - { trigger: ok, source: EMERGE, dest: DISABLE_DEPTH_STABILIZATION }
-  - { trigger: ok, source: DISABLE_DEPTH_STABILIZATION, dest: OK }
+  - { trigger: ok, source: DISABLE_DEPTH_STABILIZATION, dest: DEPTHZERO }
+  - { trigger: ok, source: DEPTHZERO, dest: OK }

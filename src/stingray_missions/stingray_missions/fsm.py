@@ -8,7 +8,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from stingray_missions.fsm_states import State, Transition
 from stingray_missions.action import StateActionBase
-from stingray_missions.descriptions import StateDescription, MissionDescription, ScenarioDescription
+from stingray_missions.descriptions import StateDescription, ScenarioDescription, MissionDescription
 from stingray_interfaces.srv import SetTransition
 
 
@@ -49,20 +49,15 @@ class FSM(object):
         # add global transitions
         global_transitions = [
             [Transition.reset, [State.FAILED, State.OK], State.IDLE],
-            [Transition.fail, State.ALL, State.FAILED],
         ]
         self.machine.add_transitions(global_transitions)
 
         # remember global states
-        self.registered_states[State.IDLE] = StateDescription(
-            node=self.node,
-            state=State.IDLE)
-        self.registered_states[State.FAILED] = StateDescription(
-            node=self.node,
-            state=State.FAILED)
-        self.registered_states[State.OK] = StateDescription(
-            node=self.node,
-            state=State.OK)
+        self.registered_states[State.IDLE] = StateDescription(State.IDLE)
+        self.registered_states[State.FAILED] = StateDescription(State.FAILED)
+        self.registered_states[State.OK] = StateDescription(State.OK)
+        
+        self.draw()
 
         get_logger("fsm").info(f"FSM created")
 
@@ -149,19 +144,35 @@ class FSM(object):
 
     def _register_scenarios_from_packages(self, package_names: list[str]):
         """Registering scenarios from packages"""
+        custom_transitions = []
+        custom_states = []
+
         for package_name in package_names:
             pakage_path = get_package_share_directory(package_name)
             configs = Path(pakage_path, "configs/scenarios").glob("*.yaml")
+
             for config in configs:
                 scenario = ScenarioDescription.load(
-                    node=self.node,
                     config_name=config.name,
                     package_name=package_name)
-                self.machine.add_states(
-                    [state.name for state in scenario.states])
+                get_logger("fsm").info(
+                    f"Registering scenario {scenario.name}")
                 self.registered_states.update(
                     {state.name: state for state in scenario.states})
-                self.machine.add_transitions(scenario.transitions)
+                custom_states += [state.name for state in scenario.states]
+                custom_transitions += scenario.transitions
+            
+            if package_name in ScenarioDescription.loaded_oks:
+                custom_states += [state.name for state in ScenarioDescription.loaded_oks[package_name].states]
+                custom_transitions += ScenarioDescription.loaded_oks[package_name].transitions
+            if package_name in ScenarioDescription.loaded_faileds:
+                custom_states += [state.name for state in ScenarioDescription.loaded_faileds[package_name].states]
+                custom_transitions += ScenarioDescription.loaded_faileds[package_name].transitions
+                
+        self.machine.add_states(custom_states)
+        self.machine.add_transitions(
+            custom_transitions
+        )
 
     async def execute_state(self):
         """Executing as soon as the state is entered"""
