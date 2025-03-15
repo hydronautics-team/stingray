@@ -11,6 +11,7 @@ float32 search_rate
 ---
 # Result
 bool success
+bool finded
 ---
 # Feedback
 std_msgs/Empty empty
