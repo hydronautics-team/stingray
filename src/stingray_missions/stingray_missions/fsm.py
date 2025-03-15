@@ -57,7 +57,7 @@ class FSM(object):
         self.registered_states[State.FAILED] = StateDescription(State.FAILED)
         self.registered_states[State.OK] = StateDescription(State.OK)
         
-        self.draw()
+        # self.draw()
 
         get_logger("fsm").info(f"FSM created")
 
@@ -164,9 +164,13 @@ class FSM(object):
             
             if package_name in ScenarioDescription.loaded_oks:
                 custom_states += [state.name for state in ScenarioDescription.loaded_oks[package_name].states]
+                self.registered_states.update(
+                    {state.name: state for state in ScenarioDescription.loaded_oks[package_name].states})
                 custom_transitions += ScenarioDescription.loaded_oks[package_name].transitions
             if package_name in ScenarioDescription.loaded_faileds:
                 custom_states += [state.name for state in ScenarioDescription.loaded_faileds[package_name].states]
+                self.registered_states.update(
+                    {state.name: state for state in ScenarioDescription.loaded_faileds[package_name].states})
                 custom_transitions += ScenarioDescription.loaded_faileds[package_name].transitions
                 
         self.machine.add_states(custom_states)
