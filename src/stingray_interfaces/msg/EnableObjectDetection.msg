@@ -1,2 +1,0 @@
-string camera_topic
-bool enable

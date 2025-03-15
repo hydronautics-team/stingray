@@ -21,6 +21,11 @@ def generate_launch_description():
         "enable_object_detection_topic", default_value='/stingray/topics/enable_object_detection'
     )
 
+    # recording
+    enable_recording_topic_arg = DeclareLaunchArgument(
+        "enable_recording_topic", default_value='/stingray/topics/enable_recording'
+    )
+
     # movement
     twist_action_arg = DeclareLaunchArgument(
         "twist_action", default_value='/stingray/actions/twist'
@@ -72,6 +77,7 @@ def generate_launch_description():
         mission_package_names_arg,
         transition_srv_arg,
         enable_object_detection_topic_arg,
+        enable_recording_topic_arg,
         zbar_topic_arg,
         twist_action_arg,
         bbox_centering_twist_action_arg,
@@ -93,17 +99,26 @@ def generate_launch_description():
             executable='fsm_node',
             name='fsm_node',
             parameters=[
-                {'mission_package_names': LaunchConfiguration("mission_package_names")},
+                {'mission_package_names': LaunchConfiguration(
+                    "mission_package_names")},
                 {'transition_srv': LaunchConfiguration("transition_srv")},
                 {'twist_action': LaunchConfiguration("twist_action")},
-                {'bbox_centering_twist_action': LaunchConfiguration("bbox_centering_twist_action")},
-                {'bbox_search_twist_action': LaunchConfiguration("bbox_search_twist_action")},
-                {'hydroacoustic_centering_twist_action': LaunchConfiguration("hydroacoustic_centering_twist_action")},
+                {'bbox_centering_twist_action': LaunchConfiguration(
+                    "bbox_centering_twist_action")},
+                {'bbox_search_twist_action': LaunchConfiguration(
+                    "bbox_search_twist_action")},
+                {'hydroacoustic_centering_twist_action': LaunchConfiguration(
+                    "hydroacoustic_centering_twist_action")},
                 {'device_action': LaunchConfiguration("device_action")},
                 {'reset_imu_srv': LaunchConfiguration("reset_imu_srv")},
-                {'set_stabilization_srv': LaunchConfiguration("set_stabilization_srv")},
-                {'enable_thrusters_srv': LaunchConfiguration("enable_thrusters_srv")},
-                {'enable_object_detection_topic': LaunchConfiguration("enable_object_detection_topic")},
+                {'set_stabilization_srv': LaunchConfiguration(
+                    "set_stabilization_srv")},
+                {'enable_thrusters_srv': LaunchConfiguration(
+                    "enable_thrusters_srv")},
+                {'enable_object_detection_topic': LaunchConfiguration(
+                    "enable_object_detection_topic")},
+                {'enable_recording_topic': LaunchConfiguration(
+                    "enable_recording_topic")},
             ],
             respawn=True,
             respawn_delay=1,
@@ -140,7 +155,8 @@ def generate_launch_description():
             executable='bbox_centering_twist_action_server',
             name='bbox_centering_twist_action_server',
             parameters=[
-                {'bbox_centering_twist_action': LaunchConfiguration("bbox_centering_twist_action")},
+                {'bbox_centering_twist_action': LaunchConfiguration(
+                    "bbox_centering_twist_action")},
                 {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
                 {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
             ],
@@ -152,7 +168,8 @@ def generate_launch_description():
             executable='bbox_search_twist_action_server',
             name='bbox_search_twist_action_server',
             parameters=[
-                {'bbox_search_twist_action': LaunchConfiguration("bbox_search_twist_action")},
+                {'bbox_search_twist_action': LaunchConfiguration(
+                    "bbox_search_twist_action")},
                 {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
                 {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
             ],
@@ -164,7 +181,8 @@ def generate_launch_description():
             executable='hydroacoustic_centering_twist_action_server',
             name='hydroacoustic_centering_twist_action_server',
             parameters=[
-                {'hydroacoustic_centering_twist_action': LaunchConfiguration("hydroacoustic_centering_twist_action")},
+                {'hydroacoustic_centering_twist_action': LaunchConfiguration(
+                    "hydroacoustic_centering_twist_action")},
                 {'uv_state_topic': LaunchConfiguration("uv_state_topic")},
                 {'set_twist_srv': LaunchConfiguration("set_twist_srv")},
             ],

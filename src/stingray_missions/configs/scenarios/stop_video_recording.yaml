@@ -1,9 +1,13 @@
-initial: CHECK
+initial: STOP_VIDEO_RECORDING
 ok_state_package_name: stingray_missions
 failed_state_package_name: stingray_missions
 missions:
+  STOP_VIDEO_RECORDING:
+    config_name: stop_video_recording
+    package_name: stingray_missions
   CHECK:
     config_name: check
     package_name: stingray_missions
 transitions:
+  - { source: STOP_VIDEO_RECORDING, outcome: OK, dest: CHECK }
   - { source: CHECK, outcome: OK, dest: IDLE }

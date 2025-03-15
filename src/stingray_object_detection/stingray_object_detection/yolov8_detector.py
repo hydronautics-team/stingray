@@ -1,20 +1,12 @@
 import rclpy
-from rclpy.logging import get_logger
-from rclpy.node import Node
-from rclpy.publisher import Publisher
-from sensor_msgs.msg import Image, CameraInfo
 from ament_index_python import get_package_share_directory
-from cv_bridge import CvBridge, CvBridgeError
 
 import numpy as np
 import os
 import torch
-from functools import partial
 
 from stingray_object_detection.yolo_detector_base import YoloDetectorBase
 from stingray_interfaces.msg import Bbox, BboxArray
-from stingray_interfaces.msg import EnableObjectDetection
-from stingray_object_detection.distance import DistanceCalculator
 
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
@@ -99,8 +91,8 @@ class YoloV8Detector(YoloDetectorBase):
                     label = self.names[int(label_id)]
 
                     # self.get_logger().info(f"prev xyxy: {xyxy}")
-                    # xyxy = scale_boxes(
-                    #     im.shape[2:], xyxy, input_img.shape).round()
+                    xyxy = scale_boxes(
+                        im.shape[2:], xyxy, input_img.shape).round()
                     # self.get_logger().info(f"xyxy: {xyxy}")
 
                     # left, top, right, bottom = xyxy

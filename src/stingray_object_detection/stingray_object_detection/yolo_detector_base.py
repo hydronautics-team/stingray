@@ -19,7 +19,7 @@ import torch
 from functools import partial
 
 from stingray_interfaces.msg import Bbox, BboxArray
-from stingray_interfaces.msg import EnableObjectDetection
+from stingray_interfaces.msg import EnableTopic
 from stingray_object_detection.distance import DistanceCalculator
 
 
@@ -49,7 +49,9 @@ class YoloDetectorBase(Node):
         self.declare_parameter(
             'bbox_attrs_pkg_name', 'stingray_object_detection')
         self.declare_parameter(
-            'image_topic_list', ['/stingray/topics/front_camera'])
+            'image_topic_list', ['/stingray/topics/camera/front'])
+        self.declare_parameter(
+            'camera_info_topic_list', ['/stingray/topics/camera/front/camera_info'])
         self.declare_parameter(
             'debug', True)
         self.declare_parameter(
@@ -92,7 +94,7 @@ class YoloDetectorBase(Node):
             "cuda" if torch.cuda.is_available() else "cpu")
 
         self._enable_object_detection_sub = self.create_subscription(
-            EnableObjectDetection,
+            EnableTopic,
             self.get_parameter(
                 'enable_object_detection_topic').get_parameter_value().string_value,
             self._enable_object_detection,
@@ -161,16 +163,16 @@ class YoloDetectorBase(Node):
         """ YOLO init"""
         raise NotImplementedError
 
-    def _enable_object_detection(self, msg: EnableObjectDetection):
+    def _enable_object_detection(self, msg: EnableTopic):
         """Callback to enable or disable object detection for specific camera topic"""
 
-        if msg.camera_topic == 'all':
+        if msg.topic_name == 'all':
             for key in self.detection_enabled.keys():
                 self.detection_enabled[key] = msg.enable
                 self.get_logger().info(
                     f'Detection enabled: {self.detection_enabled}')
         else:
-            self.detection_enabled[msg.camera_topic] = msg.enable
+            self.detection_enabled[msg.topic_name] = msg.enable
         self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
 
     def detect(self, img: np.ndarray, topic: str):

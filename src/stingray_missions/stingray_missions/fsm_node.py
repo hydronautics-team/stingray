@@ -50,6 +50,8 @@ def declare_parameters(node: Node):
         'set_stabilization_srv', '/stingray/services/set_stabilization')
     node.declare_parameter(
         'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
+    node.declare_parameter(
+        'enable_recording_topic', '/stingray/topics/enable_recording')
 
 
 def main():

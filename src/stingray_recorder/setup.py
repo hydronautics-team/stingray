@@ -1,19 +1,15 @@
 from setuptools import find_packages, setup
-from glob import glob
 
-package_name = 'stingray_object_detection'
+package_name = 'stingray_recorder'
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=find_packages(exclude=['test']) + find_packages(where='ultralytics', include=["ultralytics", "ultralytics.*"]),
-    package_dir={'ultralytics': 'ultralytics/ultralytics'},
-    package_data={ "ultralytics": ["**/*.yaml"], "ultralytics.assets" : ["*.jpg"] },
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (f'share/{package_name}/weights', glob('weights/*.pt')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,8 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'yolov5_detector = stingray_object_detection.yolov5_detector:main',
-            'yolov8_detector = stingray_object_detection.yolov8_detector:main',
+            'video_recorder_node = stingray_recorder.video_recorder_node:main',
         ],
     },
 )

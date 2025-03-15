@@ -9,9 +9,9 @@ from stingray_interfaces.action import BboxCenteringTwistAction
 from stingray_interfaces.action import BboxSearchTwistAction
 from stingray_interfaces.action import HydroacousticCenteringTwistAction
 from stingray_interfaces.action import DeviceAction
-from stingray_interfaces.msg import EnableObjectDetection
+from stingray_interfaces.msg import EnableTopic
 from stingray_core_interfaces.srv import SetStabilization
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, SetBool
 
 
 class StateActionBase():
@@ -150,7 +150,7 @@ class EnableObjectDetectionStateAction(StateActionBase):
         super().__init__(node=node)
 
         self._enable_object_detection_pub: Publisher = self.node.create_publisher(
-            EnableObjectDetection,
+            EnableTopic,
             self.node.get_parameter(
                 'enable_object_detection_topic').get_parameter_value().string_value,
             10)
@@ -159,13 +159,41 @@ class EnableObjectDetectionStateAction(StateActionBase):
                       camera_topic: str = "",
                       enable: bool = False,
                       **kwargs) -> bool:
-        get_logger("action").info(f"Executing {self.type} state action")
+        get_logger("action").info(
+            f"Executing {self.type} state action. Enable object detection: {enable}")
 
-        self.msg = EnableObjectDetection()
-        self.msg.camera_topic = camera_topic
+        self.msg = EnableTopic()
+        self.msg.topic_name = camera_topic
         self.msg.enable = enable
 
         self._enable_object_detection_pub.publish(self.msg)
+        return await super().execute(**kwargs)
+
+
+class EnableVideoRecordingStateAction(StateActionBase):
+    type = "EnableVideoRecording"
+
+    def __init__(self, node: Node):
+        super().__init__(node=node)
+
+        self._enable_recording_pub: Publisher = self.node.create_publisher(
+            EnableTopic,
+            self.node.get_parameter(
+                'enable_recording_topic').get_parameter_value().string_value,
+            10)
+
+    async def execute(self,
+                      camera_topic: str = "",
+                      enable: bool = False,
+                      **kwargs) -> bool:
+        get_logger("action").info(
+            f"Executing {self.type} state action. Enable recording: {enable}")
+
+        self.msg = EnableTopic()
+        self.msg.topic_name = camera_topic
+        self.msg.enable = enable
+
+        self._enable_recording_pub.publish(self.msg)
         return await super().execute(**kwargs)
 
 
@@ -189,7 +217,7 @@ class ThrusterIndicationStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
 
-        if not self.twist_action_client.wait_for_server(timeout_sec=1.0): 
+        if not self.twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.twist_action_client._action_name} action server")
             return False
@@ -237,8 +265,8 @@ class TwistStateAction(StateActionBase):
                       duration: float = 0.0,
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
-        
-        if not self.twist_action_client.wait_for_server(timeout_sec=1.0): 
+
+        if not self.twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.twist_action_client._action_name} action server")
             return False
@@ -293,7 +321,7 @@ class BboxCenteringTwistStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
 
-        if not self.bbox_centering_twist_action_client.wait_for_server(timeout_sec=1.0): 
+        if not self.bbox_centering_twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.bbox_centering_twist_action_client._action_name} action server")
             return False
@@ -352,11 +380,11 @@ class BboxSearchTwistStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(f"Executing {self.type} state action")
 
-        if not self.bbox_search_twist_action_client.wait_for_server(timeout_sec=1.0): 
+        if not self.bbox_search_twist_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.bbox_search_twist_action_client._action_name} action server")
             return False
-        
+
         self.goal = BboxSearchTwistAction.Goal()
         self.goal.bbox_name = bbox_name
         self.goal.bbox_topic = bbox_topic
@@ -399,8 +427,8 @@ class SetDeviceValueStateAction(StateActionBase):
                       **kwargs) -> bool:
         get_logger("action").info(
             f"Executing {self.type}. Device: {device}, Value: {value}")
-        
-        if not self.device_action_client.wait_for_server(timeout_sec=1.0): 
+
+        if not self.device_action_client.wait_for_server(timeout_sec=1.0):
             get_logger("action").error(
                 f"Timeout while waiting for {self.device_action_client._action_name} action server")
             return False
@@ -425,6 +453,7 @@ def load_stingray_actions(node: Node) -> dict[str, StateActionBase]:
         ResetIMUStateAction.type: ResetIMUStateAction(node),
         EnableStabilizationStateAction.type: EnableStabilizationStateAction(node),
         EnableObjectDetectionStateAction.type: EnableObjectDetectionStateAction(node),
+        EnableVideoRecordingStateAction.type: EnableVideoRecordingStateAction(node),
         ThrusterIndicationStateAction.type: ThrusterIndicationStateAction(node),
         TwistStateAction.type: TwistStateAction(node),
         BboxCenteringTwistStateAction.type: BboxCenteringTwistStateAction(node),
