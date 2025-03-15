@@ -230,16 +230,16 @@ void BboxCenteringTwistActionServer::execute(
 
         // === 5. Логика обхода (avoid) ===
         RCLCPP_INFO(_node->get_logger(), "Target distance: %f", current_target_bbox.pos_z);
-        RCLCPP_INFO(_node->get_logger(), "Avoid target distance: %f", current_avoid_target_bbox.pos_z);
+        RCLCPP_INFO(_node->get_logger(), "Avoid target distance: x: %f z: %f", current_avoid_target_bbox.pos_x, current_avoid_target_bbox.pos_z);
         bool needAvoid = (current_avoid_target_bbox.pos_z < goal->avoid_distance_threshold &&
                           std::fabs(current_avoid_target_bbox.pos_x) < goal->avoid_horizontal_threshold);
         if (needAvoid)
         {
             // Уходим в сторону, противоположную bbox.pos_x
             if (current_avoid_target_bbox.pos_x < 0.0f)
-                twistSrvRequest->sway = -goal->sway;
-            else
                 twistSrvRequest->sway = goal->sway;
+            else
+                twistSrvRequest->sway = -goal->sway;
 
             RCLCPP_INFO(_node->get_logger(), "Avoiding obstacle: sway = %f", twistSrvRequest->sway);
         }
