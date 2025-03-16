@@ -251,7 +251,7 @@ void BboxCenteringTwistActionServer::execute(
         {
             // Простейший P-регулятор
             // Допустим, pos_x = смещение по горизонтали (пиксели / условная единица)
-            float Kp = 10.0f; // подбирайте под себя
+            float Kp = 20.0f; // подбирайте под себя
             float raw_cmd = Kp * current_target_bbox.pos_x;
             // Ограничим макс. команду
             if (raw_cmd > goal->sway)
