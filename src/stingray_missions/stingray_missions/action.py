@@ -10,7 +10,7 @@ from stingray_interfaces.action import BboxSearchTwistAction
 from stingray_interfaces.action import HydroacousticCenteringTwistAction
 from stingray_interfaces.action import DeviceAction
 from stingray_interfaces.msg import EnableTopic
-from stingray_core_interfaces.srv import SetStabilization
+from stingray_interfaces.srv import SetStabilization
 from std_srvs.srv import Trigger, SetBool
 
 

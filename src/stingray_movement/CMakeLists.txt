@@ -14,7 +14,6 @@ find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(stingray_core_interfaces REQUIRED)
 find_package(stingray_interfaces REQUIRED)
 find_package(stingray_utils REQUIRED)
 
@@ -27,14 +26,14 @@ add_library(${PROJECT_NAME}
         include/stingray_movement/AbstractTwistActionServer.h
         include/stingray_movement/AbstractCenteringTwistActionServer.h
 )
-target_link_libraries(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+target_link_libraries(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_interfaces stingray_utils)
 
 add_executable(twist_action_server
         include/stingray_movement/AbstractTwistActionServer.h
         include/stingray_movement/TwistActionServer.h
         src/TwistActionServer.cpp
         )
-ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+ament_target_dependencies(twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_interfaces stingray_utils)
 
 add_executable(bbox_centering_twist_action_server
         include/stingray_movement/AbstractTwistActionServer.h
@@ -42,7 +41,7 @@ add_executable(bbox_centering_twist_action_server
         include/stingray_movement/BboxCenteringTwistActionServer.h
         src/BboxCenteringTwistActionServer.cpp
         )
-ament_target_dependencies(bbox_centering_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+ament_target_dependencies(bbox_centering_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_interfaces stingray_utils)
 
 add_executable(bbox_search_twist_action_server
         include/stingray_movement/AbstractTwistActionServer.h
@@ -50,7 +49,7 @@ add_executable(bbox_search_twist_action_server
         include/stingray_movement/BboxSearchTwistActionServer.h
         src/BboxSearchTwistActionServer.cpp
         )
-ament_target_dependencies(bbox_search_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces stingray_utils)
+ament_target_dependencies(bbox_search_twist_action_server rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_interfaces stingray_utils)
 
 ## Install headers
 install(

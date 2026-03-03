@@ -11,7 +11,7 @@ bool TwistActionServer::isTwistDone(const std::shared_ptr<const stingray_interfa
 void TwistActionServer::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::TwistAction>> goal_handle)
 {
 
-    auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+    auto twistSrvRequest = std::make_shared<stingray_interfaces::srv::SetTwist::Request>();
 
     RCLCPP_INFO(_node->get_logger(), "Execute action");
     if (!twistSrvClient->wait_for_service(1s))
