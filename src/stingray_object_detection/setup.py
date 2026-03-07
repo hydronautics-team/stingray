@@ -26,7 +26,6 @@ setup(
         'console_scripts': [
             'yolov5_detector = stingray_object_detection.yolov5_detector:main',
             'yolov8_detector = stingray_object_detection.yolov8_detector:main',
-            'video_recorder = stingray_object_detection.video_recorder:main',
         ],
     },
 )

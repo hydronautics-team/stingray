@@ -22,6 +22,9 @@ private:
     bool isTwistDone(const std::shared_ptr<const stingray_interfaces::action::BboxSearchTwistAction_Goal> goal) override;
     bool isSearchTwistDone() override;
     void bboxArrayCallback(const stingray_interfaces::msg::BboxArray &msg);
+
+    void cleanupState();
+    
     rclcpp::Subscription<stingray_interfaces::msg::BboxArray>::SharedPtr bboxArraySub;
 
     std::string target_bbox_name = "";

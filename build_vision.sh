@@ -1,1 +1,0 @@
-colcon build --packages-select stingray_object_detection stingray_interfaces stingray_launch

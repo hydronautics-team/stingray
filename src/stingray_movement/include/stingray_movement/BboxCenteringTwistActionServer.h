@@ -7,6 +7,8 @@
 #include "stingray_utils/AsyncTimer.h"
 #include "stingray_interfaces/msg/bbox_array.hpp"
 
+#include <string.h>
+
 using namespace std::chrono_literals;
 
 /**
@@ -25,6 +27,9 @@ private:
     bool isTargetLost() override;
     void bboxArrayCallback(const stingray_interfaces::msg::BboxArray &msg);
     void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<stingray_interfaces::action::BboxCenteringTwistAction>> goal_handle) override;
+
+    void cleanupAfterFinish();
+
     rclcpp::Subscription<stingray_interfaces::msg::BboxArray>::SharedPtr bboxArraySub;
 
     std::string target_bbox_name = "";

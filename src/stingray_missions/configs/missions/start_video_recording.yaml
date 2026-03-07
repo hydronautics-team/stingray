@@ -1,0 +1,9 @@
+initial: START_RECORDING
+states:
+  START_RECORDING:
+    action:
+      type: EnableVideoRecording
+      camera_topic: all
+      enable: true
+transitions:
+  - { trigger: ok, source: START_RECORDING, dest: OK }

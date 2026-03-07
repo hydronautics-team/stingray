@@ -1,0 +1,8 @@
+initial: THRUSTER_INDICATION
+states:
+  THRUSTER_INDICATION:
+    action:
+      type: ThrusterIndication
+      repeat: 1
+transitions:
+  - { trigger: ok, source: THRUSTER_INDICATION, dest: OK }

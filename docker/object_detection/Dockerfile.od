@@ -17,7 +17,5 @@ RUN pip3 install filterpy
 RUN pip3 install scikit-image
 RUN pip3 install lap
 
-RUN echo 'source /additional_packages/install/setup.bash' >> /root/.bashrc
-
 WORKDIR /stingray
 CMD ["bash"]

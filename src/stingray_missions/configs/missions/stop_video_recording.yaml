@@ -1,0 +1,9 @@
+initial: STOP_RECORDING
+states:
+  STOP_RECORDING:
+    action:
+      type: EnableVideoRecording
+      camera_topic: all
+      enable: false
+transitions:
+  - { trigger: ok, source: STOP_RECORDING, dest: OK }

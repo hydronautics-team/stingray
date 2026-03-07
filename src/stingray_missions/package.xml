@@ -10,7 +10,6 @@
   <depend>stingray_core_interfaces</depend>
   <depend>stingray_interfaces</depend>
   <depend>stingray_utils</depend>
-  <depend>zbar_ros</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
