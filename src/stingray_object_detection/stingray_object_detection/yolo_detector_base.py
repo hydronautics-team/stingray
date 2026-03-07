@@ -19,7 +19,7 @@ import torch
 from functools import partial
 
 from stingray_interfaces.msg import Bbox, BboxArray
-from stingray_interfaces.msg import EnableObjectDetection
+from stingray_interfaces.msg import EnableTopic
 from stingray_object_detection.distance import DistanceCalculator
 
 
@@ -27,7 +27,6 @@ class YoloDetectorBase(Node):
     def __init__(self,
                  node_name: str = 'yolo_detector',
                  ):
-        
         """ Detecting objects on image
 
         Args:
@@ -50,7 +49,9 @@ class YoloDetectorBase(Node):
         self.declare_parameter(
             'bbox_attrs_pkg_name', 'stingray_object_detection')
         self.declare_parameter(
-            'image_topic_list', ['/stingray/topics/front_camera'])
+            'image_topic_list', ['/stingray/topics/camera/front'])
+        self.declare_parameter(
+            'camera_info_topic_list', ['/stingray/topics/camera/front/camera_info'])
         self.declare_parameter(
             'debug', True)
         self.declare_parameter(
@@ -74,6 +75,11 @@ class YoloDetectorBase(Node):
             'image_topic_list').get_parameter_value().string_array_value
         self.get_logger().info(f"image_topic_list: {image_topic_list}")
 
+        camera_info_topic_list = self.get_parameter(
+            'camera_info_topic_list').get_parameter_value().string_array_value
+        self.get_logger().info(
+            f"camera_info_topic_list: {camera_info_topic_list}")
+
         self.debug = self.get_parameter(
             'debug').get_parameter_value().bool_value
 
@@ -88,8 +94,9 @@ class YoloDetectorBase(Node):
             "cuda" if torch.cuda.is_available() else "cpu")
 
         self._enable_object_detection_sub = self.create_subscription(
-            EnableObjectDetection, 
-            self.get_parameter('enable_object_detection_topic').get_parameter_value().string_value, 
+            EnableTopic,
+            self.get_parameter(
+                'enable_object_detection_topic').get_parameter_value().string_value,
             self._enable_object_detection,
             10)
 
@@ -103,71 +110,69 @@ class YoloDetectorBase(Node):
         # init cv_bridge
         self.bridge = CvBridge()
 
-
         self.dt = [0.0, 0.0, 0.0]
 
-        for input_topic in image_topic_list:
+        for image_topic, camera_info_topic in zip(image_topic_list, camera_info_topic_list):
 
             # disable detection by default
-            self.detection_enabled[input_topic] = False
+            self.detection_enabled[image_topic] = False
 
             # ROS Topic names
-            bbox_array_topic = f"{input_topic}/bbox_array"
+            bbox_array_topic = f"{image_topic}/bbox_array"
             self.get_logger().info(
-                f"input topic: {input_topic}, output bbox_array topic: {bbox_array_topic}")
-
-            camera_info_topic = f"{input_topic}/camera_info"
+                f"input image topic: {image_topic}, camera info: {camera_info_topic}, output bbox_array topic: {bbox_array_topic}")
 
             # ROS subscribers
 
             # provide topic name to callback
             input_img_callback = partial(
-                self._image_callback, topic=input_topic)
+                self._image_callback, topic=image_topic)
             self.create_subscription(
                 Image,
-                input_topic,
+                image_topic,
                 input_img_callback,
                 1,
             )
 
             # provide topic name to callback
             camera_info_callback = partial(
-                self._camera_info_callback, topic=input_topic)
-            self.camera_info_subscriptions[input_topic] = self.create_subscription(
+                self._camera_info_callback, topic=image_topic)
+            self.camera_info_subscriptions[image_topic] = self.create_subscription(
                 CameraInfo,
                 camera_info_topic,
                 camera_info_callback,
                 1,
             )
-            self.init_yolo(input_topic)
+            self.init_yolo(image_topic)
             # self.inited[input_topic] = False
 
             # ROS publishers
             bbox_array_pub = self.create_publisher(
                 BboxArray, bbox_array_topic, 10)
-            self.bbox_array_publishers[input_topic] = bbox_array_pub
+            self.bbox_array_publishers[image_topic] = bbox_array_pub
 
             if self.debug:
-                output_image_topic = f"{input_topic}/debug_image"
+                debug_image_topic = f"{image_topic}/debug_image"
                 self.get_logger().info("input topic: {}, output image topic: {}".format(
-                    input_topic, output_image_topic))
+                    image_topic, debug_image_topic))
                 image_pub = self.create_publisher(
-                    Image, output_image_topic, 1)
-                self.image_publishers[input_topic] = image_pub
+                    Image, debug_image_topic, 1)
+                self.image_publishers[image_topic] = image_pub
 
     def init_yolo(self, topic: str):
         """ YOLO init"""
         raise NotImplementedError
 
-    def _enable_object_detection(self, msg: EnableObjectDetection):
+    def _enable_object_detection(self, msg: EnableTopic):
         """Callback to enable or disable object detection for specific camera topic"""
 
-        if msg.camera_topic == 'all':
+        if msg.topic_name == 'all':
             for key in self.detection_enabled.keys():
                 self.detection_enabled[key] = msg.enable
-                self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
+                self.get_logger().info(
+                    f'Detection enabled: {self.detection_enabled}')
         else:
-            self.detection_enabled[msg.camera_topic] = msg.enable
+            self.detection_enabled[msg.topic_name] = msg.enable
         self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
 
     def detect(self, img: np.ndarray, topic: str):

@@ -14,7 +14,7 @@ except ImportError:
 def load_yaml(config_path: str, package_name: str) -> dict:
     pakage_path = get_package_share_directory(package_name)
     config_path = Path(config_path).with_suffix('.yaml')
-    get_logger('stingray_utils').info(f'load config from {pakage_path}/{config_path}')
+    # get_logger('stingray_utils').info(f'load config from {pakage_path}/{config_path}')
     with open(Path(pakage_path, config_path), 'r') as f:
         return yaml.load(f, Loader=Loader)
 

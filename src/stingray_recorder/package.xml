@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>stingray_missions</name>
+  <name>stingray_recorder</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="vladik1209@gmail.com">vladushked</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>stingray_core_interfaces</depend>
-  <depend>stingray_interfaces</depend>
-  <depend>stingray_utils</depend>
+  <depend>std_srvs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
