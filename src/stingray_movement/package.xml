@@ -16,7 +16,6 @@
   <depend>rclcpp_action</depend>
   <depend>rclcpp_components</depend>
 
-  <depend>stingray_core_interfaces</depend>
   <depend>stingray_interfaces</depend>
   <depend>stingray_utils</depend>
 

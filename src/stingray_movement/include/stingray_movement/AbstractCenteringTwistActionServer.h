@@ -2,8 +2,8 @@
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTCENTERINGTWISTACTIONSERVER_H_
 
 #include "stingray_movement/AbstractTwistActionServer.h"
-#include "stingray_core_interfaces/srv/set_twist.hpp"
-#include "stingray_core_interfaces/msg/uv_state.hpp"
+#include "stingray_interfaces/srv/set_twist.hpp"
+#include "stingray_interfaces/msg/uv_state.hpp"
 
 /**
  * Action server that is responsible for moving vehicle
@@ -25,20 +25,20 @@ public:
 
     AbstractCenteringTwistActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractTwistActionServer<TCenteringTwistAction, TCenteringTwistActionGoal>(_node, actionName) {
     // ROS subscribers
-        uvStateSub = _node->create_subscription<stingray_core_interfaces::msg::UVState>(
+        uvStateSub = _node->create_subscription<stingray_interfaces::msg::UVState>(
             _node->get_parameter("uv_state_topic").as_string(), 1000,
             std::bind(&AbstractCenteringTwistActionServer::uvStateCallback, this, std::placeholders::_1));
     };
     ~AbstractCenteringTwistActionServer() = default;
     
-    stingray_core_interfaces::msg::UVState current_uv_state;
+    stingray_interfaces::msg::UVState current_uv_state;
     
 private:
-    void uvStateCallback(const stingray_core_interfaces::msg::UVState &msg) {
+    void uvStateCallback(const stingray_interfaces::msg::UVState &msg) {
         current_uv_state = msg;
     }
 
-    rclcpp::Subscription<stingray_core_interfaces::msg::UVState>::SharedPtr uvStateSub;
+    rclcpp::Subscription<stingray_interfaces::msg::UVState>::SharedPtr uvStateSub;
 };
 
 #endif //STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTCENTERINGTWISTACTIONSERVER_H_

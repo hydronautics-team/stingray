@@ -54,9 +54,6 @@ def generate_launch_description():
     device_action_arg = DeclareLaunchArgument(
         "device_action", default_value='/stingray/actions/device'
     )
-    device_state_array_topic_arg = DeclareLaunchArgument(
-        "device_state_array_topic", default_value='/stingray/topics/device_state_array'
-    )
 
     # core
     uv_state_topic_arg = DeclareLaunchArgument(
@@ -74,9 +71,6 @@ def generate_launch_description():
     enable_thrusters_srv_arg = DeclareLaunchArgument(
         "enable_thrusters_srv", default_value='/stingray/services/enable_thrusters'
     )
-    set_device_srv_arg = DeclareLaunchArgument(
-        "set_device_srv", default_value='/stingray/services/set_device'
-    )
 
     # load ros config
     return LaunchDescription([
@@ -91,11 +85,9 @@ def generate_launch_description():
         device_action_arg,
         uv_state_topic_arg,
         set_twist_srv_arg,
-        device_state_array_topic_arg,
         reset_imu_srv_arg,
         set_stabilization_srv_arg,
         enable_thrusters_srv_arg,
-        set_device_srv_arg,
 
         # missions
         Node(

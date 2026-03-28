@@ -47,16 +47,10 @@ def generate_launch_description():
     device_action_arg = DeclareLaunchArgument(
         "device_action", default_value='/stingray/actions/device'
     )
-    device_state_array_topic_arg = DeclareLaunchArgument(
-        "device_state_array_topic", default_value='/stingray/topics/device_state_array'
-    )
 
     # core services
     set_twist_srv_arg = DeclareLaunchArgument(
         "set_twist_srv", default_value='/stingray/services/set_twist'
-    )
-    set_device_srv_arg = DeclareLaunchArgument(
-        "set_device_srv", default_value='/stingray/services/set_device'
     )
     set_stabilization_srv_arg = DeclareLaunchArgument(
         "set_stabilization_srv", default_value='/stingray/services/set_stabilization'
@@ -86,11 +80,9 @@ def generate_launch_description():
         uv_state_topic_arg,
         set_twist_srv_arg,
         device_action_arg,
-        device_state_array_topic_arg,
         reset_imu_srv_arg,
         set_stabilization_srv_arg,
         enable_thrusters_srv_arg,
-        set_device_srv_arg,
         debug_arg,
 
         # missions
@@ -197,9 +189,6 @@ def generate_launch_description():
             name='device_action_server',
             parameters=[
                 {'device_action': LaunchConfiguration("device_action")},
-                {'device_state_array_topic': LaunchConfiguration(
-                    "device_state_array_topic")},
-                {'set_device_srv': LaunchConfiguration("set_device_srv")},
             ],
             respawn=True,
             respawn_delay=1,

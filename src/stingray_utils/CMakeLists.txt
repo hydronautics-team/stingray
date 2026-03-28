@@ -12,7 +12,6 @@ find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(stingray_core_interfaces REQUIRED)
 find_package(stingray_interfaces REQUIRED)
 
 include_directories(include)
@@ -22,7 +21,7 @@ add_library(${PROJECT_NAME}
         include/stingray_utils/AsyncTimer.h
 )
 # ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
-target_link_libraries(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_core_interfaces stingray_interfaces)
+target_link_libraries(${PROJECT_NAME} rclcpp rclcpp_action rclcpp_components std_msgs std_srvs stingray_interfaces)
 
 
 

@@ -2,8 +2,8 @@
 #define STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTTWISTACTIONSERVER_H_
 
 #include "stingray_utils/AbstractActionServer.h"
-#include "stingray_core_interfaces/srv/set_twist.hpp"
-#include "stingray_core_interfaces/msg/uv_state.hpp"
+#include "stingray_interfaces/srv/set_twist.hpp"
+#include "stingray_interfaces/msg/uv_state.hpp"
 
 /**
  * Action server that is responsible for moving vehicle
@@ -101,7 +101,7 @@ public:
         }
     }
 
-    virtual void stopTwist(std::shared_ptr<stingray_core_interfaces::srv::SetTwist::Request> twistSrvRequest)
+    virtual void stopTwist(std::shared_ptr<stingray_interfaces::srv::SetTwist::Request> twistSrvRequest)
     {
         twistSrvRequest->surge = 0.0;
         twistSrvRequest->sway = 0.0;
@@ -155,11 +155,41 @@ public:
         twistSrvClient->async_send_request(twistSrvRequest).wait();
     }
 
-    rclcpp::Client<stingray_core_interfaces::srv::SetTwist>::SharedPtr twistSrvClient;
+    virtual void stopTwist()
+    {
+        // Формируем новый запрос на движение
+        auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+        twistSrvRequest->surge = 0.0;
+        twistSrvRequest->sway = 0.0;
+        twistSrvRequest->depth = current_uv_state.depth;
+        twistSrvRequest->roll = current_uv_state.roll;
+        twistSrvRequest->pitch = current_uv_state.pitch;
+        twistSrvRequest->yaw = current_uv_state.yaw;
+        // if (!current_uv_state.yaw_stabilization)
+        // {
+        //     twistSrvRequest->yaw = 0.0;
+        // }
+        // if (!current_uv_state.depth_stabilization)
+        // {
+        //     twistSrvRequest->depth = 0.0;
+        // }
+        // if (!current_uv_state.roll_stabilization)
+        // {
+        //     twistSrvRequest->roll = 0.0;
+        // }
+        // if (!current_uv_state.pitch_stabilization)
+        // {
+        //     twistSrvRequest->pitch = 0.0;
+        // }
+        RCLCPP_INFO(this->_node->get_logger(), "Twist action request stop yaw: %f, surge: %f", twistSrvRequest->yaw, twistSrvRequest->surge);
+        twistSrvClient->async_send_request(twistSrvRequest).wait();
+    }
+
+    rclcpp::Client<stingray_interfaces::srv::SetTwist>::SharedPtr twistSrvClient;
 
     float depth_tolerance;
     float angle_tolerance;
-    stingray_core_interfaces::msg::UVState current_uv_state;
+    stingray_interfaces::msg::UVState current_uv_state;
 
     AbstractTwistActionServer(std::shared_ptr<rclcpp::Node> _node, const std::string &actionName) : AbstractActionServer<TTwistAction, TTwistActionGoal>(_node, actionName)
     {
@@ -170,9 +200,9 @@ public:
         _node->declare_parameter("angle_tolerance", 10.0);
 
         // ROS service clients
-        twistSrvClient = _node->create_client<stingray_core_interfaces::srv::SetTwist>(_node->get_parameter("set_twist_srv").as_string());
+        twistSrvClient = _node->create_client<stingray_interfaces::srv::SetTwist>(_node->get_parameter("set_twist_srv").as_string());
         // ROS subscribers
-        uvStateSub = _node->create_subscription<stingray_core_interfaces::msg::UVState>(
+        uvStateSub = _node->create_subscription<stingray_interfaces::msg::UVState>(
             _node->get_parameter("uv_state_topic").as_string(), 1000,
             std::bind(&AbstractTwistActionServer::uvStateCallback, this, std::placeholders::_1));
         depth_tolerance = _node->get_parameter("depth_tolerance").as_double();
@@ -181,12 +211,12 @@ public:
     ~AbstractTwistActionServer() = default;
 
 private:
-    void uvStateCallback(const stingray_core_interfaces::msg::UVState &msg)
+    void uvStateCallback(const stingray_interfaces::msg::UVState &msg)
     {
         current_uv_state = msg;
     }
 
-    rclcpp::Subscription<stingray_core_interfaces::msg::UVState>::SharedPtr uvStateSub;
+    rclcpp::Subscription<stingray_interfaces::msg::UVState>::SharedPtr uvStateSub;
 };
 
 #endif // STINGRAY_SRC_STINGRAY_MOVEMENT_INCLUDE_ABSTRACTTWISTACTIONSERVER_H_
