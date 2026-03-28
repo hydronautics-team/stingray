@@ -1,0 +1,51 @@
+### EKF configuration for VectorNav VN100 ###
+ekf_filter_node:
+  ros__parameters:
+    # Основные параметры
+    frequency: 50.0                      # Частота работы фильтра (Гц)
+    sensor_timeout: 0.1                 # Таймаут ожидания датчиков (сек)
+    two_d_mode: true                    # Режим движения по плоскости
+    publish_tf: true                    # Публиковать трансформации
+    publish_acceleration: false         # Не публиковать ускорения
+    
+    
+    # ИЗМЕНЕНО: используем ваши фреймы
+    map_frame: world              # было map, теперь world
+    odom_frame: world             # было odom, теперь world (или оставьте odom, если хотите отдельно)
+    base_link_frame: auv          # было base_link, теперь auv
+    world_frame: world            # было odom, теперь world
+    # map_frame: map                      # Глобальная система координат
+    # odom_frame: odom                    # Система одометрии
+    # base_link_frame: base_link          # Система робота
+    # world_frame: odom                   # Базовая система для фильтра
+
+    # Настройки отладки
+    debug: false
+    debug_out_file: /tmp/ekf_debug.txt
+
+    # Настройки IMU (VectorNav VN100)
+    imu0: /vectornav/imu                # Топик IMU
+    imu0_config: [false, false, false,  # Использовать ли позицию X, Y, Z
+                  true, true, true,     # Использовать ориентацию (RPY)
+                  false, false, false,  # Использовать линейную скорость
+                  true, true, true,     # Использовать угловую скорость
+                  false, false, false]  # Использовать линейное ускорение
+    imu0_differential: false            # Не дифференцировать измерения
+    imu0_relative: false                # Измерения абсолютные
+    imu0_remove_gravitational_acceleration: true  # Удалять гравитацию
+    imu0_queue_size: 10                 # Размер очереди сообщений
+
+    # Процессные шумы (подбираются экспериментально)
+    process_noise_covariance: [0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
+    
+    initial_estimate_covariance: [1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                  0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+                                  0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+                                  0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+                                  0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                                  0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
