@@ -1,3 +1,6 @@
 #!/bin/bash
 
-docker buildx build --platform linux/amd64,linux/arm64 -t hydronautics/stingray:control -f Dockerfile --push ../../
+#docker buildx build --platform linux/amd64,linux/arm64 -t hydronautics/stingray:control -f Dockerfile --push ../../
+docker build -t hydronautics/stingray:control -f docker/control/Dockerfile .
+
+echo "[INFO] Образ успешно собран."
