@@ -128,7 +128,7 @@ public:
     virtual void stopTwist()
     {
         // Формируем новый запрос на движение
-        auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+        auto twistSrvRequest = std::make_shared<stingray_interfaces::srv::SetTwist::Request>();
         twistSrvRequest->surge = 0.0;
         twistSrvRequest->sway = 0.0;
         twistSrvRequest->depth = current_uv_state.depth;
@@ -158,7 +158,7 @@ public:
     virtual void stopTwist()
     {
         // Формируем новый запрос на движение
-        auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+        auto twistSrvRequest = std::make_shared<stingray_interfaces::srv::SetTwist::Request>();
         twistSrvRequest->surge = 0.0;
         twistSrvRequest->sway = 0.0;
         twistSrvRequest->depth = current_uv_state.depth;

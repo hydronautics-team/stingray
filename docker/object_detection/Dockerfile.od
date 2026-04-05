@@ -1,4 +1,4 @@
-FROM hydronautics/stingray_core:latest
+FROM hydronautics/stingray:latest
 
 RUN apt update && apt install -y --no-install-recommends ros-iron-usb-cam ros-iron-zbar-ros python3-pip
 

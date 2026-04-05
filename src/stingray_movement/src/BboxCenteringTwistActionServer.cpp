@@ -225,7 +225,7 @@ void BboxCenteringTwistActionServer::execute(
         }
 
         // Формируем новый запрос на движение
-        auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+        auto twistSrvRequest = std::make_shared<stingray_interfaces::srv::SetTwist::Request>();
         twistSrvRequest->surge = goal->surge; // как задано в goal
         twistSrvRequest->depth = goal->depth;
         twistSrvRequest->roll = goal->roll;

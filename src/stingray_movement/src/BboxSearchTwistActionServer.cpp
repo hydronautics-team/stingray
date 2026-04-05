@@ -121,7 +121,7 @@ void BboxSearchTwistActionServer::execute(
     found_target_yaw     = 0.0f;
 
     // 5. Задаём глубину/ролл/питч
-    auto twistSrvRequest = std::make_shared<stingray_core_interfaces::srv::SetTwist::Request>();
+    auto twistSrvRequest = std::make_shared<stingray_interfaces::srv::SetTwist::Request>();
     twistSrvRequest->depth = goal->depth;
     twistSrvRequest->roll  = goal->roll;
     twistSrvRequest->pitch = goal->pitch;

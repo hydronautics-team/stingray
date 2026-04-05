@@ -9,11 +9,10 @@
         "/opt/ros/iron/local/lib/python3.10/dist-packages",
         "./install/stingray_interfaces/lib/python3.10/site-packages",
         "./src/stingray_utils",
-        "./src/stingray_core/src/stingray_core_interfaces",
         "./src/stingray_missions",
         "src/stingray_object_detection/yolov5",
         "src/stingray_object_detection/ultralytics",
-        "./install/stingray_core_interfaces/lib/python3.10/site-packages"
+        "./install/stingray_interfaces/lib/python3.10/site-packages"
     ],
     "files.associations": {
         "cctype": "cpp",
@@ -101,7 +100,7 @@
     },
     "C_Cpp.errorSquiggles": "enabled",
     "cmake.configureOnOpen": true,
-    "cmake.sourceDirectory": "/home/super_ubuntu22/stingray/build/stingray_core_interfaces/stingray_core_interfaces__py",
+    "cmake.sourceDirectory": "/home/super_ubuntu22/stingray/build",
     "ros.isolateEnvironment": null,
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

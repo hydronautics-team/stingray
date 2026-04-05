@@ -2,7 +2,7 @@
 
 Review scope:
 
-- First-party packages under `src/`, excluding `src/stingray_core`.
+- First-party packages under `src/`, excluding the legacy core subtree.
 - No deep review of third-party code in
   `src/stingray_object_detection/ultralytics` or vendored
   `src/stingray_object_detection/yolov5`.

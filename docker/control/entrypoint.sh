@@ -11,8 +11,6 @@ else
 
   source "/opt/ros/humble/setup.bash"
   source "/additional_packages/install/setup.bash"
-  source /stingray_core/install/setup.bash
-
   if ! colcon build --packages-select stingray_devices stingray_interfaces stingray_launch stingray_missions stingray_movement stingray_utils; then
     echo "[ERROR] Сборка завершилась с ошибкой. Удаляем build, install, log..."
     rm -rf build install log

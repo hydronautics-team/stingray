@@ -12,7 +12,7 @@ external code trees that are used by object detection.
 ## Scope of This README
 
 - This document describes the packages that live in this repository today.
-- Direct code review scope excluded `src/stingray_core`.
+- Direct code review scope excluded the legacy core subtree.
 - Deep review also excluded third-party detector code in
   `src/stingray_object_detection/ultralytics` and vendored `yolov5`.
 - Known defects and architectural risks are tracked in [ISSUES.md](ISSUES.md).
@@ -22,11 +22,11 @@ external code trees that are used by object detection.
 | Package | Kind | Main entry points | Notes |
 | --- | --- | --- | --- |
 | `stingray_cam` | ROS 2 Python package | Camera calibration data | Ships `configs/camera.yaml`; no runtime node in this package. |
-| `stingray_devices` | ROS 2 C++ package | `device_action_server` | Bridges `DeviceAction` requests to `stingray_core_interfaces/SetDevice`. |
+| `stingray_devices` | ROS 2 C++ package | `device_action_server` | Bridges `DeviceAction` requests to `stingray_interfaces/SetDevice`. |
 | `stingray_interfaces` | ROS 2 interface package | Actions, messages, services | Shared contract for missions, movement, devices, detector, and recorder control. |
 | `stingray_launch` | ROS 2 Python package | `cam.launch.py`, `control.launch.py`, `missions.launch.py`, `od.launch.py`, `recorder.launch.py`, `zbar.launch.py` | Main bring-up/orchestration layer. |
 | `stingray_missions` | ROS 2 Python package | `fsm_node`, `qr_trigger_node` | Loads scenario YAML, drives the finite-state machine, and invokes actions/services. |
-| `stingray_movement` | ROS 2 C++ package | `twist_action_server`, `bbox_centering_twist_action_server`, `bbox_search_twist_action_server` | Movement actions backed by `stingray_core_interfaces/SetTwist`. |
+| `stingray_movement` | ROS 2 C++ package | `twist_action_server`, `bbox_centering_twist_action_server`, `bbox_search_twist_action_server` | Movement actions backed by `stingray_interfaces/SetTwist`. |
 | `stingray_object_detection` | ROS 2 Python package | `yolov8_detector` | Publishes `BboxArray` from image topics; also contains the `ultralytics` submodule and vendored `yolov5`. |
 | `stingray_recorder` | ROS 2 Python package | `video_recorder_node` | Records image topics on demand via `EnableTopic`. |
 | `stingray_utils` | Mixed ROS 2 package | C++ headers, Python helpers, `stingray_utils.launch.py` | Shared helpers used by missions/movement; packaging is currently inconsistent, see `ISSUES.md`. |
@@ -44,13 +44,13 @@ The current first-party control path is:
 4. Mission actions call movement/device action servers or publish
    `EnableTopic` messages to toggle detection/recording.
 5. `stingray_movement` and `stingray_devices` turn those actions into
-   `stingray_core_interfaces` service calls.
+   `stingray_interfaces` service calls.
 6. `stingray_object_detection` subscribes to image and camera info topics and
    publishes `*/bbox_array`.
 7. `stingray_recorder` subscribes to image topics and records when enabled.
 
-The stack relies on `stingray_core_interfaces` for the low-level control and
-state contracts, but `src/stingray_core` itself is outside the scope of this
+The stack relies on `stingray_interfaces` for the low-level control and
+state contracts; the legacy external core stack is outside the scope of this
 repository review.
 
 ## Launch Files
@@ -118,7 +118,7 @@ Built-in reviewed scenarios include:
 
 This repository uses ROS 2 package layouts (`ament_cmake`, `ament_python`,
 `rosidl_generate_interfaces`) and assumes a ROS 2 workspace with
-`stingray_core_interfaces` available.
+`stingray_interfaces` available.
 
 Expected external/runtime dependencies visible from the reviewed code include:
 
