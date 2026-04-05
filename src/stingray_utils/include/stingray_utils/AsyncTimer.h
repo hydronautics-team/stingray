@@ -21,7 +21,7 @@ public:
     }
 
     busy = true;
-    std::thread timerThread([=]() {
+    std::thread timerThread([this]() {
       std::this_thread::sleep_for(std::chrono::milliseconds(this->milliseconds));
       busy = false;
       });
