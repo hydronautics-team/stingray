@@ -54,7 +54,7 @@ class PathPlannerNode : public rclcpp::Node{
         double resolution = 0.05;
         bool got_odom = false;
         bool got_map = false;
-        bool got_objects = false;  
+        bool got_target = false; 
         Point start_point{0, 0};
         Point target{0, 0};
         std::unique_ptr<GRID> grid;
@@ -92,6 +92,16 @@ class PathPlannerNode : public rclcpp::Node{
                 }
             }
             got_map = true;
+            try_run();
+        }
+
+        void targets_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg){
+            if (got_target) return;
+
+            const double x_m = msg->pose.position.x;
+            const double y_m = msg->pose.position.y;
+            target = {static_cast<int>(x_m * k_units), static_cast<int>(y_m * k_units)};
+            got_target = true;
             try_run();
         }
 
