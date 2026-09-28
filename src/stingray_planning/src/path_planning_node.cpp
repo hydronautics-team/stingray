@@ -18,6 +18,7 @@ class PathPlannerNode : public rclcpp::Node{
             this->declare_parameter("min_vel",               0.1);
             this->declare_parameter("max_angle_vel",        60.0);
             this->declare_parameter("min_angle_vel",         5.0);
+            this->declare_parameter("shutdown_on_complete", false);
 
             k_units = this->get_parameter("k_units").as_double();
             auv_length = this->get_parameter("auv_length").as_double();
@@ -52,9 +53,12 @@ class PathPlannerNode : public rclcpp::Node{
         double max_angle_vel;
         double min_angle_vel;
         double resolution = 0.05;
+
         bool got_odom = false;
         bool got_map = false;
-        bool got_target = false; 
+        bool got_target = false;
+        bool executed = false;
+
         Point start_point{0, 0};
         Point target{0, 0};
         std::unique_ptr<GRID> grid;
@@ -103,6 +107,37 @@ class PathPlannerNode : public rclcpp::Node{
             target = {static_cast<int>(x_m * k_units), static_cast<int>(y_m * k_units)};
             got_target = true;
             try_run();
+        }
+
+        void try_run(){
+            if (executed) return;
+            if (!got_odom || !got_map || !got_target) return;
+            executed = true;
+
+            AUV VELT(start_point,
+                     metres_to_grid_units(auv_length, k_units),
+                     metres_to_grid_units(auv_width, k_units),
+                     metres_to_grid_units(max_vel, k_units),
+                     metres_to_grid_units(min_vel, k_units),
+                     max_angle_vel,
+                     min_angle_vel);
+            std::vector<Point> targets.push_back(target);
+            std::vector<Point> path = auv.build_full_route(targets, *grid);
+            if (path.empty()) {
+                RCLCPP_ERROR(this->get_logger(), "Path not found");
+                finish();
+                return;
+            }
+             publish_path(path);
+             publish_velocity(path);
+             finish();
+        }
+
+        void finish(){
+            if (this->get_parameter("shutdown_on_complete").as_bool()) {
+                RCLCPP_INFO(this->get_logger(), "Shutting down (shutdown_on_complete=true)");
+                rclcpp::shutdown();
+            }
         }
 
     }
