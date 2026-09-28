@@ -203,15 +203,16 @@ double normalize_angle(double angle) {
     return angle;
 }
 
-void angle_velocity_output(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K) {
-    if (path.empty()) return;
-
-    if (path.size() == 1) {
-        std::cout << path[0].x << ", " << path[0].y << "\t\t0.0\t\t\t0.0" << std::endl;
-        return;
+std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K){
+    std::vector<WaypointCommand> result;
+    if (path.empty()) return result;
+    const size_t n = path.size();
+    result.resize(n);
+    
+    if (n == 1) {
+        result[0] = {0.0, 0.0, 0.0, 0.0, 0.0};
+        return result;
     }
-
-    size_t n = path.size();
     std::vector<double> turn_angles(n, 0.0);
     std::vector<double> velocities(n, 0.0);
     std::vector<double> x_vel(n, 0.0);
@@ -262,13 +263,29 @@ void angle_velocity_output(std::vector<Point> path, double max_vel, double min_v
 
     velocities[n - 1] = 0.0; 
     angle_vel[n - 1] = 0.0;
-    std::cout << "Point\t\t" << "Turn Angle\t" << "Velocity after Point\t" << "Angle Velocity" << std::endl;
+    
     for (size_t i = 0; i < n; ++i) {
-        std::cout << path[i].x << ", " << path[i].y << "\t\t" 
-                  << turn_angles[i] << "\t\t\t" << grid_units_to_metres(velocities[i], K) 
-                  << ", " << grid_units_to_metres(x_vel[i], K) << ", " << grid_units_to_metres(y_vel[i], K) 
-                  << "\t\t" << angle_vel[i] << std::endl;
+        result[i].turn_angle = turn_angles[i];
+        result[i].velocity = grid_units_to_metres(velocities[i], K);
+        result[i].x_vel = grid_units_to_metres(x_vel[i], K);
+        result[i].y_vel = grid_units_to_metres(y_vel[i], K);
+        result[i].angle_vel = angle_vel[i];
     }
-} 
+    return result;
+}
+
+void angle_velocity_output(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K){
+    auto cmds = compute_commands(path, max_vel, min_vel, max_angle_vel, min_angle_vel, K);
+    if (cmds.empty()) return;
+    std::cout << "Point\t\tTurn Angle\tVelocity\tX vel\tY vel\tAngle Velocity\n";
+    for (size_t i = 0; i < cmds.size(); ++i) {
+        std::cout << path[i].x << ", " << path[i].y << "\t\t"
+                  << cmds[i].turn_angle << "\t\t"
+                  << cmds[i].velocity   << ", "
+                  << cmds[i].x_vel      << ", "
+                  << cmds[i].y_vel      << "\t"
+                  << cmds[i].angle_vel  << std::endl;
+    }
+}
 
 

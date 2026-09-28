@@ -10,6 +10,14 @@ struct Point {
     int y;
 };
 
+struct WaypointCommand{
+    double turn_angle;
+    double velocity;
+    double x_vel;
+    double y_vel;
+    double angle_vel;
+};
+
 // Находит все точки, лежащие на прямой, соединяющей две точки
 std::vector<Point> bresenham(Point start, Point finish);
 
@@ -74,6 +82,7 @@ public:
 };
 
 // Вывод скорости и угла поворота для каждой точки
+std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
 void angle_velocity_output(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
 
 #endif
