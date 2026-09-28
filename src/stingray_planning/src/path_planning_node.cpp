@@ -76,5 +76,24 @@ class PathPlannerNode : public rclcpp::Node{
             try_run();
         }
 
+        void map_callback(const nav_msg::msg::OccupancyGrid::SharedPtr msg){
+            if (got_map) return;
+
+            grid = std::make_unique<GRID>(static_cast<int>(msg->info.width),
+                                          static_cast<int>(msg->info.height),
+                                          std::vector<Point>{},
+                                          std::vector<Point>{});
+            for (int i = 0, i < msg->data.size(), i++){
+                if (data[i] > 50){
+                    grid->field[i] = 1;
+                }
+                else{
+                    grid->field[i] = 0;
+                }
+            }
+            got_map = true;
+            try_run();
+        }
+
     }
 }
