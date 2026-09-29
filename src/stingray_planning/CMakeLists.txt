@@ -5,11 +5,37 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+
+add_executable(path_planner_node
+  src/path_planner_node.cpp
+  src/Route.cpp
+)
+
+target_link_libraries(path_planner_node
+  rclcpp::rclcpp
+  ${nav_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+  # ${stingray_mapping_TARGETS}
+)
+
+install(TARGETS path_planner_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
