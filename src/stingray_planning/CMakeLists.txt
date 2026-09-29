@@ -20,12 +20,12 @@ find_package(std_msgs REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(path_planner_node
-  src/path_planner_node.cpp
+add_executable(path_planning_node
+  src/path_planning_node.cpp
   src/Route.cpp
 )
 
-target_link_libraries(path_planner_node
+target_link_libraries(path_planning_node
   rclcpp::rclcpp
   ${nav_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
@@ -33,7 +33,7 @@ target_link_libraries(path_planner_node
   # ${stingray_mapping_TARGETS}
 )
 
-install(TARGETS path_planner_node
+install(TARGETS path_planning_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
