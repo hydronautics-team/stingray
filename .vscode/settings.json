@@ -1,27 +1,61 @@
 {
-    "ros.distro": "iron",
+    "ros.distro": "humble",
+    "C_Cpp.autocomplete": "Disabled",
+    "C_Cpp.errorSquiggles": "Disabled",
+    "C_Cpp.intelliSenseEngine": "Disabled",
+    "C_Cpp.formatting.provider": "disabled",
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.formatOnSave": true
+    },
+    "[c]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.formatOnSave": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "always",
+            "source.organizeImports.ruff": "always"
+        }
+    },
+    "clangd.path": "/usr/bin/clangd",
+    "clangd.arguments": [
+        "--background-index",
+        "--clang-tidy",
+        "--completion-style=detailed",
+        "--compile-commands-dir=/stingray",
+        "--header-insertion=iwyu",
+        "--query-driver=/usr/bin/clang,/usr/bin/clang++,/usr/bin/gcc,/usr/bin/g++"
+    ],
+    "files.insertFinalNewline": true,
+    "cmake.configureOnOpen": false,
+    "python.defaultInterpreterPath": "/usr/bin/python3",
     "python.autoComplete.extraPaths": [
-        "/opt/ros/iron/lib/python3.10/site-packages",
-        "/opt/ros/iron/local/lib/python3.10/dist-packages"
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
     ],
     "python.analysis.extraPaths": [
-        "/opt/ros/iron/lib/python3.10/site-packages",
-        "/opt/ros/iron/local/lib/python3.10/dist-packages",
-        "./install/stingray_interfaces/lib/python3.10/site-packages",
-        "./src/stingray_utils",
-        "./src/stingray_core/src/stingray_core_interfaces",
-        "./src/stingray_missions",
-        "src/stingray_object_detection/yolov5",
-        "src/stingray_object_detection/ultralytics",
-        "./install/stingray_core_interfaces/lib/python3.10/site-packages"
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "${workspaceFolder}/install/stingray_interfaces/lib/python3.10/site-packages",
+        "${workspaceFolder}/install/stingray_core_control/lib/python3.10/site-packages"
     ],
+    "ruff.nativeServer": "on",
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "files.associations": {
+        "*.hpp": "cpp",
+        "*.cpp": "cpp",
+        "cstddef": "cpp",
+        "limits": "cpp",
+        "version": "cpp",
+        "functional": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
         "csignal": "cpp",
         "cstdarg": "cpp",
-        "cstddef": "cpp",
         "cstdio": "cpp",
         "cstdlib": "cpp",
         "cstring": "cpp",
@@ -54,7 +88,6 @@
         "vector": "cpp",
         "exception": "cpp",
         "algorithm": "cpp",
-        "functional": "cpp",
         "iterator": "cpp",
         "memory": "cpp",
         "memory_resource": "cpp",
@@ -75,11 +108,11 @@
         "iosfwd": "cpp",
         "iostream": "cpp",
         "istream": "cpp",
-        "limits": "cpp",
         "mutex": "cpp",
         "new": "cpp",
         "numbers": "cpp",
         "ostream": "cpp",
+        "ranges": "cpp",
         "semaphore": "cpp",
         "shared_mutex": "cpp",
         "sstream": "cpp",
@@ -93,15 +126,12 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "version": "cpp",
-        "ranges": "cpp",
-        "*.inc": "cpp",
-        "*.ipp": "cpp",
-        "regex": "cpp"
-    },
-    "C_Cpp.errorSquiggles": "enabled",
-    "cmake.configureOnOpen": true,
-    "cmake.sourceDirectory": "/home/super_ubuntu22/stingray/build/stingray_core_interfaces/stingray_core_interfaces__py",
-    "ros.isolateEnvironment": null,
-    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
+        "span": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "charconv": "cpp",
+        "climits": "cpp",
+        "format": "cpp"
+    }
 }

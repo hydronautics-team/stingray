@@ -1,0 +1,28 @@
+CompileFlags:
+  CompilationDatabase: /stingray
+  Add:
+    - -std=c++17
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - clang-analyzer-*
+      - performance-*
+      - portability-*
+      - modernize-use-nullptr
+      - modernize-use-override
+      - readability-braces-around-statements
+      - readability-container-size-empty
+      - readability-inconsistent-declaration-parameter-name
+      - readability-misleading-indentation
+      - readability-redundant-control-flow
+      - readability-simplify-boolean-expr
+    Remove:
+      - bugprone-easily-swappable-parameters
+      - modernize-use-trailing-return-type
+      - readability-identifier-length
+      - readability-magic-numbers
+
+Index:
+  Background: Build

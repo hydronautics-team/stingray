@@ -1,0 +1,39 @@
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  performance-*,
+  portability-*,
+  modernize-use-nullptr,
+  modernize-use-override,
+  readability-braces-around-statements,
+  readability-container-size-empty,
+  readability-identifier-naming,
+  readability-inconsistent-declaration-parameter-name,
+  readability-misleading-indentation,
+  readability-redundant-control-flow,
+  readability-simplify-boolean-expr,
+  -bugprone-easily-swappable-parameters,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(/stingray/)?src/.*'
+FormatStyle: file
+CheckOptions:
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: '1'
+  - key: readability-function-cognitive-complexity.Threshold
+    value: '40'
+    
+  - key: readability-identifier-naming.FunctionCase
+    value: snake_case
+
+  - key: readability-identifier-naming.MethodCase
+    value: snake_case
+
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE

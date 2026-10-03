@@ -1,0 +1,41 @@
+{
+    "name": "Stingray ROS 2 Humble",
+    "build": {
+        "context": "..",
+        "dockerfile": "../docker/Dockerfile"
+    },
+    "workspaceFolder": "/stingray",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/stingray,type=bind",
+    "remoteUser": "root",
+    "overrideCommand": true,
+    "runArgs": [
+        "--privileged",
+        "--network=host",
+        "-v",
+        "/tmp/.X11-unix:/tmp/.X11-unix",
+        "-v",
+        "/dev:/dev"
+    ],
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "QT_X11_NO_MITSHM": "1",
+        "ROS_DOMAIN_ID": "1"
+    },
+    "initializeCommand": "xhost +si:localuser:root || true",
+    "postCreateCommand": "bash .devcontainer/post-create.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-iot.vscode-ros",
+                "redhat.vscode-yaml",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools",
+                "twxs.cmake",
+                "charliermarsh.ruff"
+            ]
+        }
+    }
+}
