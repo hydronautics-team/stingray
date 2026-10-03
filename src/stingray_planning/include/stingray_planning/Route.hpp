@@ -1,5 +1,4 @@
-#ifndef ROUTE_H
-#define ROUTE_H
+#pragma once
 
 #include <vector>
 #include <cstdint>
@@ -84,5 +83,3 @@ public:
 // Вывод скорости и угла поворота для каждой точки
 std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
 void angle_velocity_output(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
-
-#endif

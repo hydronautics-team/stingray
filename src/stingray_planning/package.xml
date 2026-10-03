@@ -3,7 +3,7 @@
 <package format="3">
   <name>stingray_planning</name>
   <version>0.0.0</version>
-  <description>Routh planner for Stingray framework</description>
+  <description>Route planner for Stingray framework</description>
   <maintainer email="gu1307303@gmail.com">egor</maintainer>
   <license>MIT</license>
 
