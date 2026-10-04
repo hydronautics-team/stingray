@@ -1,5 +1,5 @@
 path_planning:
- ros_parametres:
+ ros__parameters:
 
   k_units: 20.0                 # клеток в метре
   auv_length: 1.0               # м
