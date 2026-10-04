@@ -25,6 +25,10 @@ add_executable(path_planning_node
   src/Route.cpp
 )
 
+target_include_directories(path_planning_node PRIVATE
+  include
+)
+
 target_link_libraries(path_planning_node
   rclcpp::rclcpp
   ${nav_msgs_TARGETS}
@@ -36,6 +40,14 @@ target_link_libraries(path_planning_node
 install(TARGETS path_planning_node
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config
+)
+
+#install(DIRECTORY launch/
+#  DESTINATION share/${PROJECT_NAME}/launch
+#)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

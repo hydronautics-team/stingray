@@ -6,7 +6,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "nav_msgs/msg/path.hpp"
-#include "stingray_mapping/msg/map_object_array.hpp"
+//#include "stingray_mapping/msg/map_object_array.hpp"
 
 namespace stingray::planning{
     class PathPlannerNode : public rclcpp::Node{
@@ -22,13 +22,13 @@ namespace stingray::planning{
                 this->declare_parameter("min_angle_vel",         5.0);
                 this->declare_parameter("shutdown_on_complete", false);
 
-                k_units = this->get_parameter("k_units").as_double();
-                auv_length = this->get_parameter("auv_length").as_double();
-                auv_width = this->get_parameter("auv_width").as_double();
-                max_vel = this->get_parameter("max_vel").as_double();
-                min_vel = this->get_parameter("min_vel").as_double();
-                max_angle_vel = this->get_parameter("max_angle_vel").as_double();
-                min_angle_vel = this->get_parameter("min_angle_vel").as_double();
+                k_units_ = this->get_parameter("k_units").as_double();
+                auv_length_ = this->get_parameter("auv_length").as_double();
+                auv_width_ = this->get_parameter("auv_width").as_double();
+                max_vel_ = this->get_parameter("max_vel").as_double();
+                min_vel_ = this->get_parameter("min_vel").as_double();
+                max_angle_vel_ = this->get_parameter("max_angle_vel").as_double();
+                min_angle_vel_ = this->get_parameter("min_angle_vel").as_double();
 
 
                 sub_odometry = this -> create_subscription<nav_msgs::msg::Odometry>(
@@ -37,9 +37,9 @@ namespace stingray::planning{
                 sub_map = this -> create_subscription<nav_msgs::msg::OccupancyGrid>(
                     "/map/occupancy_local", 10,
                     std::bind(&PathPlannerNode::map_callback, this, std::placeholders::_1));
-                sub_targets = this -> create_subscription<stingray_mapping::msg::MapObjectArray>(
-                    "/map/objects", 10,
-                    std::bind(&PathPlannerNode::targets_callback, this, std::placeholders::_1));
+                // sub_targets = this -> create_subscription<stingray_mapping::msg::MapObjectArray>(
+                //     "/map/objects", 10,
+                //     std::bind(&PathPlannerNode::targets_callback, this, std::placeholders::_1));
                 
 
                 pub_cmd = this -> create_publisher<geometry_msgs::msg::Twist>("/core/cmd/velocity", 10);
@@ -86,27 +86,27 @@ namespace stingray::planning{
                                             static_cast<int>(msg->info.height),
                                             std::vector<Point>{},
                                             std::vector<Point>{});
-                for (int i = 0; i < msg->data.size(); i++){
+                for (size_t i = 0; i < msg->data.size(); i++){
                     if (msg->data[i] > 50){
-                        grid->field[i] = 1;
+                        grid_->field[i] = 1;
                     }
                     else{
-                        grid->field[i] = 0;
+                        grid_->field[i] = 0;
                     }
                 }
                 got_map_ = true;
                 try_run();
             }
 
-            void targets_callback(const stingray_mapping::msg::MapObjectArray::SharedPtr msg){
-                if (got_target_) return;
+            // void targets_callback(const stingray_mapping::msg::MapObjectArray::SharedPtr msg){
+            //     if (got_target_) return;
 
-                const double x_m = msg->pose.position.x;
-                const double y_m = msg->pose.position.y;
-                target_ = {static_cast<int>(x_m * k_units_), static_cast<int>(y_m * k_units_)};
-                got_target_ = true;
-                try_run();
-            }
+            //     const double x_m = msg->pose.position.x;
+            //     const double y_m = msg->pose.position.y;
+            //     target_ = {static_cast<int>(x_m * k_units_), static_cast<int>(y_m * k_units_)};
+            //     got_target_ = true;
+            //     try_run();
+            // }
 
             void try_run(){
                 if (executed_) return;
@@ -178,7 +178,7 @@ namespace stingray::planning{
 
             rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry;
             rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_map;
-            rclcpp::Subscription<stingray_mapping::msg::MapObjectArray>::SharedPtr sub_targets;
+            //rclcpp::Subscription<stingray_mapping::msg::MapObjectArray>::SharedPtr sub_targets;
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd;
             rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path;
 

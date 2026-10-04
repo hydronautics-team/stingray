@@ -1,0 +1,13 @@
+path_planning:
+ ros_parametres:
+
+  k_units: 20.0                 # клеток в метре
+  auv_length: 1.0               # м
+  auv_width: 0.4                # м
+
+  max_vel: 1.0                  # м/с
+  min_vel: 0.1                  # м/с
+  max_angle_vel: 60.0           # град/с
+  min_angle_vel: 5.0            # град/с
+
+  shutdown_on_complete: false

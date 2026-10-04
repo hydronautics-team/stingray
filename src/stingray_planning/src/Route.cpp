@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-
+namespace stingray::planning{
 
 void obstacles_inflation(std::vector<uint8_t>& field, GRID grid, Point center, int radius) {
     for (int x = center.x - radius; x <= center.x + radius; x++) {
@@ -288,4 +288,4 @@ void angle_velocity_output(std::vector<Point> path, double max_vel, double min_v
     }
 }
 
-
+}
