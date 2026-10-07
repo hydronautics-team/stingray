@@ -8,7 +8,7 @@
 
 namespace stingray::planning{
 
-void obstacles_inflation(std::vector<uint8_t>& field, GRID grid, Point center, int radius) {
+void obstacles_inflation(std::vector<uint8_t>& field, const GRID& grid, Point center, int radius) {
     for (int x = center.x - radius; x <= center.x + radius; x++) {
         for (int y = center.y - radius; y <= center.y + radius; y++) {
             if (!grid.inside(x, y)) {
@@ -21,7 +21,13 @@ void obstacles_inflation(std::vector<uint8_t>& field, GRID grid, Point center, i
     }
 }
 
-std::vector<Point> theta_star(Point start, Point target, GRID grid, std::vector<uint8_t> temp_field) {
+std::vector<Point> theta_star(Point start, Point target, const GRID& grid, const std::vector<uint8_t>& temp_field) {
+    if (!grid.inside(start.x, start.y) || !grid.inside(target.x, target.y)) {
+        return {};
+    }
+    if (grid.field[grid.index(start)] != 0 || grid.field[grid.index(target)] != 0) {
+        return {};
+    }
     int size = grid.x_size * grid.y_size;
     std::vector<double> g_score(size, INFINITY);
     std::vector<uint8_t> closed_set(size, 0);
@@ -109,7 +115,7 @@ GRID::GRID(int grid_x_size, int grid_y_size, std::vector<Point> grid_targets, st
     field.resize(grid_x_size * grid_y_size, 0);
 }
 
-bool GRID::valid_move(Point current, Point neighbor) {
+bool GRID::valid_move(Point current, Point neighbor) const {
     int x0 = current.x;
     int y0 = current.y;
     int x1 = neighbor.x;
@@ -123,7 +129,7 @@ bool GRID::valid_move(Point current, Point neighbor) {
     return true;
 }
 
-bool GRID::line_of_sight(Point parent, Point neighbor, std::vector<uint8_t> clean_field) {
+bool GRID::line_of_sight(Point parent, Point neighbor, const std::vector<uint8_t>& clean_field) const {
     std::vector<Point> cells = bresenham(parent, neighbor);
     for (size_t i = 0; i < cells.size(); i++) {
         if (inside(cells[i].x, cells[i].y)) {
@@ -137,16 +143,26 @@ bool GRID::line_of_sight(Point parent, Point neighbor, std::vector<uint8_t> clea
     return true;
 }
 
-std::vector<Point> AUV::build_full_route(std::vector<Point> targets, GRID grid) {
+std::vector<Point> AUV::build_full_route(const std::vector<Point>& targets, const GRID& grid) {
     std::vector<Point> full_path;
     Point current = start_point;
+    GRID navigation_grid = grid;
+    const std::vector<uint8_t> original_field = grid.field;
+    for (int y = 0; y < grid.y_size; ++y) {
+        for (int x = 0; x < grid.x_size; ++x) {
+            if (original_field[grid.index(x, y)] != 0) {
+                obstacles_inflation(navigation_grid.field, grid, {x, y}, radius);
+            }
+        }
+    }
     for (size_t i = 0; i < targets.size(); i++) {
         Point current_target = targets[i];
         std::vector<uint8_t> temp_field(grid.x_size * grid.y_size, 0);
         for (size_t j = i + 1; j < targets.size(); j++) {
             obstacles_inflation(temp_field, grid, targets[j], radius);
         }
-        std::vector<Point> path_segment = theta_star(current, current_target, grid, temp_field);
+        std::vector<Point> path_segment = theta_star(
+            current, current_target, navigation_grid, temp_field);
         if (path_segment.empty()) {
             return {};
         }
@@ -203,7 +219,7 @@ double normalize_angle(double angle) {
     return angle;
 }
 
-std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K){
+std::vector<WaypointCommand> compute_commands(const std::vector<Point>& path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double /*K*/){
     std::vector<WaypointCommand> result;
     if (path.empty()) return result;
     const size_t n = path.size();
@@ -222,7 +238,11 @@ std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double ma
     double first_dx = path[1].x - path[0].x;
     double first_dy = path[1].y - path[0].y;
     turn_angles[0] = normalize_angle(-(std::atan2(first_dy, first_dx) * 180.0 / M_PI));
-    angle_vel[0] = std::copysign(1.0, turn_angles[0]) * (min_angle_vel + (std::abs(turn_angles[0]) / 180.0) * (max_angle_vel - min_angle_vel));
+    if (std::abs(turn_angles[0]) > 1e-9) {
+        angle_vel[0] = std::copysign(
+            min_angle_vel + (std::abs(turn_angles[0]) / 180.0) * (max_angle_vel - min_angle_vel),
+            turn_angles[0]);
+    }
 
     for (size_t i = 1; i < n - 1; ++i) {
         double in_dx = path[i].x - path[i - 1].x;
@@ -235,7 +255,11 @@ std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double ma
         double out_angle = std::atan2(out_dy, out_dx) * 180.0 / M_PI;
 
         turn_angles[i] = normalize_angle(in_angle - out_angle);
-        angle_vel[i] = std::copysign(1.0, turn_angles[i]) * (min_angle_vel + (std::abs(turn_angles[i]) / 180.0) * (max_angle_vel - min_angle_vel));
+        if (std::abs(turn_angles[i]) > 1e-9) {
+            angle_vel[i] = std::copysign(
+                min_angle_vel + (std::abs(turn_angles[i]) / 180.0) * (max_angle_vel - min_angle_vel),
+                turn_angles[i]);
+        }
     }
 
     turn_angles[n - 1] = 0.0;
@@ -244,7 +268,7 @@ std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double ma
         if (i == 0){
             double next_turn = turn_angles[i + 1];
             velocities[i] = min_vel + (max_vel - min_vel) * std::cos(0.5 * next_turn * M_PI / 180.0);
-            double out_angle = abs(turn_angles[0]) * M_PI / 180.0;
+            double out_angle = std::atan2(first_dy, first_dx);
             x_vel[i] = velocities[i] * std::cos(out_angle);
             y_vel[i] = velocities[i] * std::sin(out_angle);
         }
@@ -266,15 +290,15 @@ std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double ma
     
     for (size_t i = 0; i < n; ++i) {
         result[i].turn_angle = turn_angles[i];
-        result[i].velocity = grid_units_to_metres(velocities[i], K);
-        result[i].x_vel = grid_units_to_metres(x_vel[i], K);
-        result[i].y_vel = grid_units_to_metres(y_vel[i], K);
+        result[i].velocity = velocities[i];
+        result[i].x_vel = x_vel[i];
+        result[i].y_vel = y_vel[i];
         result[i].angle_vel = angle_vel[i];
     }
     return result;
 }
 
-void angle_velocity_output(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K){
+void angle_velocity_output(const std::vector<Point>& path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K){
     auto cmds = compute_commands(path, max_vel, min_vel, max_angle_vel, min_angle_vel, K);
     if (cmds.empty()) return;
     std::cout << "Point\t\tTurn Angle\tVelocity\tX vel\tY vel\tAngle Velocity\n";

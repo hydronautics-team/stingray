@@ -44,9 +44,9 @@ public:
     }
 
     // Проверяет, можно ли пройти из одной точки в другую
-    bool valid_move(Point current, Point neighbor);
+    bool valid_move(Point current, Point neighbor) const;
     // Проверяет, лежат ли точки на одной прямой без препятствий
-    bool line_of_sight(Point parent, Point neighbor, std::vector<uint8_t> clean_field);
+    bool line_of_sight(Point parent, Point neighbor, const std::vector<uint8_t>& clean_field) const;
 };
 
 // Переводит метры в единицы сетки
@@ -62,10 +62,10 @@ inline int heuristic(int x0, int y0, int x1, int y1) {
 }
 
 // Надувание препятствий 
-void obstacles_inflation(std::vector<uint8_t>& field, GRID grid, Point center, int radius);
+void obstacles_inflation(std::vector<uint8_t>& field, const GRID& grid, Point center, int radius);
 
 // Поиск пути Theta*
-std::vector<Point> theta_star(Point start, Point target, GRID grid, std::vector<uint8_t> temp_field);
+std::vector<Point> theta_star(Point start, Point target, const GRID& grid, const std::vector<uint8_t>& temp_field);
 
 // Класс аппарата
 class AUV {
@@ -78,11 +78,11 @@ public:
     double min_angle_velocity;
 
     AUV(Point start, double length, double weight, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel);
-    std::vector<Point> build_full_route(std::vector<Point> targets, GRID grid);
+    std::vector<Point> build_full_route(const std::vector<Point>& targets, const GRID& grid);
 };
 
 // Вывод скорости и угла поворота для каждой точки
-std::vector<WaypointCommand> compute_commands(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
-void angle_velocity_output(std::vector<Point> path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
+std::vector<WaypointCommand> compute_commands(const std::vector<Point>& path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
+void angle_velocity_output(const std::vector<Point>& path, double max_vel, double min_vel, double max_angle_vel, double min_angle_vel, double K);
 
 }

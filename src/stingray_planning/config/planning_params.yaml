@@ -1,13 +1,22 @@
 path_planning:
- ros__parameters:
+  ros__parameters:
 
-  k_units: 20.0                 # клеток в метре
-  auv_length: 1.0               # м
-  auv_width: 0.4                # м
+    auv_length: 1.0               # м
+    auv_width: 0.4                # м
 
-  max_vel: 1.0                  # м/с
-  min_vel: 0.1                  # м/с
-  max_angle_vel: 60.0           # град/с
-  min_angle_vel: 5.0            # град/с
+    max_vel: 1.0                  # м/с
+    min_vel: 0.1                  # м/с
+    max_angle_vel: 60.0           # град/с, контракт stingray_core_control
+    min_angle_vel: 5.0            # град/с
+    goal_tolerance: 0.25          # м
+    control_rate_hz: 10.0
+    odometry_timeout: 0.5         # с
+    unknown_is_obstacle: true
 
-  shutdown_on_complete: false
+    odometry_topic: /core/state/odometry
+    map_topic: /map/occupancy_local
+    goal_topic: /planner/goal
+    command_topic: /control/data
+    path_topic: /planner/global_path
+
+    shutdown_on_complete: false
