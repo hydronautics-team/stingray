@@ -18,13 +18,27 @@ from ultralytics.utils.ops import scale_boxes
 class YoloV8Detector(YoloDetectorBase):
     def __init__(self):
         """ YOLO v8"""
+        self._weights_path_override = None
         super().__init__('yolov8_detector')
 
     def init_yolo(self, topic: str):
+        if hasattr(self, "model"):
+            self.get_logger().info(
+                f'Reusing the loaded model for topic {topic}')
+            return
+
         # get weights path
         self.weights_pkg_path = f'{get_package_share_directory(self.get_parameter("weights_pkg_name").get_parameter_value().string_value)}'
-        self.weights_path = os.path.join(
+        if not self.has_parameter("weights_path"):
+            self.declare_parameter("weights_path", "")
+        self._weights_path_override = self.get_parameter(
+            "weights_path").get_parameter_value().string_value
+        self.weights_path = self._weights_path_override or os.path.join(
             self.weights_pkg_path, "weights", "yolov8.pt")
+        if not os.path.isfile(self.weights_path):
+            raise FileNotFoundError(
+                f"YOLO weights not found: {self.weights_path}. "
+                "Set the 'weights_path' parameter to a mounted .pt file.")
         self.config_path = os.path.join(
             self.weights_pkg_path, "weights", "yolov8.yaml")
 

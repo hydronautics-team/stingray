@@ -21,6 +21,9 @@ def generate_launch_description():
     bbox_attrs_pkg_name_arg = DeclareLaunchArgument(
         "bbox_attrs_pkg_name", default_value='stingray_object_detection'
     )
+    weights_path_arg = DeclareLaunchArgument(
+        "weights_path", default_value=''
+    )
     debug_arg = DeclareLaunchArgument(
         "debug", default_value='True'
     )
@@ -32,6 +35,7 @@ def generate_launch_description():
         enable_object_detection_topic_arg,
         weights_pkg_name_arg,
         bbox_attrs_pkg_name_arg,
+        weights_path_arg,
         debug_arg,
 
         # object detection
@@ -42,6 +46,7 @@ def generate_launch_description():
             parameters=[
                 {'weights_pkg_name': LaunchConfiguration("weights_pkg_name")},
                 {'bbox_attrs_pkg_name': LaunchConfiguration("bbox_attrs_pkg_name")},
+                {'weights_path': LaunchConfiguration("weights_path")},
                 {'image_topic_list': LaunchConfiguration("image_topic_list")},
                 {'camera_info_topic_list': LaunchConfiguration("camera_info_topic_list")},
                 {'enable_object_detection_topic': LaunchConfiguration(

@@ -3,6 +3,7 @@ import rclpy
 from rclpy.logging import get_logger
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import qos_profile_sensor_data
 from rclpy.subscription import Subscription
 from sensor_msgs.msg import Image, CameraInfo
 from ament_index_python import get_package_share_directory
@@ -80,6 +81,12 @@ class YoloDetectorBase(Node):
         self.get_logger().info(
             f"camera_info_topic_list: {camera_info_topic_list}")
 
+        if not image_topic_list:
+            raise ValueError("image_topic_list must contain at least one topic")
+        if len(image_topic_list) != len(camera_info_topic_list):
+            raise ValueError(
+                "image_topic_list and camera_info_topic_list must have equal lengths")
+
         self.debug = self.get_parameter(
             'debug').get_parameter_value().bool_value
 
@@ -131,7 +138,7 @@ class YoloDetectorBase(Node):
                 Image,
                 image_topic,
                 input_img_callback,
-                1,
+                qos_profile_sensor_data,
             )
 
             # provide topic name to callback
@@ -141,7 +148,7 @@ class YoloDetectorBase(Node):
                 CameraInfo,
                 camera_info_topic,
                 camera_info_callback,
-                1,
+                qos_profile_sensor_data,
             )
             self.init_yolo(image_topic)
             # self.inited[input_topic] = False
