@@ -330,6 +330,9 @@ private:
   void stop()
   {
     route_active_ = false;
+    if (!got_goal_) {
+      return;
+    }
     geometry_msgs::msg::Twist command;
     command.linear.z = target_depth_;
     pub_cmd_->publish(command);

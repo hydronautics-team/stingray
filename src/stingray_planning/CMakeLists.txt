@@ -24,6 +24,10 @@ add_executable(path_planning_node
   src/Route.cpp
 )
 
+add_executable(empty_map_publisher
+  src/empty_map_publisher.cpp
+)
+
 target_include_directories(path_planning_node PRIVATE
   include
 )
@@ -34,7 +38,12 @@ target_link_libraries(path_planning_node
   ${geometry_msgs_TARGETS}
 )
 
-install(TARGETS path_planning_node
+target_link_libraries(empty_map_publisher
+  rclcpp::rclcpp
+  ${nav_msgs_TARGETS}
+)
+
+install(TARGETS path_planning_node empty_map_publisher
   DESTINATION lib/${PROJECT_NAME}
 )
 
