@@ -9,6 +9,7 @@ path_planning:
     max_angle_vel: 60.0           # град/с, контракт stingray_core_control
     min_angle_vel: 5.0            # град/с
     goal_tolerance: 0.25          # м
+    target_depth: 0.5             # м, положительное направление вниз
     control_rate_hz: 10.0
     odometry_timeout: 0.5         # с
     velocity_observation_timeout: 0.5 # с

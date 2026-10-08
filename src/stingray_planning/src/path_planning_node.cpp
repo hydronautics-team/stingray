@@ -44,6 +44,7 @@ public:
     declare_parameter("max_angle_vel", 60.0);
     declare_parameter("min_angle_vel", 5.0);
     declare_parameter("goal_tolerance", 0.25);
+    declare_parameter("target_depth", 0.5);
     declare_parameter("control_rate_hz", 10.0);
     declare_parameter("odometry_timeout", 0.5);
     declare_parameter("velocity_observation_timeout", 0.5);
@@ -65,6 +66,7 @@ public:
     max_angle_vel_ = get_parameter("max_angle_vel").as_double();
     min_angle_vel_ = get_parameter("min_angle_vel").as_double();
     goal_tolerance_ = get_parameter("goal_tolerance").as_double();
+    target_depth_ = get_parameter("target_depth").as_double();
     odometry_timeout_ = get_parameter("odometry_timeout").as_double();
     velocity_observation_timeout_ = get_parameter("velocity_observation_timeout").as_double();
     require_velocity_observation_ = get_parameter("require_velocity_observation").as_bool();
@@ -313,6 +315,7 @@ private:
     const double speed = std::clamp(distance, min_vel_, max_vel_);
 
     geometry_msgs::msg::Twist command;
+    command.linear.z = target_depth_;
     command.linear.x = speed * std::cos(heading_error);
     command.linear.y = speed * std::sin(heading_error);
     if (std::abs(heading_error) > 1e-3) {
@@ -327,7 +330,9 @@ private:
   void stop()
   {
     route_active_ = false;
-    pub_cmd_->publish(geometry_msgs::msg::Twist{});
+    geometry_msgs::msg::Twist command;
+    command.linear.z = target_depth_;
+    pub_cmd_->publish(command);
   }
 
   double auv_length_{1.0};
@@ -337,6 +342,7 @@ private:
   double max_angle_vel_{60.0};
   double min_angle_vel_{5.0};
   double goal_tolerance_{0.25};
+  double target_depth_{0.5};
   double odometry_timeout_{0.5};
   double velocity_observation_timeout_{0.5};
   bool unknown_is_obstacle_{true};
