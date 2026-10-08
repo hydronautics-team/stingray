@@ -46,9 +46,13 @@ public:
     declare_parameter("goal_tolerance", 0.25);
     declare_parameter("control_rate_hz", 10.0);
     declare_parameter("odometry_timeout", 0.5);
+    declare_parameter("velocity_observation_timeout", 0.5);
+    declare_parameter("require_velocity_observation", true);
     declare_parameter("unknown_is_obstacle", true);
     declare_parameter("shutdown_on_complete", false);
     declare_parameter<std::string>("odometry_topic", "/core/state/odometry");
+    declare_parameter<std::string>(
+      "velocity_observation_topic", "/stingray_core/sensors/dvl/odometry");
     declare_parameter<std::string>("map_topic", "/map/occupancy_local");
     declare_parameter<std::string>("goal_topic", "/planner/goal");
     declare_parameter<std::string>("command_topic", "/control/data");
@@ -62,12 +66,17 @@ public:
     min_angle_vel_ = get_parameter("min_angle_vel").as_double();
     goal_tolerance_ = get_parameter("goal_tolerance").as_double();
     odometry_timeout_ = get_parameter("odometry_timeout").as_double();
+    velocity_observation_timeout_ = get_parameter("velocity_observation_timeout").as_double();
+    require_velocity_observation_ = get_parameter("require_velocity_observation").as_bool();
     unknown_is_obstacle_ = get_parameter("unknown_is_obstacle").as_bool();
 
     const auto command_qos = rclcpp::QoS(rclcpp::KeepLast(5)).reliable().durability_volatile();
     sub_odometry_ = create_subscription<nav_msgs::msg::Odometry>(
       get_parameter("odometry_topic").as_string(), rclcpp::SensorDataQoS(),
       std::bind(&PathPlannerNode::odometry_callback, this, std::placeholders::_1));
+    sub_velocity_observation_ = create_subscription<nav_msgs::msg::Odometry>(
+      get_parameter("velocity_observation_topic").as_string(), rclcpp::SensorDataQoS(),
+      std::bind(&PathPlannerNode::velocity_observation_callback, this, std::placeholders::_1));
     sub_map_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
       get_parameter("map_topic").as_string(), rclcpp::QoS(1).reliable().durability_volatile(),
       std::bind(&PathPlannerNode::map_callback, this, std::placeholders::_1));
@@ -121,6 +130,22 @@ private:
     if (got_map_ && got_goal_ && plan_requested_) {
       plan_route();
     }
+  }
+
+  void velocity_observation_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
+  {
+    last_velocity_observation_stamp_ = rclcpp::Time(msg->header.stamp);
+    last_velocity_observation_time_ = now();
+    got_velocity_observation_ = true;
+  }
+
+  bool stamp_is_fresh(const rclcpp::Time & stamp, double timeout) const
+  {
+    if (stamp.nanoseconds() == 0) {
+      return false;
+    }
+    const double age = (now() - stamp).seconds();
+    return age >= 0.0 && age <= timeout;
   }
 
   void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
@@ -220,14 +245,22 @@ private:
     msg.header.stamp = now();
     msg.header.frame_id = map_frame_;
     msg.poses.reserve(route_.size());
-    for (const auto & point : route_) {
+    for (size_t index = 0; index < route_.size(); ++index) {
       geometry_msgs::msg::PoseStamped pose;
       pose.header = msg.header;
-      pose.pose.position = grid_to_world(point);
+      pose.pose.position = waypoint_position(index);
       pose.pose.orientation.w = 1.0;
       msg.poses.push_back(pose);
     }
     pub_path_->publish(msg);
+  }
+
+  geometry_msgs::msg::Point waypoint_position(size_t index) const
+  {
+    if (index + 1 == route_.size()) {
+      return goal_.pose.position;
+    }
+    return grid_to_world(route_[index]);
   }
 
   void control_tick()
@@ -235,8 +268,20 @@ private:
     if (!route_active_) {
       return;
     }
-    if (!got_odometry_ || (now() - last_odometry_time_).seconds() > odometry_timeout_) {
+    const bool odometry_fresh = got_odometry_ &&
+      (now() - last_odometry_time_).seconds() <= odometry_timeout_ &&
+      stamp_is_fresh(rclcpp::Time(odometry_.header.stamp), odometry_timeout_);
+    if (!odometry_fresh) {
       RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000, "Odometry timeout; stopping");
+      stop();
+      return;
+    }
+    const bool velocity_observation_fresh = got_velocity_observation_ &&
+      (now() - last_velocity_observation_time_).seconds() <= velocity_observation_timeout_ &&
+      stamp_is_fresh(last_velocity_observation_stamp_, velocity_observation_timeout_);
+    if (require_velocity_observation_ && !velocity_observation_fresh) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 2000, "Velocity observation timeout; stopping");
       stop();
       return;
     }
@@ -244,7 +289,7 @@ private:
     const double current_x = odometry_.pose.pose.position.x;
     const double current_y = odometry_.pose.pose.position.y;
     while (route_index_ < route_.size()) {
-      const auto waypoint = grid_to_world(route_[route_index_]);
+      const auto waypoint = waypoint_position(route_index_);
       if (std::hypot(waypoint.x - current_x, waypoint.y - current_y) > goal_tolerance_) {
         break;
       }
@@ -259,7 +304,7 @@ private:
       return;
     }
 
-    const auto waypoint = grid_to_world(route_[route_index_]);
+    const auto waypoint = waypoint_position(route_index_);
     const double dx = waypoint.x - current_x;
     const double dy = waypoint.y - current_y;
     const double distance = std::hypot(dx, dy);
@@ -293,15 +338,20 @@ private:
   double min_angle_vel_{5.0};
   double goal_tolerance_{0.25};
   double odometry_timeout_{0.5};
+  double velocity_observation_timeout_{0.5};
   bool unknown_is_obstacle_{true};
+  bool require_velocity_observation_{true};
   bool got_odometry_{false};
   bool got_map_{false};
   bool got_goal_{false};
   bool plan_requested_{false};
   bool route_active_{false};
+  bool got_velocity_observation_{false};
   nav_msgs::msg::Odometry odometry_;
   geometry_msgs::msg::PoseStamped goal_;
   rclcpp::Time last_odometry_time_{0, 0, RCL_ROS_TIME};
+  rclcpp::Time last_velocity_observation_time_{0, 0, RCL_ROS_TIME};
+  rclcpp::Time last_velocity_observation_stamp_{0, 0, RCL_ROS_TIME};
   std::unique_ptr<GRID> grid_;
   std::vector<Point> route_;
   size_t route_index_{0};
@@ -311,6 +361,7 @@ private:
   double map_origin_y_{0.0};
   double map_origin_yaw_{0.0};
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_velocity_observation_;
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_map_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_;

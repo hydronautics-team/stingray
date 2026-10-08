@@ -11,9 +11,12 @@ path_planning:
     goal_tolerance: 0.25          # м
     control_rate_hz: 10.0
     odometry_timeout: 0.5         # с
+    velocity_observation_timeout: 0.5 # с
+    require_velocity_observation: true
     unknown_is_obstacle: true
 
     odometry_topic: /core/state/odometry
+    velocity_observation_topic: /stingray_core/sensors/dvl/odometry
     map_topic: /map/occupancy_local
     goal_topic: /planner/goal
     command_topic: /control/data
