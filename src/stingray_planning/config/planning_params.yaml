@@ -22,5 +22,6 @@ path_planning:
     goal_topic: /planner/goal
     command_topic: /control/data
     path_topic: /planner/global_path
+    cords_diff_topic: /planner/cords_diff
 
     shutdown_on_complete: false

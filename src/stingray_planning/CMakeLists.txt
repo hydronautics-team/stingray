@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(stingray_interfaces REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -36,6 +37,7 @@ target_link_libraries(path_planning_node
   rclcpp::rclcpp
   ${nav_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
+  ${stingray_interfaces_TARGETS}
 )
 
 target_link_libraries(empty_map_publisher

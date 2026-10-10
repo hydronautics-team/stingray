@@ -1,4 +1,5 @@
 #include "stingray_planning/Route.hpp"
+#include "stingray_interfaces/msg/cords_diff.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -14,6 +15,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <rclcpp/rclcpp.hpp>
+
 
 namespace stingray::planning
 {
@@ -58,6 +60,7 @@ public:
     declare_parameter<std::string>("goal_topic", "/planner/goal");
     declare_parameter<std::string>("command_topic", "/control/data");
     declare_parameter<std::string>("path_topic", "/planner/global_path");
+    declare_parameter<std::string>("cords_diff_topic", "/planner/cords_diff");
 
     auv_length_ = get_parameter("auv_length").as_double();
     auv_width_ = get_parameter("auv_width").as_double();
@@ -90,6 +93,9 @@ public:
       get_parameter("command_topic").as_string(), command_qos);
     pub_path_ = create_publisher<nav_msgs::msg::Path>(
       get_parameter("path_topic").as_string(), rclcpp::QoS(1).reliable().transient_local());
+    pub_cords_ = create_publisher<stingray_interfaces::msg::CordsDiff>(
+      get_parameter("cords_diff_topic").as_string(), command_qos);
+
 
     const double rate = std::max(1.0, get_parameter("control_rate_hz").as_double());
     control_timer_ = create_wall_timer(
@@ -297,6 +303,17 @@ private:
       }
       ++route_index_;
     }
+
+    if (route_index_ != prev_route_index_ && route_index_ + 1 < route_.size()){
+      const auto reached = waypoint_position(route_index_);
+      const auto next = waypoint_position(route_index_ + 1);
+      stingray_interfaces::msg::CordsDiff cords;
+
+      cords.x_difference = next.x - reached.x;
+      cords.y_difference = next.y - reached.y;
+      pub_cords_->publish(cords);
+    }
+
     if (route_index_ >= route_.size()) {
       RCLCPP_INFO(get_logger(), "Goal reached");
       stop();
@@ -369,12 +386,14 @@ private:
   double map_origin_x_{0.0};
   double map_origin_y_{0.0};
   double map_origin_yaw_{0.0};
+  size_t prev_route_index_{0};
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_velocity_observation_;
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_map_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
+  rclcpp::Publisher<stingray_interfaces::msg::CordsDiff>::SharedPtr pub_cords_;
   rclcpp::TimerBase::SharedPtr control_timer_;
 };
 }  // namespace stingray::planning
