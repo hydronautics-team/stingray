@@ -1,0 +1,20 @@
+# Goal
+geometry_msgs/PoseStamped target
+float32 position_tolerance
+float32 timeout
+---
+# Result
+uint8 SUCCEEDED=0
+uint8 CANCELED=1
+uint8 PLANNING_FAILED=2
+uint8 LOCALIZATION_LOST=3
+uint8 VELOCITY_FEEDBACK_LOST=4
+uint8 TIMEOUT=5
+
+uint8 code
+string message
+---
+# Feedback
+geometry_msgs/PoseStamped current_pose
+float32 distance_remaining
+nav_msgs/Path path

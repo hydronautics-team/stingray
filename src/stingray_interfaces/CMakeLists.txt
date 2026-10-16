@@ -8,6 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -19,13 +21,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/BboxSearchTwistAction.action"
   "action/DeviceAction.action"
   "action/HydroacousticCenteringTwistAction.action"
+  "action/NavigateToPose.action"
   "msg/Bbox.msg"
   "msg/BboxArray.msg"
   "msg/EnableTopic.msg"
   "msg/UVState.msg"
   "msg/ObjectsMap.msg"
   "msg/CordsDiff.msg"
-  DEPENDENCIES std_msgs
+  DEPENDENCIES std_msgs geometry_msgs nav_msgs
 )
 
 if(BUILD_TESTING)

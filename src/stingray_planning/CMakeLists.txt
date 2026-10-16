@@ -13,6 +13,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED) 
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(stingray_interfaces REQUIRED)
@@ -35,6 +36,7 @@ target_include_directories(path_planning_node PRIVATE
 
 target_link_libraries(path_planning_node
   rclcpp::rclcpp
+  rclcpp_action::rclcpp_action  
   ${nav_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
   ${stingray_interfaces_TARGETS}
