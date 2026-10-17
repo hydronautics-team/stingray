@@ -27,6 +27,9 @@ def generate_launch_description():
     debug_arg = DeclareLaunchArgument(
         "debug", default_value='True'
     )
+    enabled_on_start_arg = DeclareLaunchArgument(
+        "enabled_on_start", default_value='False'
+    )
 
     # load ros config
     return LaunchDescription([
@@ -37,6 +40,7 @@ def generate_launch_description():
         bbox_attrs_pkg_name_arg,
         weights_path_arg,
         debug_arg,
+        enabled_on_start_arg,
 
         # object detection
         Node(
@@ -52,6 +56,7 @@ def generate_launch_description():
                 {'enable_object_detection_topic': LaunchConfiguration(
                     "enable_object_detection_topic")},
                 {'debug': LaunchConfiguration("debug")},
+                {'enabled_on_start': LaunchConfiguration("enabled_on_start")},
             ],
             respawn=True,
             respawn_delay=1,

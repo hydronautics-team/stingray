@@ -70,7 +70,7 @@ class YoloV8Detector(YoloDetectorBase):
 
             t1 = time_sync()
             im = torch.from_numpy(im).to(self.device)
-            im = im.half()
+            im = im.half() if self.device.type == 'cuda' else im.float()
             im /= 255.0  # приводим пиксели от 0..255 к 0..1
 
             if len(im.shape) == 3:
@@ -80,7 +80,14 @@ class YoloV8Detector(YoloDetectorBase):
             self.dt[0] += t2 - t1
 
             # Inference
-            pred = self.model.predict(im)
+            pred = self.model.predict(
+                im,
+                conf=self.conf_thres,
+                iou=self.iou_thres,
+                max_det=self.max_det,
+                device=self.device,
+                verbose=False,
+            )
             t3 = time_sync()
             self.dt[1] += t3 - t2
 
@@ -113,9 +120,11 @@ class YoloV8Detector(YoloDetectorBase):
                     # Смотрим, есть ли уже детекция данного класса
                     if label not in best_detections or confidence > best_detections[label]['confidence']:
                         # Считаем дистанцию и углы для текущей детекции
-                        pos_x, pos_y, pos_z, horiz_angle, vert_angle = self.dist_calc.calcDistanceAndAngle(
-                            xyxy, label, self.camera_info[topic]
-                        )
+                        position = self.dist_calc.calcDistanceAndAngle(
+                            xyxy, label, self.camera_info[topic])
+                        if position is None:
+                            position = (float('nan'),) * 5
+                        pos_x, pos_y, pos_z, horiz_angle, vert_angle = position
                         best_detections[label] = {
                             'confidence': confidence,
                             'xyxy': xyxy,

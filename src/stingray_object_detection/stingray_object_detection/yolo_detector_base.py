@@ -57,6 +57,7 @@ class YoloDetectorBase(Node):
             'debug', True)
         self.declare_parameter(
             'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
+        self.declare_parameter('enabled_on_start', False)
 
         self.declare_parameter('confidence_threshold', 0.25)
         self.declare_parameter('iou_threshold', 0.45)
@@ -107,6 +108,8 @@ class YoloDetectorBase(Node):
             self._enable_object_detection,
             10)
 
+        enabled_on_start = self.get_parameter(
+            'enabled_on_start').get_parameter_value().bool_value
         self.detection_enabled: dict[str, bool] = {}
         self.camera_info_subscriptions: dict[str, Subscription] = {}
         self.camera_info: dict[str, CameraInfo] = {}
@@ -121,8 +124,7 @@ class YoloDetectorBase(Node):
 
         for image_topic, camera_info_topic in zip(image_topic_list, camera_info_topic_list):
 
-            # disable detection by default
-            self.detection_enabled[image_topic] = False
+            self.detection_enabled[image_topic] = enabled_on_start
 
             # ROS Topic names
             bbox_array_topic = f"{image_topic}/bbox_array"
@@ -178,8 +180,11 @@ class YoloDetectorBase(Node):
                 self.detection_enabled[key] = msg.enable
                 self.get_logger().info(
                     f'Detection enabled: {self.detection_enabled}')
-        else:
+        elif msg.topic_name in self.detection_enabled:
             self.detection_enabled[msg.topic_name] = msg.enable
+        else:
+            self.get_logger().warning(
+                f'Ignoring unknown image topic: {msg.topic_name}')
         self.get_logger().info(f'Detection enabled: {self.detection_enabled}')
 
     def detect(self, img: np.ndarray, topic: str):
@@ -201,6 +206,12 @@ class YoloDetectorBase(Node):
             topic (str): topic name
         """
         if not self.detection_enabled[topic]:
+            return
+        if topic not in self.camera_info:
+            self.get_logger().warning(
+                f'Waiting for camera_info before processing {topic}',
+                throttle_duration_sec=5.0,
+            )
             return
         try:
             # convert ROS image to OpenCV image
