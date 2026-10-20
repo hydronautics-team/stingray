@@ -1,0 +1,2 @@
+float64 x_difference
+float64 y_difference
