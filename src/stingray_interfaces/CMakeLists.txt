@@ -23,7 +23,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BboxArray.msg"
   "msg/EnableTopic.msg"
   "msg/UVState.msg"
-  "msg/ObjectsMap.msg"
   "msg/CordsDiff.msg"
   DEPENDENCIES std_msgs
 )
