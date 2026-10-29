@@ -274,6 +274,13 @@ private:
   void control_tick()
   {
     if (!route_active_) {
+      if (got_goal_ && !got_map_) {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 2000, "Waiting for occupancy grid before planning");
+      } else if (got_goal_ && !got_odometry_) {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 2000, "Waiting for odometry before planning");
+      }
       return;
     }
     const bool odometry_fresh = got_odometry_ &&
@@ -281,7 +288,7 @@ private:
       stamp_is_fresh(rclcpp::Time(odometry_.header.stamp), odometry_timeout_);
     if (!odometry_fresh) {
       RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000, "Odometry timeout; stopping");
-      stop();
+      publish_stop();
       return;
     }
     const bool velocity_observation_fresh = got_velocity_observation_ &&
@@ -290,7 +297,7 @@ private:
     if (require_velocity_observation_ && !velocity_observation_fresh) {
       RCLCPP_ERROR_THROTTLE(
         get_logger(), *get_clock(), 2000, "Velocity observation timeout; stopping");
-      stop();
+      publish_stop();
       return;
     }
 
@@ -347,6 +354,11 @@ private:
   void stop()
   {
     route_active_ = false;
+    publish_stop();
+  }
+
+  void publish_stop()
+  {
     if (!got_goal_) {
       return;
     }
