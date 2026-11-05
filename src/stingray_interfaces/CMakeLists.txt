@@ -14,6 +14,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetTransition.srv"
+  "srv/SetGoal.srv"
   "srv/SetTwist.srv"
   "srv/SetStabilization.srv"
   "action/TwistAction.action"
