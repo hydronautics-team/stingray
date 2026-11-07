@@ -17,6 +17,9 @@ find_package(rclcpp_action REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(stingray_interfaces REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -32,6 +35,12 @@ add_executable(empty_map_publisher
 
 target_include_directories(path_planning_node PRIVATE
   include
+)
+
+ament_target_dependencies(path_planning_node
+  tf2
+  tf2_geometry_msgs
+  tf2_ros
 )
 
 target_link_libraries(path_planning_node

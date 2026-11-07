@@ -15,6 +15,10 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2/time.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <rclcpp_action/rclcpp_action.hpp>
 #include "stingray_interfaces/action/navigate_to_pose.hpp"
@@ -31,10 +35,6 @@ double yaw_from_quaternion(const geometry_msgs::msg::Quaternion & q)
     1.0 - 2.0 * (q.y * q.y + q.z * q.z));
 }
 
-double normalize_angle_rad(double angle)
-{
-  return std::atan2(std::sin(angle), std::cos(angle));
-}
 }  // namespace
 
 class PathPlannerNode : public rclcpp::Node
@@ -97,7 +97,7 @@ public:
       get_parameter("velocity_observation_topic").as_string(), rclcpp::SensorDataQoS(),
       std::bind(&PathPlannerNode::velocity_observation_callback, this, std::placeholders::_1));
     sub_map_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
-      get_parameter("map_topic").as_string(), rclcpp::QoS(1).reliable().durability_volatile(),
+      get_parameter("map_topic").as_string(), rclcpp::QoS(1).reliable().transient_local(),
       std::bind(&PathPlannerNode::map_callback, this, std::placeholders::_1));
 
 
@@ -107,6 +107,9 @@ public:
       get_parameter("path_topic").as_string(), rclcpp::QoS(1).reliable().transient_local());
     pub_cords_ = create_publisher<stingray_interfaces::msg::CordsDiff>(
       get_parameter("cords_diff_topic").as_string(), command_qos);
+
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
     action_server_ = rclcpp_action::create_server<NavigateToPose>(
       this, get_parameter("action_name").as_string(),
@@ -160,18 +163,9 @@ private:
 
   void velocity_observation_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
   {
-    last_velocity_observation_stamp_ = rclcpp::Time(msg->header.stamp);
+    (void)msg;
     last_velocity_observation_time_ = now();
     got_velocity_observation_ = true;
-  }
-
-  bool stamp_is_fresh(const rclcpp::Time & stamp, double timeout) const
-  {
-    if (stamp.nanoseconds() == 0) {
-      return false;
-    }
-    const double age = (now() - stamp).seconds();
-    return age >= 0.0 && age <= timeout;
   }
 
   void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
@@ -212,7 +206,10 @@ private:
       goal->target.pose.position.z);
 
     if (!got_map_ || !got_odometry_) {
-      RCLCPP_WARN(get_logger(), "Rejecting goal: no map or odometry yet");
+      RCLCPP_WARN(
+        get_logger(), "Rejecting goal: missing%s%s",
+        got_map_ ? "" : " map",
+        got_odometry_ ? "" : " odometry");
       return rclcpp_action::GoalResponse::REJECT;
     }
     if (active_goal_ && active_goal_->is_active()) {
@@ -263,13 +260,13 @@ private:
 
   bool plan_route()
 {
-  if (!odometry_.header.frame_id.empty() && odometry_.header.frame_id != map_frame_) {
-    RCLCPP_ERROR(get_logger(), "Odometry frame differs from map frame");
+  geometry_msgs::msg::PoseStamped current_pose;
+  if (!current_pose_in_map(current_pose)) {
     return false;
   }
 
   Point start, target;
-  if (!world_to_grid(odometry_.pose.pose.position.x, odometry_.pose.pose.position.y, start) ||
+  if (!world_to_grid(current_pose.pose.position.x, current_pose.pose.position.y, start) ||
       !world_to_grid(goal_.pose.position.x, goal_.pose.position.y, target))
   {
     RCLCPP_ERROR(get_logger(), "Start or goal lies outside the occupancy grid");
@@ -288,6 +285,30 @@ private:
   route_ = auv.build_full_route({target}, *grid_);
   return !route_.empty();
 }
+
+  bool current_pose_in_map(geometry_msgs::msg::PoseStamped & result)
+  {
+    geometry_msgs::msg::PoseStamped source;
+    source.header = odometry_.header;
+    source.pose = odometry_.pose.pose;
+
+    if (source.header.frame_id.empty() || source.header.frame_id == map_frame_) {
+      source.header.frame_id = map_frame_;
+      result = source;
+      return true;
+    }
+
+    try {
+      result = tf_buffer_->transform(source, map_frame_, tf2::durationFromSec(0.1));
+      return true;
+    } catch (const tf2::TransformException & exception) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 2000,
+        "Cannot transform odometry from '%s' to '%s': %s",
+        source.header.frame_id.c_str(), map_frame_.c_str(), exception.what());
+      return false;
+    }
+  }
 
   void publish_path()
   {
@@ -315,6 +336,9 @@ private:
 
   void control_tick()
   {
+    if (!rclcpp::ok()) {
+      return;
+    }
     if (!active_goal_ || !active_goal_->is_active()) {
       return;
     }
@@ -330,11 +354,9 @@ private:
       return;
     }
     const bool velocity_observation_fresh = got_velocity_observation_ &&
-      (now() - last_velocity_observation_time_).seconds() <= velocity_observation_timeout_ &&
-      stamp_is_fresh(last_velocity_observation_stamp_, velocity_observation_timeout_);
+      (now() - last_velocity_observation_time_).seconds() <= velocity_observation_timeout_;
     const bool odometry_fresh = got_odometry_ &&
-      (now() - last_odometry_time_).seconds() <= odometry_timeout_ &&
-      stamp_is_fresh(rclcpp::Time(odometry_.header.stamp), odometry_timeout_);
+      (now() - last_odometry_time_).seconds() <= odometry_timeout_;
 
     if (!odometry_fresh) {
       RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000, "Odometry timeout; stopping");
@@ -348,8 +370,14 @@ private:
       return;
     }
 
-    const double current_x = odometry_.pose.pose.position.x;
-    const double current_y = odometry_.pose.pose.position.y;
+    geometry_msgs::msg::PoseStamped current_pose;
+    if (!current_pose_in_map(current_pose)) {
+      publish_stop();
+      return;
+    }
+
+    const double current_x = current_pose.pose.position.x;
+    const double current_y = current_pose.pose.position.y;
     while (route_index_ < route_.size()) {
       const auto waypoint = waypoint_position(route_index_);
       if (std::hypot(waypoint.x - current_x, waypoint.y - current_y) > goal_tolerance_) {
@@ -372,7 +400,7 @@ private:
     auto feedback = std::make_shared<NavigateToPose::Feedback>();
     feedback->current_pose.header.stamp = now();
     feedback->current_pose.header.frame_id = map_frame_;
-    feedback->current_pose.pose = odometry_.pose.pose;
+    feedback->current_pose.pose = current_pose.pose;
 
     if (route_index_ < route_.size()) {
       const auto waypoint = waypoint_position(route_index_);
@@ -403,24 +431,20 @@ private:
     }
 
     const auto waypoint = waypoint_position(route_index_);
-    const double dx = waypoint.x - current_x;
-    const double dy = waypoint.y - current_y;
-    const double distance = std::hypot(dx, dy);
-    const double yaw = yaw_from_quaternion(odometry_.pose.pose.orientation);
-    const double heading_error = normalize_angle_rad(std::atan2(dy, dx) - yaw);
-    const double speed = std::clamp(distance, min_vel_, max_vel_);
+    const double dx_map = waypoint.x - current_x;
+    const double dy_map = waypoint.y - current_y;
 
     geometry_msgs::msg::Twist command;
+    command.linear.x = dx_map;
+    command.linear.y = dy_map;
     command.linear.z = target_depth_;
-    command.linear.x = speed * std::cos(heading_error);
-    command.linear.y = speed * std::sin(heading_error);
-    if (std::abs(heading_error) > 1e-3) {
-      const double angular_speed_deg = std::clamp(
-        std::abs(heading_error) * 180.0 / M_PI, min_angle_vel_, max_angle_vel_);
-      // stingray_core_control integrates angular.z into degree-based attitude setpoints.
-      command.angular.z = std::copysign(angular_speed_deg, heading_error);
-    }
     pub_cmd_->publish(command);
+
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "Tracking waypoint: current_map=(%.2f, %.2f), target_map=(%.2f, %.2f), "
+      "error_map=(%.2f, %.2f)",
+      current_x, current_y, waypoint.x, waypoint.y, dx_map, dy_map);
   }
 
   void safe_stop()
@@ -432,6 +456,8 @@ private:
   void publish_stop()
   {
     geometry_msgs::msg::Twist command;
+    command.linear.x = 0.0;
+    command.linear.y = 0.0;
     command.linear.z = target_depth_;
     pub_cmd_->publish(command);
   }
@@ -486,7 +512,6 @@ private:
   geometry_msgs::msg::PoseStamped goal_;
   rclcpp::Time last_odometry_time_{0, 0, RCL_ROS_TIME};
   rclcpp::Time last_velocity_observation_time_{0, 0, RCL_ROS_TIME};
-  rclcpp::Time last_velocity_observation_stamp_{0, 0, RCL_ROS_TIME};
   rclcpp::Time goal_start_time_{0, 0, RCL_ROS_TIME};
   std::unique_ptr<GRID> grid_;
   std::vector<Point> route_;
@@ -505,6 +530,8 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
   rclcpp::Publisher<stingray_interfaces::msg::CordsDiff>::SharedPtr pub_cords_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   rclcpp::TimerBase::SharedPtr control_timer_;
 };
 }  // namespace stingray::planning
