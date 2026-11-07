@@ -4,7 +4,9 @@ import rclpy
 from rclpy.node import Node
 
 from stingray_missions.fsm import FSM
+from stingray_missions.fsm_states import State
 from stingray_missions.action import load_stingray_actions
+from stingray_missions.goal import GoalStore
 
 
 async def ros_loop(node: Node):
@@ -31,8 +33,7 @@ async def state_action_loop(fsm: FSM):
 
 
 def declare_parameters(node: Node):
-    node.declare_parameter("mission_package_names", [
-        'sauvc_missions, stingray_missions'])
+    node.declare_parameter("mission_package_names", ['stingray_missions'])
     node.declare_parameter(
         'uv_state_topic', '/stingray/topics/uv_state')
     node.declare_parameter('twist_action', '/stingray/actions/twist')
@@ -52,6 +53,10 @@ def declare_parameters(node: Node):
         'enable_object_detection_topic', '/stingray/topics/enable_object_detection')
     node.declare_parameter(
         'enable_recording_topic', '/stingray/topics/enable_recording')
+    node.declare_parameter(
+        'goto_point_action', '/planner/navigate_to_pose')
+    node.declare_parameter(
+        'set_goal_srv', '/stingray/services/set_goal')
 
 
 def main():
@@ -63,8 +68,14 @@ def main():
 
     mission_package_names = node.get_parameter(
         'mission_package_names').get_parameter_value().string_array_value
+    goal_store = GoalStore(
+        node=node,
+        service_name=node.get_parameter(
+            'set_goal_srv').get_parameter_value().string_value,
+        is_busy=lambda: fsm.state != State.IDLE)
+
     fsm = FSM(node=node, scenarios_packages=mission_package_names,
-              actions=load_stingray_actions(node))
+              actions=load_stingray_actions(node, goal_store))
     event_loop = asyncio.get_event_loop()
     future = asyncio.wait(
         [ros_loop(node), fsm_loop(fsm), state_action_loop(fsm)], return_when=asyncio.FIRST_EXCEPTION

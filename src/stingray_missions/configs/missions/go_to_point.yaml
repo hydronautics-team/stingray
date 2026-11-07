@@ -1,0 +1,12 @@
+initial: GO_TO_POINT
+states:
+  GO_TO_POINT:
+    action:
+      type: GoToPoint
+      require_target: true
+      frame_id: map
+      position_tolerance: 0.5
+      timeout: 120.0
+      goal_max_age: 60.0
+transitions:
+  - { trigger: ok, source: GO_TO_POINT, dest: OK }

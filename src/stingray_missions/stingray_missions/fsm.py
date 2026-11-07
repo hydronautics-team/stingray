@@ -22,6 +22,7 @@ class FSM(object):
         self.node = node
         self.pending_transition = None
         self.pending_action: dict = None
+        self.state_epoch = 0
         self.registered_states: dict[str, StateDescription] = {}
         self.registered_actions: dict[str, StateActionBase] = actions
 
@@ -124,7 +125,12 @@ class FSM(object):
             if self.pending_action["type"] in self.registered_actions:
 
                 action = self.registered_actions[self.pending_action["type"]]
+                epoch = self.state_epoch
                 result = await action.execute(**self.pending_action)
+                if epoch != self.state_epoch:
+                    get_logger("fsm").warning(
+                        f"{action.type} finished after state change, result ignored")
+                    return
                 get_logger("fsm").info(
                     f"{action.type} result: {result}, stopped: {action.stopped}")
                 if not action.stopped:
@@ -201,6 +207,7 @@ class FSM(object):
 
     async def leave_state(self):
         """Executing before leaving the state"""
+        self.state_epoch += 1
         get_logger("fsm").info(f"Start leaving {self.state}")
 
         # stop expiration timer

@@ -20,18 +20,22 @@ class AsyncSubscription:
 
 class AsyncActionClient(ActionClient):
     client_goal_handle = None
+    _cancel_requested = False
 
     def cancel(self):
+        self._cancel_requested = True
         if self.client_goal_handle:
             self.client_goal_handle.cancel_goal_async()
 
     async def send_goal_async(self, goal_msg):
-        _send_goal_future = super().send_goal_async(
-            goal_msg,
-        )
+        self._cancel_requested = False
+        self.client_goal_handle = None
+        _send_goal_future = super().send_goal_async(goal_msg)
         self.client_goal_handle = await asyncio.ensure_future(_send_goal_future)
         if not self.client_goal_handle.accepted:
             raise Exception("Goal rejected.")
+        if self._cancel_requested:
+            # отмена пришла, пока ждали принятия цели
+            self.client_goal_handle.cancel_goal_async()
         _get_result_future = self.client_goal_handle.get_result_async()
-        result_goal_handle = await asyncio.ensure_future(_get_result_future)
-        return result_goal_handle
+        return await asyncio.ensure_future(_get_result_future)

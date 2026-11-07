@@ -9,6 +9,10 @@ from stingray_interfaces.action import BboxCenteringTwistAction
 from stingray_interfaces.action import BboxSearchTwistAction
 from stingray_interfaces.action import HydroacousticCenteringTwistAction
 from stingray_interfaces.action import DeviceAction
+from stingray_interfaces.action import NavigateToPose
+from action_msgs.msg import GoalStatus
+from geometry_msgs.msg import PoseStamped
+from stingray_missions.goal import GoalStore
 from stingray_interfaces.msg import EnableTopic
 from stingray_interfaces.srv import SetStabilization
 from std_srvs.srv import Trigger, SetBool
@@ -446,9 +450,94 @@ class SetDeviceValueStateAction(StateActionBase):
         return await super().execute(**kwargs)
 
 
-def load_stingray_actions(node: Node) -> dict[str, StateActionBase]:
+class GoToPointStateAction(StateActionBase):
+    type = "GoToPoint"
+
+    def __init__(self, node: Node, goal_store: GoalStore):
+        super().__init__(node=node)
+        self.goal_store = goal_store
+        self.goto_action_name = self.node.get_parameter(
+            'goto_point_action').get_parameter_value().string_value
+        self.goto_client = AsyncActionClient(
+            self.node, NavigateToPose, self.goto_action_name)
+
+    def stop(self):
+        get_logger("action").info(f"Stopping {self.type} action")
+        self.goto_client.cancel()
+        return super().stop()
+
+    async def execute(self,
+                      require_target: bool = True,
+                      frame_id: str = "map",
+                      x: float = 0.0, y: float = 0.0, z: float = 0.0,
+                      position_tolerance: float = 0.5,
+                      timeout: float = 120.0,
+                      goal_max_age: float = 60.0,
+                      **kwargs) -> bool:
+        kwargs.pop("type", None)
+
+        target = self.goal_store.take(goal_max_age)
+        if target is None:
+            if require_target:
+                get_logger("action").error(
+                    f"{self.type}: no fresh goal received")
+                return False
+            target = PoseStamped()
+            target.header.frame_id = frame_id
+            target.pose.position.x = float(x)
+            target.pose.position.y = float(y)
+            target.pose.position.z = float(z)
+            target.pose.orientation.w = 1.0
+
+        if not target.header.frame_id:
+            target.header.frame_id = frame_id
+        target.header.stamp = self.node.get_clock().now().to_msg()
+
+        p = target.pose.position
+        get_logger("action").info(
+            f"Executing {self.type}: frame={target.header.frame_id} "
+            f"x={p.x:.2f} y={p.y:.2f} z={p.z:.2f}")
+
+        if not self.goto_client.wait_for_server(timeout_sec=1.0):
+            get_logger("action").error(
+                f"Action server {self.goto_action_name} not available")
+            return False
+
+        goal = NavigateToPose.Goal()
+        goal.target = target
+        goal.position_tolerance = float(position_tolerance)
+        goal.timeout = float(timeout)
+
+        try:
+            result = await asyncio.wait_for(
+                self.goto_client.send_goal_async(goal),
+                timeout=float(timeout) + 5.0)
+        except asyncio.TimeoutError:
+            get_logger("action").error(f"{self.type} client-side timeout")
+            self.goto_client.cancel()
+            return False
+        except Exception as e:
+            get_logger("action").error(f"{self.type}: {e}")
+            return False
+
+        if result is None or result.result is None:
+            get_logger("action").error(f"{self.type}: empty result")
+            return False
+
+        if result.status != GoalStatus.STATUS_SUCCEEDED or \
+                result.result.code != NavigateToPose.Result.SUCCEEDED:
+            get_logger("action").error(
+                f"{self.type} failed: status={result.status}, "
+                f"code={result.result.code}, message={result.result.message}")
+            return False
+
+        get_logger("action").info(f"{self.type}: target reached")
+        return await super().execute(**kwargs)
+
+
+def load_stingray_actions(node: Node, goal_store: GoalStore | None = None) -> dict[str, StateActionBase]:
     """Load all actions"""
-    return {
+    actions = {
         DurationStateAction.type: DurationStateAction(node),
         ResetIMUStateAction.type: ResetIMUStateAction(node),
         EnableStabilizationStateAction.type: EnableStabilizationStateAction(node),
@@ -460,3 +549,6 @@ def load_stingray_actions(node: Node) -> dict[str, StateActionBase]:
         BboxSearchTwistStateAction.type: BboxSearchTwistStateAction(node),
         SetDeviceValueStateAction.type: SetDeviceValueStateAction(node),
     }
+    if goal_store is not None:
+        actions[GoToPointStateAction.type] = GoToPointStateAction(node, goal_store)
+    return actions

@@ -1,0 +1,9 @@
+initial: GO_TO_POINT
+ok_state_package_name: stingray_missions
+failed_state_package_name: stingray_missions
+missions:
+  GO_TO_POINT:
+    config_name: go_to_point
+    package_name: stingray_missions
+transitions:
+  - { source: GO_TO_POINT, outcome: OK, dest: IDLE }
