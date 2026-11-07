@@ -200,7 +200,8 @@ class ScenarioDescription:
             transitions = []
 
         self.name = name.upper()
-        self.scenario_transitions = transitions
+        self.scenario_transitions = [dict(transition)
+                                     for transition in transitions]
         self.ok_state_package_name = ok_state_package_name
         self.failed_state_package_name = failed_state_package_name
 
@@ -229,13 +230,26 @@ class ScenarioDescription:
                 custom_name=custom_name
             )
 
-        # Пробуем автоматически добавить переход на FAILED из любой миссии,
-        # если outcome=FAILED
-        self.scenario_transitions.append({
-            'source': list(missions.keys()),
-            'outcome': State.FAILED,
-            'dest': State.FAILED
-        })
+        # Add the default failure recovery only for missions that do not have
+        # an explicit FAILED outcome in the scenario configuration.
+        explicit_failed_sources = set()
+        for transition in self.scenario_transitions:
+            if transition['outcome'].upper() != State.FAILED:
+                continue
+            sources = transition['source']
+            if not isinstance(sources, list):
+                sources = [sources]
+            explicit_failed_sources.update(sources)
+        default_failed_sources = [
+            mission_name for mission_name in missions
+            if mission_name not in explicit_failed_sources
+        ]
+        if default_failed_sources:
+            self.scenario_transitions.append({
+                'source': default_failed_sources,
+                'outcome': State.FAILED,
+                'dest': State.FAILED
+            })
 
         # Начальная миссия (тоже с префиксом сценария)
         self.initial_mission = self._custom_mission_name(initial)
@@ -321,10 +335,17 @@ class ScenarioDescription:
 
             match dest:
                 case State.IDLE:
-                    # outcome=OK => отправляем миссию в IDLE
                     for mission_name in source:
                         mission_full_name = self._custom_mission_name(mission_name)
-                        self.missions[mission_full_name].set_OK_outcome(State.IDLE)
+                        if outcome.upper() == State.OK:
+                            self.missions[mission_full_name].set_OK_outcome(
+                                State.IDLE)
+                        elif outcome.upper() == State.FAILED:
+                            self.missions[mission_full_name].set_FAILED_outcome(
+                                State.IDLE)
+                        else:
+                            raise ValueError(
+                                f"Invalid outcome: {outcome} in scenario {self.name}")
 
                 case _:
                     # outcome = OK или FAILED (или что-то ещё) => разные ветки
