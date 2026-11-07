@@ -230,7 +230,7 @@ private:
     const std::shared_ptr<GoalHandle> /*goal_handle*/)
   {
     RCLCPP_INFO(get_logger(), "Cancel request received");
-    safe_stop();
+    publish_stop();
     return rclcpp_action::CancelResponse::ACCEPT;
   }
 
@@ -315,7 +315,14 @@ private:
 
   void control_tick()
   {
-    if (!route_active_ || !active_goal_ || !active_goal_->is_active()) {
+    if (!active_goal_ || !active_goal_->is_active()) {
+      return;
+    }
+    if (active_goal_->is_canceling()) {
+      finish_goal(NavigateToPose::Result::CANCELED, "Canceled");
+      return;
+    }
+    if (!route_active_) {
       return;
     }
     if ((now() - goal_start_time_).seconds() > goal_timeout_) {

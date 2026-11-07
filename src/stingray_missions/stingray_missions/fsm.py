@@ -121,27 +121,30 @@ class FSM(object):
                 self.set_failed()
                 return
             
-            self.wait_action_success_event.clear()
+            completion_event = asyncio.Event()
+            self.wait_action_success_event = completion_event
             if self.pending_action["type"] in self.registered_actions:
 
                 action = self.registered_actions[self.pending_action["type"]]
                 epoch = self.state_epoch
-                result = await action.execute(**self.pending_action)
-                if epoch != self.state_epoch:
-                    get_logger("fsm").warning(
-                        f"{action.type} finished after state change, result ignored")
-                    return
-                get_logger("fsm").info(
-                    f"{action.type} result: {result}, stopped: {action.stopped}")
-                if not action.stopped:
-                    if result:
-                        self.add_pending_transition(Transition.ok)
-                    else:
-                        self.add_pending_transition(Transition.fail)
-                action.stopped = False
-                action.executed = False
-                self.pending_action = None
-                self.wait_action_success_event.set()
+                try:
+                    result = await action.execute(**self.pending_action)
+                    if epoch != self.state_epoch:
+                        get_logger("fsm").warning(
+                            f"{action.type} finished after state change, result ignored")
+                        return
+                    get_logger("fsm").info(
+                        f"{action.type} result: {result}, stopped: {action.stopped}")
+                    if not action.stopped:
+                        if result:
+                            self.add_pending_transition(Transition.ok)
+                        else:
+                            self.add_pending_transition(Transition.fail)
+                    action.stopped = False
+                    action.executed = False
+                    self.pending_action = None
+                finally:
+                    completion_event.set()
             else:
                 get_logger("fsm").error(
                     f'Action {self.pending_action["type"]} not found')
