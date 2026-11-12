@@ -62,6 +62,7 @@ public:
     declare_parameter("shutdown_on_complete", false);
     declare_parameter("use_target_depth", true);
     declare_parameter("fallback_target_depth", 0.0);
+    declare_parameter("zero_map_at_start", true);
 
     declare_parameter<std::string>("odometry_topic", "/core/state/odometry");
     declare_parameter<std::string>(
@@ -88,6 +89,7 @@ public:
     unknown_is_obstacle_ = get_parameter("unknown_is_obstacle").as_bool();
     use_target_depth_ = get_parameter("use_target_depth").as_bool();
     fallback_target_depth_ = get_parameter("fallback_target_depth").as_double();
+    zero_map_at_start_ = get_parameter("zero_map_at_start").as_bool();
 
     const auto command_qos = rclcpp::QoS(rclcpp::KeepLast(5)).reliable().durability_volatile();
     sub_odometry_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -179,8 +181,9 @@ private:
 
     map_frame_ = msg->header.frame_id.empty() ? "map" : msg->header.frame_id;
     map_resolution_ = msg->info.resolution;
-    map_origin_x_ = msg->info.origin.position.x;
-    map_origin_y_ = msg->info.origin.position.y;
+    raw_map_origin_x_ = msg->info.origin.position.x;
+    raw_map_origin_y_ = msg->info.origin.position.y;
+    update_local_map_origin();
     map_origin_yaw_ = yaw_from_quaternion(msg->info.origin.orientation);
     grid_ = std::make_unique<GRID>(
       static_cast<int>(msg->info.width), static_cast<int>(msg->info.height),
@@ -189,11 +192,18 @@ private:
       const int8_t occupancy = msg->data[i];
       grid_->field[i] = (occupancy > 50 || (occupancy < 0 && unknown_is_obstacle_)) ? 1 : 0;
     }
-    safe_stop();
     got_map_ = true;
     if (active_goal_ && active_goal_->is_active()) {
-      finish_goal(NavigateToPose::Result::PLANNING_FAILED,
-                  "Map updated during navigation; replan required");
+      publish_stop();
+      route_active_ = false;
+      if (!plan_route()) {
+        finish_goal(
+          NavigateToPose::Result::PLANNING_FAILED,
+          "Map updated and route could not be rebuilt");
+        return;
+      }
+      start_route();
+      RCLCPP_INFO(get_logger(), "Map updated; route rebuilt with %zu waypoints", route_.size());
     }
   }
 
@@ -250,10 +260,7 @@ private:
       finish_goal(NavigateToPose::Result::PLANNING_FAILED, "Path not found");
       return;
     }
-    route_index_ = route_.size() > 1 ? 1 : 0;
-    prev_route_index_ = route_index_;
-    route_active_ = true;
-    publish_path();
+    start_route();
     RCLCPP_INFO(get_logger(), "Route accepted: %zu waypoints, depth=%.2f",
                 route_.size(), target_depth_);
   }
@@ -295,19 +302,47 @@ private:
     if (source.header.frame_id.empty() || source.header.frame_id == map_frame_) {
       source.header.frame_id = map_frame_;
       result = source;
-      return true;
+    } else {
+      try {
+        result = tf_buffer_->transform(source, map_frame_, tf2::durationFromSec(0.1));
+      } catch (const tf2::TransformException & exception) {
+        RCLCPP_ERROR_THROTTLE(
+          get_logger(), *get_clock(), 2000,
+          "Cannot transform odometry from '%s' to '%s': %s",
+          source.header.frame_id.c_str(), map_frame_.c_str(), exception.what());
+        return false;
+      }
     }
 
-    try {
-      result = tf_buffer_->transform(source, map_frame_, tf2::durationFromSec(0.1));
-      return true;
-    } catch (const tf2::TransformException & exception) {
-      RCLCPP_ERROR_THROTTLE(
-        get_logger(), *get_clock(), 2000,
-        "Cannot transform odometry from '%s' to '%s': %s",
-        source.header.frame_id.c_str(), map_frame_.c_str(), exception.what());
-      return false;
+    if (zero_map_at_start_) {
+      if (!map_zero_initialized_) {
+        map_zero_x_ = result.pose.position.x;
+        map_zero_y_ = result.pose.position.y;
+        map_zero_initialized_ = true;
+        update_local_map_origin();
+        RCLCPP_INFO(
+          get_logger(),
+          "Map zero fixed at initial vehicle position (%.3f, %.3f) in frame '%s'",
+          map_zero_x_, map_zero_y_, map_frame_.c_str());
+      }
+      result.pose.position.x -= map_zero_x_;
+      result.pose.position.y -= map_zero_y_;
     }
+    return true;
+  }
+
+  void update_local_map_origin()
+  {
+    map_origin_x_ = raw_map_origin_x_ - (map_zero_initialized_ ? map_zero_x_ : 0.0);
+    map_origin_y_ = raw_map_origin_y_ - (map_zero_initialized_ ? map_zero_y_ : 0.0);
+  }
+
+  void start_route()
+  {
+    route_index_ = route_.size() > 1 ? 1 : 0;
+    prev_route_index_ = route_index_;
+    route_active_ = true;
+    publish_path();
   }
 
   void publish_path()
@@ -504,6 +539,7 @@ private:
   bool use_target_depth_{true};
   bool unknown_is_obstacle_{true};
   bool require_velocity_observation_{true};
+  bool zero_map_at_start_{true};
   bool got_odometry_{false};
   bool got_map_{false};
   bool route_active_{false};
@@ -520,7 +556,12 @@ private:
   double map_resolution_{0.0};
   double map_origin_x_{0.0};
   double map_origin_y_{0.0};
+  double raw_map_origin_x_{0.0};
+  double raw_map_origin_y_{0.0};
   double map_origin_yaw_{0.0};
+  double map_zero_x_{0.0};
+  double map_zero_y_{0.0};
+  bool map_zero_initialized_{false};
   size_t prev_route_index_{0};
   rclcpp_action::Server<NavigateToPose>::SharedPtr action_server_;
   std::shared_ptr<GoalHandle> active_goal_;

@@ -15,6 +15,7 @@ path_planning:
     velocity_observation_timeout: 0.5 # с
     require_velocity_observation: true
     unknown_is_obstacle: true
+    zero_map_at_start: true       # стартовая позиция аппарата считается (0, 0)
 
     odometry_topic: /core/state/odometry
     velocity_observation_topic: /stingray_core/sensors/dvl/odometry
