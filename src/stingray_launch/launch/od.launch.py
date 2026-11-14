@@ -30,6 +30,9 @@ def generate_launch_description():
     enabled_on_start_arg = DeclareLaunchArgument(
         "enabled_on_start", default_value='False'
     )
+    device_arg = DeclareLaunchArgument("device", default_value='auto')
+    require_cuda_arg = DeclareLaunchArgument(
+        "require_cuda", default_value='False')
 
     # load ros config
     return LaunchDescription([
@@ -41,6 +44,8 @@ def generate_launch_description():
         weights_path_arg,
         debug_arg,
         enabled_on_start_arg,
+        device_arg,
+        require_cuda_arg,
 
         # object detection
         Node(
@@ -57,6 +62,8 @@ def generate_launch_description():
                     "enable_object_detection_topic")},
                 {'debug': LaunchConfiguration("debug")},
                 {'enabled_on_start': LaunchConfiguration("enabled_on_start")},
+                {'device': LaunchConfiguration("device")},
+                {'require_cuda': LaunchConfiguration("require_cuda")},
             ],
             respawn=True,
             respawn_delay=1,

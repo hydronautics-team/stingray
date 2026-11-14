@@ -62,6 +62,8 @@ class YoloDetectorBase(Node):
         self.declare_parameter('confidence_threshold', 0.25)
         self.declare_parameter('iou_threshold', 0.45)
         self.declare_parameter('max_detections', 20)
+        self.declare_parameter('device', 'auto')
+        self.declare_parameter('require_cuda', False)
 
         # get weights path
         bbox_attrs_pkg_path = f'{get_package_share_directory(self.get_parameter("bbox_attrs_pkg_name").get_parameter_value().string_value)}'
@@ -98,8 +100,17 @@ class YoloDetectorBase(Node):
             'iou_threshold').get_parameter_value().double_value
         self.max_det = self.get_parameter(
             'max_detections').get_parameter_value().integer_value
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
+        requested_device = self.get_parameter('device').value
+        cuda_available = torch.cuda.is_available()
+        if self.get_parameter('require_cuda').value and not cuda_available:
+            raise RuntimeError(
+                'CUDA was required but PyTorch cannot access an NVIDIA GPU. '
+                'Check the NVIDIA driver, container toolkit and Compose GPU access.')
+        if requested_device == 'auto':
+            requested_device = 'cuda:0' if cuda_available else 'cpu'
+        self.device = torch.device(requested_device)
+        self.get_logger().info(
+            f'Inference device: {self.device}; CUDA available: {cuda_available}')
 
         self._enable_object_detection_sub = self.create_subscription(
             EnableTopic,

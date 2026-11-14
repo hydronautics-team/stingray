@@ -144,9 +144,12 @@ class YoloV8Detector(YoloDetectorBase):
 
                     # При debug рисуем бокс и надпись
                     if self.debug:
+                        distance = det_info['pos_z']
+                        distance_text = (
+                            f" {distance:.2f}m" if np.isfinite(distance) else '')
                         annotator.box_label(
                             xyxy,
-                            label,
+                            f"{label}{distance_text}",
                             color=colors(lbl_id, True)
                         )
 
